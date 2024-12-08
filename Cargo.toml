@@ -1,0 +1,29 @@
+[package]
+name = "blockchaininfo"
+version = "0.1.0"
+edition = "2021"
+
+[[bench]]
+name = "benchmark"
+harness = false
+
+[dev-dependencies]
+blockchaininfo = { path = "." }
+criterion = "0.5.1"
+
+[lib]
+name = "blockchaininfo"
+path = "src/lib.rs"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+reqwest = {version = "0.12.9", features = ["json", "rustls-tls"] }
+serde_json = "1.0.133"
+serde = {version = "1.0.215", features = ["derive"] }
+chrono = "0.4.38"
+toml = "0.8.19"
+num-format = "0.4.4"
+colored = "2.1.0"
+
+
+
