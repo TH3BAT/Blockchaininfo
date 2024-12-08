@@ -79,7 +79,7 @@ The application requires Bitcoin Core RPC credentials to function properly. Thes
    [bitcoin_rpc]
    username = "your_username"
    password = "your_password"
-   address = "http://127.0.0.1"
+   address = "http://127.0.0.1:8332" or "https://your-node.local"
    ```
    Replace the values with your actual Bitcoin Core RPC credentials.
 
@@ -87,7 +87,7 @@ The application requires Bitcoin Core RPC credentials to function properly. Thes
    If `config.toml` is not provided, the application will look for the following environment variables:
    - `RPC_USER`: Your Bitcoin Core RPC username
    - `RPC_PASSWORD`: Your Bitcoin Core RPC password
-   - `RPC_ADDRESS`: The Bitcoin Core RPC server address (e.g., `http://127.0.0.1`)
+   - `RPC_ADDRESS`: The Bitcoin Core RPC server address (e.g., `http://127.0.0.1:8332`, `https://your-node.local`)
 
 3. **macOS Keychain (Preferred for macOS)**  
    On macOS, you can securely store the RPC password in the system Keychain. This is the most secure and recommended method. To set it up:
