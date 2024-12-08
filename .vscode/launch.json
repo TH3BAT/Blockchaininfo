@@ -1,0 +1,83 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'blockchaininfo'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=blockchaininfo"
+                ],
+                "filter": {
+                    "name": "blockchaininfo",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'blockchaininfo'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=blockchaininfo",
+                    "--package=blockchaininfo"
+                ],
+                "filter": {
+                    "name": "blockchaininfo",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'blockchaininfo'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=blockchaininfo",
+                    "--package=blockchaininfo"
+                ],
+                "filter": {
+                    "name": "blockchaininfo",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'benchmark'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=benchmark",
+                    "--package=blockchaininfo"
+                ],
+                "filter": {
+                    "name": "benchmark",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

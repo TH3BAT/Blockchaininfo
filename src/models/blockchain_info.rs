@@ -1,17 +1,17 @@
 //
 // models/blockchain_info.rs
 //
-use serde::{Deserialize, Serialize}; // For serializing and deserializing structures
-use chrono::{TimeZone, Utc};         // For handling and formatting timestamps
-use crate::models::errors::MyError;  // Custom error type from the errors module
+use serde::{Deserialize, Serialize};  // For serializing and deserializing structures
+use chrono::{TimeZone, Utc};          // For handling and formatting timestamps
+use crate::models::errors::MyError;   // Custom error type from the errors module
 
 // Data structure to deserialize blockchain information from the RPC response
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct BlockchainInfo {
-    pub error: Option<String>, // Optional field for any error message
-    pub id: String,            // Request ID
-    pub result: BlockchainResult, // The actual blockchain information
+    pub error: Option<String>,        // Optional field for any error message
+    pub id: String,                   // Request ID
+    pub result: BlockchainResult,     // The actual blockchain information
 }
 
 // Nested structure containing detailed blockchain information
@@ -38,7 +38,7 @@ impl BlockchainResult {
     pub fn formatted_chainwork_bits(&self) -> Result<String, MyError> {
         u128::from_str_radix(&self.chainwork, 16)
         .map_or_else(
-            |_| Err(MyError::InvalidChainworkHexString(self.chainwork.clone())), // More detailed error
+            |_| Err(MyError::InvalidChainworkHexString(self.chainwork.clone())), 
             |decimal_chainwork| {
                 let bits = (decimal_chainwork as f64).log2();
                 Ok(format!("{:.2} bits", bits))
@@ -75,7 +75,8 @@ impl BlockchainResult {
 
         // Check if the exponent is within the valid range for the superscript map
         let exponent_str = group_exponent.to_string();
-        let superscript_exponent: String = exponent_str.chars().filter_map(|c| c.to_digit(10).map(|d| superscript_map[d as usize])).collect();
+        let superscript_exponent: String = exponent_str.chars().filter_map(|c| 
+            c.to_digit(10).map(|d| superscript_map[d as usize])).collect();
 
         if superscript_exponent.is_empty() {
             return Err(MyError::from_custom_error("Exponent out of range for superscript formatting".to_string()));
@@ -91,7 +92,7 @@ impl BlockchainResult {
     }
 
 
-    // Format the `difficulty` field as a scientific notation string
+    // Parse and format UNIX timestamps into Datetime
     pub fn parse_mediantime(&self) -> Result<String, MyError> {
         Utc.timestamp_opt(self.mediantime as i64, 0)
         .single()
@@ -109,7 +110,8 @@ impl BlockchainResult {
             |t| Ok(t.to_string())
         )
     }
-
+   
+   // Calculate time since last block was produced.
     pub fn calculate_time_diff(&self) -> Result<String, MyError> {
         let current_time = Utc::now();
         Utc.timestamp_opt(self.time as i64, 0)
