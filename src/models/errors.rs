@@ -1,45 +1,43 @@
 //
 // models/errors.rs
 //
-use reqwest;                // For Reqwest errors
-use serde::Deserialize;     // For deserialization
-use serde_json;             // For JSON error handling
-use toml;                   // For TOML parsing errors
-use std::io;                // For I/O errors
-use std::fmt;               // For Display trait
-use crate::utils::get_rpc_password_from_keychain;  // Custom utility function
+use reqwest;                // For Reqwest errors.
+use serde::Deserialize;     // For deserialization.
+use serde_json;             // For JSON error handling.
+use toml;                   // For TOML parsing errors.
+use std::io;                // For I/O errors.
+use std::fmt;               // For Display trait.
+use crate::utils::get_rpc_password_from_keychain;  // Custom utility function.
 
-//*****************************************************[BitcoinRpcConfig]**************************************************************
 
-// Configuration structure for Bitcoin RPC
+// Configuration structure for Bitcoin RPC.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct BitcoinRpcConfig {
-     pub bitcoin_rpc: RpcConfig, // Contains username, password, and address
+     pub bitcoin_rpc: RpcConfig, // Contains username, password, and address.
 }
 
 
-// Structure for RPC connection details
+// Structure for RPC connection details.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct RpcConfig {
-     pub username: String, // RPC username
-     pub password: String, // RPC password
-     pub address: String,  // RPC server address
+     pub username: String, // RPC username.
+     pub password: String, // RPC password.
+     pub address: String,  // RPC server address.
 }
 
 
 impl BitcoinRpcConfig {
-    // Fetches the RPC password from the keychain (if necessary)
+    // Fetches the RPC password from the keychain (if necessary).
     pub fn get_rpc_password_from_keychain() -> Result<String, MyError> {
         get_rpc_password_from_keychain()
     }
 }
 
 
-//*****************************************************[MyError]***********************************************************************
 
-// Custom error enum for handling various types of errors
+// Custom error enum for handling various types of errors.
 #[derive(Debug)]
 pub enum MyError {
     Reqwest(reqwest::Error),
@@ -56,10 +54,7 @@ pub enum MyError {
 
 
 
-//
-//Implementations
-//
-// Implementation of `fmt::Display` for custom error messages
+// Implementation of `fmt::Display` for custom error messages.
 impl fmt::Display for MyError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -69,17 +64,18 @@ impl fmt::Display for MyError {
             MyError::Toml(err) => write!(f, "TOML parsing error: {}", err),
             MyError::Keychain(err) => write!(f, "Keychain error: {}", err),
             MyError::Config(err) => write!(f, "Configuration error: {}", err),
-            MyError::InvalidChainworkHexString(err) => write!(f, "Invalid chainwork hex string: {}", err),
+            MyError::InvalidChainworkHexString(err) => write!(f, 
+                "Invalid chainwork hex string: {}", err),
             MyError::InvalidMedianTime(time) => write!(f, "Invalid median time: {}", time),
             MyError::InvalidBlockTime(time) => write!(f, "Invalid block time: {}", time),
-            MyError::CustomError(err) => write!(f, "Custom error: {}", err),  // Handle CustomError variant
+            MyError::CustomError(err) => write!(f, "Custom error: {}", err),  
         }
     }
 }
 
 
 
-// Automatic conversion between error types
+// Automatic conversion between error types.
 impl From<reqwest::Error> for MyError {
     fn from(err: reqwest::Error) -> MyError {
         MyError::Reqwest(err)
@@ -111,7 +107,7 @@ impl From<String> for MyError {
 }
 
 
-// Add a method to convert String into CustomError
+// Add a method to convert String into CustomError.
 impl MyError {
     pub fn from_custom_error(err: String) -> MyError {
         MyError::CustomError(err)
@@ -132,7 +128,7 @@ pub enum MyStringError {
     InvalidChainworkHexString(String),
 }
 
-// Implement From<MyStringError> for MyError
+// Implement From<MyStringError> for MyError.
 impl From<MyStringError> for MyError {
     fn from(err: MyStringError) -> MyError {
         match err {
@@ -142,7 +138,7 @@ impl From<MyStringError> for MyError {
     }
 }
 
-// Similarly for u64-based errors:
+// Similarly for u64-based errors.
 #[derive(Debug)]
 #[allow(dead_code)]
 pub enum MyU64Error {
@@ -150,7 +146,7 @@ pub enum MyU64Error {
     InvalidBlockTime(u64),
 }
 
-// Implement From<MyU64Error> for MyError
+// Implement From<MyU64Error> for MyError.
 impl From<MyU64Error> for MyError {
     fn from(err: MyU64Error) -> MyError {
         match err {

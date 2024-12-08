@@ -5,14 +5,14 @@ use std::process::Command;
 use crate::models::errors::MyError;  
 
 
-// Constants for bytes formatting
+// Constants for bytes formatting.
 const KB: u64 = 1024;
 const MB: u64 = KB * 1024;
 const GB: u64 = MB * 1024;
 const TB: u64 = GB * 1024;
 
 
-// Formats a size in bytes into a more readable format (KB, MB, etc.)
+// Formats a size in bytes into a more readable format (KB, MB, etc.).
 pub fn format_size(bytes: u64) -> String {
     if bytes >= TB {
         format!("{:.2} TB", bytes as f64 / TB as f64)
@@ -28,7 +28,7 @@ pub fn format_size(bytes: u64) -> String {
 }
 
 
-// Retrieves the RPC password stored in macOS Keychain
+// Retrieves the RPC password stored in macOS Keychain.
 #[cfg(target_os = "macos")]
 pub fn get_rpc_password_from_keychain() -> Result<String, MyError> {
     let output = Command::new("security")
@@ -50,21 +50,21 @@ pub fn get_rpc_password_from_keychain() -> Result<String, MyError> {
 }
 
 
-// Linux-specific logic (placeholder, implement accordingly)
+// Linux-specific logic (placeholder, implement accordingly).
 #[cfg(target_os = "linux")]
 pub fn get_rpc_password_from_keychain() -> Result<String, MyError> {
     Err(MyError::Keychain("Linux keyring access not supported".to_string()))
 }
 
 
-// Windows-specific logic (placeholder, implement accordingly)
+// Windows-specific logic (placeholder, implement accordingly).
 #[cfg(target_os = "windows")]
 pub fn get_rpc_password_from_keychain() -> Result<String, MyError> {
     Err(MyError::Keychain("Windows keychain access not supported".to_string()))
 }
 
 
-// Fallback for unsupported OS
+// Fallback for unsupported OS.
 #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
 pub fn get_rpc_password_from_keychain() -> Result<String, MyError> {
     Err(MyError::Keychain("Unsupported OS for keychain access".to_string()))

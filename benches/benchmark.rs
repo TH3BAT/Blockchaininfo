@@ -1,7 +1,6 @@
 //
 // benches/benchmark.rs
-//
-/// -------------------------------------------------------------------------------- 
+// 
 /// Running benches/benchmark.rs (target/release/deps/benchmark-005d84f413f11729)
 /// formatted_chainwork_bits
 ///                         time:   [223.89 ns 224.09 ns 224.35 ns]
@@ -35,7 +34,6 @@
 /// Found 14 outliers among 100 measurements (14.00%)
 ///   3 (3.00%) high mild
 ///   11 (11.00%) high severe
-/// ------------------------------------------------------------------------------------
 
 use criterion::{criterion_group, criterion_main, Criterion};
 use blockchaininfo::models::blockchain_info::BlockchainResult;
@@ -47,13 +45,13 @@ fn bench_formatted_chainwork_bits(c: &mut Criterion) {
         blocks: 1000000,
         chain: "main".to_string(),
         chainwork: "00000000000000000000000000000000000000009ee5b59a20b79d3f8e277a28".to_string(),
-        difficulty: 103919634711492.2, // Example value
+        difficulty: 103919634711492.2, 
         headers: 873627,
         initialblockdownload: false,
-        mediantime: 1609459200, // Example timestamp (January 1, 2021)
+        mediantime: 1609459200, 
         pruned: false,
-        size_on_disk: 500000000, // Example size in bytes
-        time: 1609459200, // Example timestamp
+        size_on_disk: 500000000, 
+        time: 1609459200, 
         verificationprogress: 0.9999912438474318,
         warnings: "".to_string(),
     };
@@ -69,13 +67,13 @@ fn bench_formatted_difficulty(c: &mut Criterion) {
         blocks: 1000000,
         chain: "main".to_string(),
         chainwork: "00000000000000000000000000000000000000009ee5b59a20b79d3f8e277a28".to_string(),
-        difficulty: 103919634711492.2, // Example value
+        difficulty: 103919634711492.2, 
         headers: 873627,
         initialblockdownload: false,
-        mediantime: 1609459200, // Example timestamp (January 1, 2021)
+        mediantime: 1609459200, 
         pruned: false,
-        size_on_disk: 500000000, // Example size in bytes
-        time: 1609459200, // Example timestamp
+        size_on_disk: 500000000, 
+        time: 1609459200, 
         verificationprogress: 0.9999912438474318,
         warnings: "".to_string(),
     };
@@ -91,13 +89,13 @@ fn bench_parse_mediantime(c: &mut Criterion) {
         blocks: 1000000,
         chain: "main".to_string(),
         chainwork: "00000000000000000000000000000000000000009ee5b59a20b79d3f8e277a28".to_string(),
-        difficulty: 103919634711492.2, // Example value
+        difficulty: 103919634711492.2, 
         headers: 873627,
         initialblockdownload: false,
-        mediantime: 1609459200, // Example timestamp (January 1, 2021)
+        mediantime: 1609459200, 
         pruned: false,
-        size_on_disk: 500000000, // Example size in bytes
-        time: 1609459200, // Example timestamp
+        size_on_disk: 500000000, 
+        time: 1609459200, 
         verificationprogress: 0.9999912438474318,
         warnings: "".to_string(),
     };
@@ -113,13 +111,13 @@ fn bench_parse_time(c: &mut Criterion) {
         blocks: 1000000,
         chain: "main".to_string(),
         chainwork: "00000000000000000000000000000000000000009ee5b59a20b79d3f8e277a28".to_string(),
-        difficulty: 103919634711492.2, // Example value
+        difficulty: 103919634711492.2, 
         headers: 873627,
         initialblockdownload: false,
-        mediantime: 1609459200, // Example timestamp (January 1, 2021)
+        mediantime: 1609459200, 
         pruned: false,
-        size_on_disk: 500000000, // Example size in bytes
-        time: 1609459200, // Example timestamp
+        size_on_disk: 500000000, 
+        time: 1609459200, 
         verificationprogress: 0.9999912438474318,
         warnings: "".to_string(),
     };
@@ -135,13 +133,13 @@ fn bench_calculate_time_diff(c: &mut Criterion) {
         blocks: 1000000,
         chain: "main".to_string(),
         chainwork: "00000000000000000000000000000000000000009ee5b59a20b79d3f8e277a28".to_string(),
-        difficulty: 103919634711492.2, // Example value
+        difficulty: 103919634711492.2, 
         headers: 873627,
         initialblockdownload: false,
-        mediantime: 1609459200, // Example timestamp (January 1, 2021)
+        mediantime: 1609459200, 
         pruned: false,
-        size_on_disk: 500000000, // Example size in bytes
-        time: 1609459200, // Example timestamp
+        size_on_disk: 500000000, 
+        time: 1609459200, 
         verificationprogress: 0.9999912438474318,
         warnings: "".to_string(),
     };
@@ -160,5 +158,3 @@ criterion_group!(
     bench_calculate_time_diff
 );
 criterion_main!(benches);
-
-
