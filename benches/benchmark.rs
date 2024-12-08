@@ -38,7 +38,7 @@
 /// ------------------------------------------------------------------------------------
 
 use criterion::{criterion_group, criterion_main, Criterion};
-use blockchaininfo::models::BlockchainResult;
+use blockchaininfo::models::blockchain_info::BlockchainResult;
 
 
 fn bench_formatted_chainwork_bits(c: &mut Criterion) {

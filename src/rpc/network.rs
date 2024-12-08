@@ -4,7 +4,8 @@
 use reqwest::Client;
 use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
-use crate::models::{NetworkInfo, NetworkInfoResponse, RpcConfig, MyError};
+use crate::models::network_info::{NetworkInfo, NetworkInfoResponse};
+use crate::models::errors::{RpcConfig, MyError};
 
 
 // Makes an RPC request to fetch network information

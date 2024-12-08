@@ -2,7 +2,7 @@
 // utils.rs
 //
 use std::process::Command;
-use crate::models::MyError;  
+use crate::models::errors::MyError;  
 
 
 // Constants for bytes formatting

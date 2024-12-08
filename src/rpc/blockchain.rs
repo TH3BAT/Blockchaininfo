@@ -4,7 +4,8 @@
 use reqwest::Client;
 use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
-use crate::models::{BlockchainInfo, RpcConfig, MyError};
+use crate::models::blockchain_info::BlockchainInfo;
+use crate::models::errors::{RpcConfig, MyError};
 
 
 // Makes an RPC request to fetch blockchain information

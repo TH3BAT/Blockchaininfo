@@ -4,7 +4,8 @@
 use reqwest::Client;
 use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
-use crate::models::{MempoolInfo, MempoolInfoRpcResponse, RpcConfig, MyError};
+use crate::models::mempool_info::{MempoolInfo, MempoolInfoRpcResponse};
+use crate::models::errors::{RpcConfig, MyError};
 
 
 // Makes an RPC request to fetch mempool information

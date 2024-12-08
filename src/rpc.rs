@@ -5,7 +5,12 @@ pub mod blockchain;
 pub mod mempool;
 pub mod network;
 
-use crate::models::{BlockchainInfo, MempoolInfo, NetworkInfo, MyError, RpcConfig};
+use crate::models::blockchain_info::BlockchainInfo;
+use crate::models::mempool_info::MempoolInfo;
+use crate::models::network_info::NetworkInfo;
+use crate::models::errors::RpcConfig;
+use crate::models::errors::MyError;
+
 
 // Use Namespacing
 pub async fn fetch_blockchain_info(config: &RpcConfig) -> Result<BlockchainInfo, MyError> {

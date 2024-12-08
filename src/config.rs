@@ -4,7 +4,7 @@
 use std::fs;
 use std::env;
 use toml;
-use crate::models::{BitcoinRpcConfig, RpcConfig, MyError};
+use crate::models::errors::{BitcoinRpcConfig, RpcConfig, MyError};
 
 
 // Loads the configuration from a TOML file or environment variables

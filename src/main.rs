@@ -9,7 +9,7 @@ mod display;
 
 use config::load_config;
 use rpc::{fetch_blockchain_info, fetch_mempool_info, fetch_network_info};
-use models::MyError;
+use models::errors::MyError;
 use display::{display_blockchain_info, display_mempool_info, display_network_info};
 
 #[tokio::main]
