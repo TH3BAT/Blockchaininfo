@@ -46,9 +46,13 @@
 ├── benches
 │   └── benchmark.rs      # For bench testing.
 ├── cargo.toml
+├── display
+│   ├── display_blockchain_info.rs  # Displays blockchain data.
+│   ├── display_mempool_info.rs     # Displays mempool data.
+│   └── display_network_info.rs     # Displays network data.
 └── src
     ├── config.rs         # Configuration loading and validation.
-    ├── display.rs        # Displays data fetched from Bitcoin node.
+    ├── display.rs        # Aggregates display modules.
     ├── lib.rs            # For testing.
     ├── main.rs           # Application entry point.
     ├── models/           # Data and error handling modules.
