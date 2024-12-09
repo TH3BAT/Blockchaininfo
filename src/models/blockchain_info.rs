@@ -8,7 +8,6 @@ use crate::models::errors::MyError;   // Custom error type from the errors modul
 // Data structure to deserialize blockchain information from the RPC response.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-// pub struct BlockchainInfo {
     pub struct BlockchainInfoJsonWrap {
     pub error: Option<String>,        // Optional field for any error message.
     pub id: String,                   // Request ID.
@@ -18,7 +17,6 @@ use crate::models::errors::MyError;   // Custom error type from the errors modul
 // Nested structure containing detailed blockchain information.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-// pub struct BlockchainResult {
     pub struct BlockchainInfo {
     pub bestblockhash: String,        // Hash of the best block.
     pub blocks: u64,                  // Total number of blocks in the chain.

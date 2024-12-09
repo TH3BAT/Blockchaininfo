@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize}; // For serializing and deserializing struct
 // Wrapper Struct - The Bitcoin RPC response wraps the actual mempoolinfo data inside the result field.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-// pub struct MempoolInfoRpcResponse<T> {
     pub struct MempoolInfoJsonWrap {
      pub result: MempoolInfo,
      pub error: Option<String>,
