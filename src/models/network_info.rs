@@ -7,7 +7,8 @@ use serde::{Deserialize, Serialize}; // For struct serialization and deserializa
 // This struct represents the root response from the RPC call, which contains the `result` field.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub struct NetworkInfoResponse {
+// pub struct NetworkInfoResponse {
+      pub struct NetworkInfoJsonWrap {
       pub result: NetworkInfo,   // The actual result field which contains the data we need.
       pub error: Option<String>, // Optional error field.
       pub id: String,            // The ID of the request.

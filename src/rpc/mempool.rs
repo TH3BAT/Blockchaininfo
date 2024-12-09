@@ -4,7 +4,7 @@
 use reqwest::Client;
 use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
-use crate::models::mempool_info::{MempoolInfo, MempoolInfoRpcResponse};
+use crate::models::mempool_info::{MempoolInfoJsonWrap, MempoolInfo};
 use crate::models::errors::{RpcConfig, MyError};
 
 
@@ -25,7 +25,7 @@ pub async fn fetch_mempool_info(config: &RpcConfig) -> Result<MempoolInfo, MyErr
         .json(&json_rpc_request)
         .send()
         .await?
-        .json::<MempoolInfoRpcResponse<_>>()
+        .json::<MempoolInfoJsonWrap>()
         .await?;
 
     Ok(response.result)

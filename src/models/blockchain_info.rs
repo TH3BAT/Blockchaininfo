@@ -8,16 +8,18 @@ use crate::models::errors::MyError;   // Custom error type from the errors modul
 // Data structure to deserialize blockchain information from the RPC response.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub struct BlockchainInfo {
+// pub struct BlockchainInfo {
+    pub struct BlockchainInfoJsonWrap {
     pub error: Option<String>,        // Optional field for any error message.
     pub id: String,                   // Request ID.
-    pub result: BlockchainResult,     // The actual blockchain information.
+    pub result: BlockchainInfo,       // The actual blockchain information.
 }
 
 // Nested structure containing detailed blockchain information.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub struct BlockchainResult {
+// pub struct BlockchainResult {
+    pub struct BlockchainInfo {
     pub bestblockhash: String,        // Hash of the best block.
     pub blocks: u64,                  // Total number of blocks in the chain.
     pub chain: String,                // Chain type (e.g., "main", "test", "regtest").
@@ -33,7 +35,7 @@ pub struct BlockchainResult {
     pub warnings: String,             // Warnings related to the chain.
 }
 
-impl BlockchainResult {
+impl BlockchainInfo {
     // Converts the chainwork from a hexadecimal string to bits.
     pub fn formatted_chainwork_bits(&self) -> Result<String, MyError> {
         u128::from_str_radix(&self.chainwork, 16)
@@ -89,7 +91,7 @@ impl BlockchainResult {
 
     // Format the `difficulty` field as a scientific notation string.
     pub fn formatted_difficulty(&self) -> Result<String, MyError> {
-        BlockchainResult::format_scientific(self.difficulty)
+        BlockchainInfo::format_scientific(self.difficulty)
     }
 
 

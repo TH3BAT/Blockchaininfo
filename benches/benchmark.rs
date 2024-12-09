@@ -36,11 +36,11 @@
 ///   11 (11.00%) high severe
 
 use criterion::{criterion_group, criterion_main, Criterion};
-use blockchaininfo::models::blockchain_info::BlockchainResult;
+use blockchaininfo::models::blockchain_info::BlockchainInfo;
 
 
 fn bench_formatted_chainwork_bits(c: &mut Criterion) {
-    let result = BlockchainResult {
+    let result = BlockchainInfo {
         bestblockhash: "00000000000000000000919329462180d22b1a3c51761b64832b8047a2554f2d".to_string(),
         blocks: 1000000,
         chain: "main".to_string(),
@@ -62,7 +62,7 @@ fn bench_formatted_chainwork_bits(c: &mut Criterion) {
 }
 
 fn bench_formatted_difficulty(c: &mut Criterion) {
-    let result = BlockchainResult {
+    let result = BlockchainInfo {
         bestblockhash: "00000000000000000000919329462180d22b1a3c51761b64832b8047a2554f2d".to_string(),
         blocks: 1000000,
         chain: "main".to_string(),
@@ -84,7 +84,7 @@ fn bench_formatted_difficulty(c: &mut Criterion) {
 }
 
 fn bench_parse_mediantime(c: &mut Criterion) {
-    let result = BlockchainResult {
+    let result = BlockchainInfo {
         bestblockhash: "00000000000000000000919329462180d22b1a3c51761b64832b8047a2554f2d".to_string(),
         blocks: 1000000,
         chain: "main".to_string(),
@@ -106,7 +106,7 @@ fn bench_parse_mediantime(c: &mut Criterion) {
 }
 
 fn bench_parse_time(c: &mut Criterion) {
-    let result = BlockchainResult {
+    let result = BlockchainInfo {
         bestblockhash: "00000000000000000000919329462180d22b1a3c51761b64832b8047a2554f2d".to_string(),
         blocks: 1000000,
         chain: "main".to_string(),
@@ -128,7 +128,7 @@ fn bench_parse_time(c: &mut Criterion) {
 }
 
 fn bench_calculate_time_diff(c: &mut Criterion) {
-    let result = BlockchainResult {
+    let result = BlockchainInfo {
         bestblockhash: "00000000000000000000919329462180d22b1a3c51761b64832b8047a2554f2d".to_string(),
         blocks: 1000000,
         chain: "main".to_string(),
