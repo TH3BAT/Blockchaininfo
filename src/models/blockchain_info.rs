@@ -92,7 +92,6 @@ impl BlockchainInfo {
         BlockchainInfo::format_scientific(self.difficulty)
     }
 
-
     // Parse and format UNIX timestamps into Datetime.
     pub fn parse_mediantime(&self) -> Result<String, MyError> {
         Utc.timestamp_opt(self.mediantime as i64, 0)

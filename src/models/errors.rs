@@ -9,14 +9,12 @@ use std::io;                // For I/O errors.
 use std::fmt;               // For Display trait.
 use crate::utils::get_rpc_password_from_keychain;  // Custom utility function.
 
-
 // Configuration structure for Bitcoin RPC.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct BitcoinRpcConfig {
      pub bitcoin_rpc: RpcConfig, // Contains username, password, and address.
 }
-
 
 // Structure for RPC connection details.
 #[derive(Debug, Deserialize)]
@@ -27,15 +25,12 @@ pub struct RpcConfig {
      pub address: String,  // RPC server address.
 }
 
-
 impl BitcoinRpcConfig {
     // Fetches the RPC password from the keychain (if necessary).
     pub fn get_rpc_password_from_keychain() -> Result<String, MyError> {
         get_rpc_password_from_keychain()
     }
 }
-
-
 
 // Custom error enum for handling various types of errors.
 #[derive(Debug)]
@@ -50,9 +45,9 @@ pub enum MyError {
     InvalidMedianTime(u64),
     InvalidBlockTime(u64),
     CustomError(String),  
+    Terminal(String),      // Terminal-related errors
+    Audio(String),         // Audio-related errors
 }
-
-
 
 // Implementation of `fmt::Display` for custom error messages.
 impl fmt::Display for MyError {
@@ -68,12 +63,12 @@ impl fmt::Display for MyError {
                 "Invalid chainwork hex string: {}", err),
             MyError::InvalidMedianTime(time) => write!(f, "Invalid median time: {}", time),
             MyError::InvalidBlockTime(time) => write!(f, "Invalid block time: {}", time),
-            MyError::CustomError(err) => write!(f, "Custom error: {}", err),  
+            MyError::CustomError(err) => write!(f, "Custom error: {}", err),
+            MyError::Terminal(err) => write!(f, "Terminal error: {}", err),
+            MyError::Audio(err) => write!(f, "Audio error: {}", err),
         }
     }
 }
-
-
 
 // Automatic conversion between error types.
 impl From<reqwest::Error> for MyError {
@@ -106,7 +101,6 @@ impl From<String> for MyError {
     }
 }
 
-
 // Add a method to convert String into CustomError.
 impl MyError {
     pub fn from_custom_error(err: String) -> MyError {
@@ -114,10 +108,21 @@ impl MyError {
     }
 }
 
-
 impl From<std::env::VarError> for MyError {
     fn from(err: std::env::VarError) -> MyError {
         MyError::Config(format!("Environment variable error: {}", err))
+    }
+}
+
+impl From<rodio::decoder::DecoderError> for MyError {
+    fn from(err: rodio::decoder::DecoderError) -> MyError {
+        MyError::Audio(format!("Audio decoder error: {}", err))
+    }
+}
+
+impl From<std::sync::PoisonError<std::sync::MutexGuard<'_, rodio::Sink>>> for MyError {
+    fn from(_: std::sync::PoisonError<std::sync::MutexGuard<'_, rodio::Sink>>) -> MyError {
+        MyError::Audio("Mutex poisoned while accessing Sink".to_string())
     }
 }
 

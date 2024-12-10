@@ -12,7 +12,6 @@ use serde::{Deserialize, Serialize}; // For serializing and deserializing struct
      pub id: String,
 }
 
-
 // Represents the mempool information retrieved from the Bitcoin RPC `getmempoolinfo` call.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

@@ -13,7 +13,6 @@ use serde::{Deserialize, Serialize}; // For struct serialization and deserializa
       pub id: String,            // The ID of the request.
 }
 
-
 // This struct encapsulates various details about the Bitcoin node's network status.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -36,7 +35,6 @@ pub struct NetworkInfo {
       pub warnings: String,                      // Any warnings issued by the node. 
 }
 
-
 // Represents a specific network type (e.g., IPv4, IPv6, Onion) and its properties.
 // This struct is used in the `networks` field of the `NetworkInfo` struct.
 #[derive(Debug, Serialize, Deserialize)]
@@ -48,7 +46,6 @@ pub struct Network {
       pub proxy: String,                         // The proxy address used for this network.
       pub proxy_randomize_credentials: bool,     // Boolean flag for randomizing proxy credentials.
 }
-
 
 // Represents a local address used by the node.
 // This struct is used in the `localaddresses` field of the `NetworkInfo` struct.

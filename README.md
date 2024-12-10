@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Blockchaininfo** is a Rust-based application designed to interact with a Bitcoin node via RPC, providing detailed, real-time insights into the blockchain, mempool, and network status. It formats and color-codes output to make complex data more accessible and user-friendly.
+**Blockchaininfo** is a Rust-based application designed to interact with a Bitcoin node via RPC, providing detailed, real-time insights into the blockchain, mempool, and network status. It formats and color-codes output to make complex data more accessible and user-friendly. Recent updates include a block-based alarm clock feature for enhanced functionality.
 
 ---
 
@@ -37,6 +37,12 @@
    - Displays:
      - Number of inbound and outbound peer connections.
 
+4. **Block-Based Alarm Clock**  
+   - **New Command Line Feature**: `-a18 some_mp3_file_name_and_path` activates and sets the alarm to play the specified MP3 file a certain number of blocks in the future.
+   - **Planned Enhancements**:
+     - Configurable default snooze duration.
+     - Support for more advanced options via a config file.
+
 ---
 
 ## File Structure
@@ -66,7 +72,8 @@
     │   ├── mempool.rs    # Mempool data fetching.
     │   └── network.rs    # Network data fetching.
     ├── rpc.rs            # Aggregates RPC modules.
-    └── utils.rs          # Utility functions (e.g., data formatting).
+    ├── utils.rs          # Utility functions (e.g., data formatting).
+    ├── alarm.rs          # Implements block-based alarm clock functionality.
 ```
 
 ---
@@ -128,6 +135,10 @@ The application requires Bitcoin Core RPC credentials to function properly. Thes
    ```bash
    ./target/release/blockchaininfo
    ```
+3. Use the new alarm clock feature to set an alarm based on future blocks:
+   ```bash
+   ./target/release/blockchaininfo -a18 /path/to/alarm.mp3
+   ```
 
 ---
 
@@ -155,6 +166,9 @@ Min Transaction Fee: 1 vSats/vByte
 [Network]
 Connections in: 36
 Connections out: 10
+
+Alarm set to activate at block 873,697 or greater.
+Set to play:  /path/to/alarm.mp3
 ```
 
 ---
@@ -165,6 +179,7 @@ The program includes robust error handling:
 - **Configuration Errors**: Ensures `config.toml` or environment variables contains valid credentials and address.   
 - **RPC Communication Errors**: Handles failures in connecting to the Bitcoin node.  
 - **Data Parsing Errors**: Identifies and reports issues with parsing the JSON response.
+- **Alarm Errors**: Validates the MP3 file path and block input for the alarm clock feature.
 
 ---
 

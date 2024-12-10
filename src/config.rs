@@ -6,7 +6,6 @@ use std::env;
 use toml;
 use crate::models::errors::{BitcoinRpcConfig, RpcConfig, MyError};
 
-
 // Loads the configuration from a TOML file or environment variables.
 pub fn load_config(file_path: &str) -> Result<BitcoinRpcConfig, MyError> {
     // Attempt to read the config from the TOML file.

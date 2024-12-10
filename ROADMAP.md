@@ -9,14 +9,18 @@ This document outlines planned features and improvements for the BlockchainInfo 
 ### **1. Block-Based Alarm Clock**
 - **Description**: Add an optional feature to alert users when a specified number of blocks have been mined beyond the current blockchain height.
 - **Key Details**:
-  - Enable with a CLI argument: `-a` to activate, followed by a block offset (e.g., `-10`).
+  - Enable with a CLI argument: `-a` followed by the block offset and an optional file path for an MP3 file to play (e.g., `-a18 some_mp3_file_name_and_path`).
   - Application will poll the blockchain RPC endpoint at regular intervals.
-  - Trigger an audible or visual alarm when the target block is reached.
-  - Users can turn off the alarm interactively using the spacebar.
+  - Trigger an audible alarm using the specified MP3 file or a default sound when the target block is reached.
+  - Users can turn off the alarm interactively using any key.
+- **Future Enhancements**:
+  - Transition to a configuration file for setting default MP3 paths, snooze durations, and other preferences.
+  - Add snooze functionality with adjustable time intervals.
+  - Integrate volume control and additional alarm types (visual alerts, notifications).
 - **Implementation Notes**:
   - Use async runtime for background polling.
   - Integrate terminal interactivity with `crossterm`.
-  - Optional sound playback with `rodio`.
+  - Use `rodio` for MP3 playback.
 
 ---
 

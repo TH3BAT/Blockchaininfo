@@ -7,7 +7,6 @@ use serde_json::json;
 use crate::models::blockchain_info::{BlockchainInfoJsonWrap, BlockchainInfo};
 use crate::models::errors::{RpcConfig, MyError};
 
-
 // Makes an RPC request to fetch blockchain information.
 pub async fn fetch_blockchain_info(config: &RpcConfig) -> Result<BlockchainInfo, MyError> {
     let json_rpc_request = json!({
