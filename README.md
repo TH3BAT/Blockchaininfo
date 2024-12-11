@@ -118,8 +118,8 @@ The application requires Bitcoin Core RPC credentials to function properly. Thes
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/blockchaininfo.git
-   cd blockchaininfo
+   git clone https://github.com/TH3BAT/Blockchaininfo.git
+   cd Blockchaininfo
    ```
 
 2. Build the project:
