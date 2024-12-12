@@ -5,7 +5,8 @@ use reqwest::Client;
 use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
 use crate::models::network_info::{NetworkInfoJsonWrap, NetworkInfo};
-use crate::models::errors::{RpcConfig, MyError};
+use crate::models::errors::MyError;
+use crate::config::RpcConfig;
 
 // Makes an RPC request to fetch network information.
 pub async fn fetch_network_info(config: &RpcConfig) -> Result<NetworkInfo, MyError> {

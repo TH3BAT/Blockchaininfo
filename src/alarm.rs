@@ -1,7 +1,8 @@
 //
 // alarm.rs
 //
-use crate::models::{errors::MyError, errors::BitcoinRpcConfig};
+use crate::models::errors::MyError;
+use crate::config::BitcoinRpcConfig;
 use crossterm::{event, terminal, ExecutableCommand};
 use rodio::{Decoder, OutputStream, Sink, Source};
 use std::{fs::File, io::{self, BufReader}, sync::{Arc, Mutex}, thread, time, env};

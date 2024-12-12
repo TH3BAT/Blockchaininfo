@@ -2,35 +2,10 @@
 // models/errors.rs
 //
 use reqwest;                // For Reqwest errors.
-use serde::Deserialize;     // For deserialization.
 use serde_json;             // For JSON error handling.
 use toml;                   // For TOML parsing errors.
 use std::io;                // For I/O errors.
 use std::fmt;               // For Display trait.
-use crate::utils::get_rpc_password_from_keychain;  // Custom utility function.
-
-// Configuration structure for Bitcoin RPC.
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub struct BitcoinRpcConfig {
-     pub bitcoin_rpc: RpcConfig, // Contains username, password, and address.
-}
-
-// Structure for RPC connection details.
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub struct RpcConfig {
-     pub username: String, // RPC username.
-     pub password: String, // RPC password.
-     pub address: String,  // RPC server address.
-}
-
-impl BitcoinRpcConfig {
-    // Fetches the RPC password from the keychain (if necessary).
-    pub fn get_rpc_password_from_keychain() -> Result<String, MyError> {
-        get_rpc_password_from_keychain()
-    }
-}
 
 // Custom error enum for handling various types of errors.
 #[derive(Debug)]
