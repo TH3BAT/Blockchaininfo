@@ -18,7 +18,7 @@ pub fn display_blockchain_info(blockchain_info: &BlockchainInfo) -> Result<(), M
 
     println!();
     println!("{}", "[Blockchain]".bold().underline().cyan());
-    println!("Best Block Hash: {}", blockchain_info.bestblockhash.white());
+    println!("Best Block Hash: {}", blockchain_info.bestblockhash);
     println!("Number of Blocks: {}", 
         blockchain_info.blocks.to_formatted_string(&Locale::en).green());
     println!("Chain: {}", blockchain_info.chain.yellow());
@@ -26,9 +26,9 @@ pub fn display_blockchain_info(blockchain_info: &BlockchainInfo) -> Result<(), M
     println!("Difficulty: {}", formatted_difficulty.bright_red());
     println!("Verification progress: {}%", format!("{:.4}", 
         blockchain_info.verificationprogress * 100.0).yellow());
-    println!("Size on Disk: {}", formatted_size_on_disk.white());
-    println!("Median Time: {}", mediantime.white());
-    println!("Block Time: {}", time.white());
+    println!("Size on Disk: {}", formatted_size_on_disk);
+    println!("Median Time: {}", mediantime);
+    println!("Block Time: {}", time);
     println!("Time since block: {}", time_since_block.red());
 
     if !blockchain_info.warnings.is_empty() {

@@ -24,8 +24,9 @@ pub fn display_mempool_info(mempool_info: &MempoolInfo) -> Result<(), MyError> {
 
     println!("{}", "[Mempool]".bold().underline().cyan());
     println!("Transactions: {}", mempool_info.size.to_formatted_string(&Locale::en).green());
-    println!("Memory: {} / {}", mempool_size_in_memory_color, max_mempool_size_in_memory.white());
-    println!("Total fees: {}", mempool_info.total_fee.to_string().white());
+    println!("Memory: {} / {}", mempool_size_in_memory_color, max_mempool_size_in_memory);
+    println!("Total fees: {}", mempool_info.total_fee.to_string());
+
     println!("Min Transaction Fee: {} vSats/vByte", 
         min_relay_fee_vsats.to_formatted_string(&Locale::en).yellow());
     println!();
