@@ -1,5 +1,6 @@
-![BlockchainInfo Avatar](https://image.nostr.build/98d63043b0980b9b5ffcb5c0aeb904a69e4054f432736f07b159411db669500f.jpg)
 # Blockchaininfo
+
+![BlockchainInfo Avatar](https://image.nostr.build/98d63043b0980b9b5ffcb5c0aeb904a69e4054f432736f07b159411db669500f.jpg)
 
 ## Overview
 
@@ -48,7 +49,7 @@
 
 ## File Structure
 
-```
+```plaintext
 .
 ├── benches
 │   └── benchmark.rs      # For bench testing.
@@ -87,12 +88,14 @@ The application requires Bitcoin Core RPC credentials to function properly. Thes
 
 1. **`config.toml` File (Default)**  
    Create a `config.toml` file in the root directory with the following structure:
+
    ```toml
    [bitcoin_rpc]
    username = "your_username"
    password = "your_password"
-   address = "http://127.0.0.1:8332" or "https://your-node.local"
+   address = "http://127.0.0.1:8332"
    ```
+
    Replace the values with your actual Bitcoin Core RPC credentials.
 
 2. **Environment Variables (Alternative)**  
@@ -104,25 +107,29 @@ The application requires Bitcoin Core RPC credentials to function properly. Thes
 3. **macOS Keychain (Preferred for macOS)**  
    On macOS, you can securely store the RPC password in the system Keychain. This is the most secure and recommended method. To set it up:
    - Use the following command to add the password to your Keychain:
+
      ```bash
      security add-generic-password -a bitcoin -s rpc-password -w "your_password"
      ```
+
    - The program will automatically retrieve the password using the Keychain during runtime. Ensure the username (`RPC_USER`) and address (`RPC_ADDRESS`) are provided either in the `config.toml` file or as environment variables.
 
 4. **Rust (Stable)**  
    - Install Rust via [rustup.rs](https://rustup.rs/).  
 
----  
+---
 
 ## Installation
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/TH3BAT/Blockchaininfo.git
    cd Blockchaininfo
    ```
 
 2. Build the project:
+
    ```bash
    cargo build --release
    ```
@@ -133,10 +140,13 @@ The application requires Bitcoin Core RPC credentials to function properly. Thes
 
 1. Ensure your Bitcoin node is running with RPC enabled.
 2. Run the application:
+
    ```bash
    ./target/release/blockchaininfo
    ```
+
 3. Use the new alarm clock feature to set an alarm based on future blocks:
+
    ```bash
    ./target/release/blockchaininfo -a18 /path/to/alarm.mp3
    ```
@@ -177,7 +187,8 @@ Set to play:  /path/to/alarm.mp3
 ## Error Handling
 
 The program includes robust error handling:
-- **Configuration Errors**: Ensures `config.toml` or environment variables contains valid credentials and address.   
+
+- **Configuration Errors**: Ensures `config.toml` or environment variables contains valid credentials and address.
 - **RPC Communication Errors**: Handles failures in connecting to the Bitcoin node.  
 - **Data Parsing Errors**: Identifies and reports issues with parsing the JSON response.
 - **Alarm Errors**: Validates the MP3 file path and block input for the alarm clock feature.
@@ -187,6 +198,7 @@ The program includes robust error handling:
 ## Contributions
 
 We welcome contributions! To get involved:
+
 1. Fork the repository.
 2. Create a feature branch.
 3. Open a pull request with a clear description.

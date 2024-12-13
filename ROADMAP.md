@@ -7,6 +7,7 @@ This document outlines planned features and improvements for the BlockchainInfo 
 ## Planned Features
 
 ### **1. Block-Based Alarm Clock**
+
 - **Description**: Add an optional feature to alert users when a specified number of blocks have been mined beyond the current blockchain height.
 - **Key Details**:
   - Enable with a CLI argument: `-a` followed by the block offset and an optional file path for an MP3 file to play (e.g., `-a18 some_mp3_file_name_and_path`).
@@ -25,6 +26,7 @@ This document outlines planned features and improvements for the BlockchainInfo 
 ---
 
 ### **2. Enhanced Modularization**
+
 - **Description**: Continue refining code organization for scalability and readability.
 - **Key Updates**:
   - Further modularize existing namespaces like `rpc.rs` and `display.rs`.
@@ -33,6 +35,7 @@ This document outlines planned features and improvements for the BlockchainInfo 
 ---
 
 ### **3. Configurable Options**
+
 - **Description**: Provide greater flexibility through a configuration file.
 - **Planned Settings**:
   - Default polling interval for RPC queries.
@@ -42,6 +45,7 @@ This document outlines planned features and improvements for the BlockchainInfo 
 ---
 
 ### **4. Web UI Integration**
+
 - **Description**: Build a lightweight web interface for real-time monitoring.
 - **Features**:
   - View blockchain information via a browser.
@@ -51,11 +55,13 @@ This document outlines planned features and improvements for the BlockchainInfo 
 ---
 
 ### **5. Multi-Language Support**
+
 - **Description**: Translate the application output and CLI help into multiple languages for global accessibility.
 
 ---
 
 ### **Contributing**
+
 We welcome contributions! If you have ideas or want to help with implementation, please check out our contribution guidelines.
 
 ---
