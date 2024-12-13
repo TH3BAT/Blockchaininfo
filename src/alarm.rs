@@ -80,7 +80,7 @@ pub async fn check_and_activate_alarm(init_blocks: u64, config: &BitcoinRpcConfi
 // Plays an alarm sound until stopped by any key.
 fn play_alarm_sound(file_path: &str) -> Result<(), MyError> {
     let file_path = file_path.to_string();
-    
+
     // Set up audio output
     let (_stream, stream_handle) = OutputStream::try_default()
         .map_err(|_| MyError::Audio("Failed to initialize audio output stream".to_string()))?;
@@ -122,17 +122,33 @@ fn play_alarm_sound(file_path: &str) -> Result<(), MyError> {
 
     println!("Press any key to stop the alarm.");
 
-    // Wait for any key press.
-    while !event::poll(std::time::Duration::from_millis(500))
-        .map_err(|_| MyError::Terminal("Failed to poll for events".to_string()))? {}
+    let start_time = time::Instant::now(); // Track the start time
+    loop {
+        // Check if 5 minutes have passed, and stop the alarm to avoid indefinite playback 
+        // and potential system resource exhaustion.
+        if start_time.elapsed() >= time::Duration::from_secs(300) {
+            println!("Timeout reached: 5 minutes elapsed. Stopping the alarm.");
+            let sink = sink.lock().map_err(|_| {
+                MyError::Audio("Failed to lock the audio sink for stopping".to_string())
+            })?;
+            sink.stop();
+            break;
+        }
 
-    if let event::Event::Key(_) = event::read()
-        .map_err(|_| MyError::Terminal("Failed to read key event".to_string()))?
-    {
-        let sink = sink.lock().map_err(|_| {
-            MyError::Audio("Failed to lock the audio sink for stopping".to_string())
-        })?;
-        sink.stop();
+        // Check for key press
+        if event::poll(std::time::Duration::from_millis(500))
+            .map_err(|_| MyError::Terminal("Failed to poll for events".to_string()))?
+        {
+            if let event::Event::Key(_) = event::read()
+                .map_err(|_| MyError::Terminal("Failed to read key event".to_string()))?
+            {
+                let sink = sink.lock().map_err(|_| {
+                    MyError::Audio("Failed to lock the audio sink for stopping".to_string())
+                })?;
+                sink.stop();
+                break;
+            }
+        }
     }
 
     terminal::disable_raw_mode()
