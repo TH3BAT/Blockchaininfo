@@ -156,37 +156,7 @@ The application requires Bitcoin Core RPC credentials to function properly. Thes
 
 ## Example Output
 
-```plaintext
- ____  __    _____   ___  _  _   ___  _   _    __    ____  _  _  ____  _  _  ____  _____ 
-(  _ \(  )  (  _  ) / __)( )/ ) / __)( )_( )  /__\  (_  _)( \( )(_  _)( \( )( ___)(  _  )
- ) _ < )(__  )(_)( ( (__  )  ( ( (__  ) _ (  /(__)\  _)(_  )  (  _)(_  )  (  )__)  )(_)(
-(____/(____)(_____) \___)(_)\_) \___)(_) (_)(__)(__)(____)(_)\_)(____)(_)\_)(__)  (_____)
-
-[Blockchain]
-Chain: main
-Number of Blocks: 874,655
-Chainwork: 95.33 bits
-Difficulty: 103.9×10¹²
-Verification progress: 99.9998%
-Size on Disk: 659.16 GB
-Median Time: 2024-12-14 02:25:09 UTC
-Block Time: 2024-12-14 03:33:41 UTC
-Time since block: 0 hours, 6 minutes ago
-Blocks until adjustment: 288
-
-[Mempool]
-Transactions: 231,019
-Memory: 595.67 MB / 953.67 MB
-Total fees: 1.90444848
-Min Transaction Fee: 1 vSats/vByte
-
-[Network]
-Connections in: 19
-Connections out: 10
-
-Alarm set to activate at block 874,650 or greater.
-Set to play:  src/assets/sample.mp3
-```
+![Sample Output](assets/output.png)
 
 ---
 
