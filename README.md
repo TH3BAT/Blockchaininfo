@@ -156,7 +156,7 @@ The application requires Bitcoin Core RPC credentials to function properly. Thes
 
 ## Example Output
 
-![Sample Output](assets/output.png)
+![Sample Output](src/assets/output.png)
 
 ---
 
