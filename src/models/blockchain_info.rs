@@ -139,7 +139,6 @@ impl BlockchainInfo {
         Ok((DIFFICULTY_ADJUSTMENT_INTERVAL - (self.blocks % DIFFICULTY_ADJUSTMENT_INTERVAL)) - 1)
     }
     
-
     // Determine the color based on blocks until the next difficulty adjustment.
     pub fn difficulty_adjustment_color(&self) -> Result<&str, MyError> {
         let blocks_left = self.blocks_until_adjustment()?;
@@ -155,7 +154,6 @@ impl BlockchainInfo {
         Ok(color)
     }
     
-
     // Combine blocks until adjustment and color into a formatted string.
     pub fn display_blocks_until_difficulty_adjustment(&self) -> Result<(), MyError> {
         let blocks_left = self.blocks_until_adjustment()?;
