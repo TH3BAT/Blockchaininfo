@@ -17,10 +17,10 @@ pub fn display_blockchain_info(blockchain_info: &BlockchainInfo) -> Result<(), M
     let formatted_chainwork_bits = blockchain_info.formatted_chainwork_bits()?;
 
     println!();
-    println!(r" ____  __    _____   ___  _  _   ___  _   _    __    ____  _  _  ____  _  _  ____  _____ ");
-    println!(r"(  _ \(  )  (  _  ) / __)( )/ ) / __)( )_( )  /__\  (_  _)( \( )(_  _)( \( )( ___)(  _  )");
-    println!(r" ) _ < )(__  )(_)( ( (__  )  ( ( (__  ) _ (  /(__)\  _)(_  )  (  _)(_  )  (  )__)  )(_)(");
-    println!(r"(____/(____)(_____) \___)(_)\_) \___)(_) (_)(__)(__)(____)(_)\_)(____)(_)\_)(__)  (_____)");
+    println!("{}", r" ____  __    _____   ___  _  _   ___  _   _    __    ____  _  _  ____  _  _  ____  _____ ".normal());
+    println!("{}", r"(  _ \(  )  (  _  ) / __)( )/ ) / __)( )_( )  /__\  (_  _)( \( )(_  _)( \( )( ___)(  _  )".bright_white());
+    println!("{}", r" ) _ < )(__  )(_)( ( (__  )  ( ( (__  ) _ (  /(__)\  _)(_  )  (  _)(_  )  (  )__)  )(_)(".cyan());
+    println!("{}", r"(____/(____)(_____) \___)(_)\_) \___)(_) (_)(__)(__)(____)(_)\_)(____)(_)\_)(__)  (_____)".blue());
     println!();
     println!("{}", "[Blockchain]".bold().underline().cyan());
     println!("Chain: {}", blockchain_info.chain.yellow());
