@@ -1,6 +1,6 @@
-//
+
 // display/display_network_info.rs
-//
+
 use colored::*;
 use crate::models::network_info::NetworkInfo;
 use crate::models::errors::MyError;

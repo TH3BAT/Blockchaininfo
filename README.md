@@ -12,15 +12,16 @@
 
 1. **Blockchain Information**  
    - Details include:
-     - Best Block Hash
-     - Number of Blocks
+     - Best Block Hash (Removed)
      - Chain
+     - Number of Blocks
      - Chainwork (in bits)
      - Difficulty
      - Verification Progress
      - Size on Disk
      - Median and Block Times
-     - Time Since Last Block  
+     - Time Since Last Block
+     - Blocks until adjustment (Added)  
 
    - Displays **warnings** from the Bitcoin node, if present.
 
@@ -148,7 +149,7 @@ The application requires Bitcoin Core RPC credentials to function properly. Thes
 3. Use the new alarm clock feature to set an alarm based on future blocks:
 
    ```bash
-   ./target/release/blockchaininfo -a18 /path/to/alarm.mp3
+   ./target/release/blockchaininfo -a18 src/assets/sample.mp3
    ```
 
 ---
@@ -157,29 +158,29 @@ The application requires Bitcoin Core RPC credentials to function properly. Thes
 
 ```plaintext
 [Blockchain]
-Best Block Hash: 00000000000000000000a1128daa4385b2e0889a6d8f22508812c2304ebdbf9d
-Number of Blocks: 873,694
 Chain: main
-Chainwork: 95.31 bits
+Number of Blocks: 874,632
+Chainwork: 95.33 bits
 Difficulty: 103.9×10¹²
-Verification progress: 99.9990%
-Size on Disk: 657.53 GB
-Median Time: 2024-12-07 19:35:39 UTC
-Block Time: 2024-12-07 20:57:52 UTC
-Time since block: 0 hours, 28 minutes ago
+Verification progress: 99.9998%
+Size on Disk: 659.12 GB
+Median Time: 2024-12-13 22:12:35 UTC
+Block Time: 2024-12-13 23:27:12 UTC
+Time since block: 0 hours, 4 minutes ago
+Blocks until adjustment: 311
 
 [Mempool]
-Transactions: 253,743
-Memory: 683.70 MB / 953.67 MB
-Total fees: 2.78107451
+Transactions: 234,446
+Memory: 598.50 MB / 953.67 MB
+Total fees: 1.92988154
 Min Transaction Fee: 1 vSats/vByte
 
 [Network]
-Connections in: 36
+Connections in: 15
 Connections out: 10
 
-Alarm set to activate at block 873,697 or greater.
-Set to play:  /path/to/alarm.mp3
+Alarm set to activate at block 874,650 or greater.
+Set to play:  src/assets/sample.mp3
 ```
 
 ---

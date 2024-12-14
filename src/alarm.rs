@@ -1,6 +1,6 @@
-//
+
 // alarm.rs
-//
+
 use crate::models::errors::MyError;
 use crate::config::BitcoinRpcConfig;
 use crossterm::{event, terminal, ExecutableCommand};
@@ -40,7 +40,7 @@ pub async fn check_and_activate_alarm(init_blocks: u64, config: &BitcoinRpcConfi
 
     // Start polling mode if alarm is enabled.
     if let Some(alarm_blocks) = alarm_blocks_ahead {
-        let initial_blocks = init_blocks; // Only need this passed when moved to alarm mod.
+        let initial_blocks = init_blocks; 
         let threshold = initial_blocks + alarm_blocks;
         let mp3_file = &mp3_filename.clone().unwrap_or("default string".to_string());
 
@@ -81,7 +81,7 @@ pub async fn check_and_activate_alarm(init_blocks: u64, config: &BitcoinRpcConfi
 fn play_alarm_sound(file_path: &str) -> Result<(), MyError> {
     let file_path = file_path.to_string();
 
-    // Set up audio output
+    // Set up audio output.
     let (_stream, stream_handle) = OutputStream::try_default()
         .map_err(|_| MyError::Audio("Failed to initialize audio output stream".to_string()))?;
     let sink = Sink::try_new(&stream_handle)
@@ -135,7 +135,7 @@ fn play_alarm_sound(file_path: &str) -> Result<(), MyError> {
             break;
         }
 
-        // Check for key press
+        // Check for key press.
         if event::poll(std::time::Duration::from_millis(500))
             .map_err(|_| MyError::Terminal("Failed to poll for events".to_string()))?
         {
@@ -151,6 +151,7 @@ fn play_alarm_sound(file_path: &str) -> Result<(), MyError> {
         }
     }
 
+    // Disable raw mode and return back to original terminal state.
     terminal::disable_raw_mode()
         .map_err(|_| MyError::Terminal("Failed to disable raw mode".to_string()))?;
     io::stdout()

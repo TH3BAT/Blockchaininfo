@@ -1,6 +1,6 @@
-//
+
 // display/display_mempool_info.rs
-//
+
 use colored::*;
 use num_format::{Locale, ToFormattedString};
 use crate::utils::format_size;

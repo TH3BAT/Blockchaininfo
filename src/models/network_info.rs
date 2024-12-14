@@ -1,6 +1,6 @@
-//
+
 // models/network_info.rs
-//
+
 use serde::{Deserialize, Serialize}; // For struct serialization and deserialization.
 
 // Represents the information returned from the `getnetworkinfo` RPC call.

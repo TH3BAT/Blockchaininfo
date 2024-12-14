@@ -1,6 +1,6 @@
-//
+
 // models/errors.rs
-//
+
 use reqwest;                // For Reqwest errors.
 use serde_json;             // For JSON error handling.
 use toml;                   // For TOML parsing errors.
@@ -18,10 +18,11 @@ pub enum MyError {
     Config(String),
     InvalidChainworkHexString(String),
     InvalidMedianTime(u64),
-    InvalidBlockTime(u64),
-    CustomError(String),  
-    Terminal(String),      // Terminal-related errors
-    Audio(String),         // Audio-related errors
+    InvalidBlockTime(u64),   
+    InvalidBlockHeight(u64), // Difficulty adjustment calc error.
+    CustomError(String),     // Format scientific superscript error.
+    Terminal(String),        // Terminal-related errors
+    Audio(String),           // Audio-related errors
 }
 
 // Implementation of `fmt::Display` for custom error messages.
@@ -38,6 +39,7 @@ impl fmt::Display for MyError {
                 "Invalid chainwork hex string: {}", err),
             MyError::InvalidMedianTime(time) => write!(f, "Invalid median time: {}", time),
             MyError::InvalidBlockTime(time) => write!(f, "Invalid block time: {}", time),
+            MyError::InvalidBlockHeight(time) => write!(f, "Invalid block height: {}", time),
             MyError::CustomError(err) => write!(f, "Custom error: {}", err),
             MyError::Terminal(err) => write!(f, "Terminal error: {}", err),
             MyError::Audio(err) => write!(f, "Audio error: {}", err),
@@ -83,6 +85,7 @@ impl MyError {
     }
 }
 
+
 impl From<std::env::VarError> for MyError {
     fn from(err: std::env::VarError) -> MyError {
         MyError::Config(format!("Environment variable error: {}", err))
@@ -124,6 +127,7 @@ impl From<MyStringError> for MyError {
 pub enum MyU64Error {
     InvalidMedianTime(u64),
     InvalidBlockTime(u64),
+    InvalidBlockHeight(u64),
 }
 
 // Implement From<MyU64Error> for MyError.
@@ -132,6 +136,7 @@ impl From<MyU64Error> for MyError {
         match err {
             MyU64Error::InvalidMedianTime(err) => MyError::InvalidMedianTime(err),
             MyU64Error::InvalidBlockTime(err) => MyError::InvalidBlockTime(err),
+            MyU64Error::InvalidBlockHeight(err) => MyError::InvalidBlockHeight(err),
         }
     }
 }

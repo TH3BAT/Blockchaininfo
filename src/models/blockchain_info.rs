@@ -1,9 +1,10 @@
-//
+
 // models/blockchain_info.rs
-//
+
 use serde::{Deserialize, Serialize};  // For serializing and deserializing structures.
 use chrono::{TimeZone, Utc};          // For handling and formatting timestamps.
 use crate::models::errors::MyError;   // Custom error type from the errors module.
+use colored::*; // Assuming you're using the `colored` crate for terminal colors.
 
 // Data structure to deserialize blockchain information from the RPC response.
 #[derive(Debug, Serialize, Deserialize)]
@@ -37,16 +38,16 @@ impl BlockchainInfo {
     // Converts the chainwork from a hexadecimal string to bits.
     pub fn formatted_chainwork_bits(&self) -> Result<String, MyError> {
         u128::from_str_radix(&self.chainwork, 16)
-        .map_or_else(
-            |_| Err(MyError::InvalidChainworkHexString(self.chainwork.clone())), 
-            |decimal_chainwork| {
-                let bits = (decimal_chainwork as f64).log2();
-                Ok(format!("{:.2} bits", bits))
-            }
-        )
+            .map_or_else(
+                |_| Err(MyError::InvalidChainworkHexString(self.chainwork.clone())),
+                |decimal_chainwork| {
+                    let bits = (decimal_chainwork as f64).log2();
+                    Ok(format!("{:.2} bits", bits))
+                },
+            )
     }
 
-    pub fn format_scientific(value: f64) -> Result<String, MyError> {
+   pub fn format_scientific(value: f64) -> Result<String, MyError> {
         if value == 0.0 {
             return Ok("0.0".to_string()); // Handle zero separately.
         }
@@ -83,8 +84,8 @@ impl BlockchainInfo {
                 "Exponent out of range for superscript formatting".to_string()));
         }
 
-        // Return formatted scientific notation with "×" symbol.
-        Ok(format!("{:.1}×10{}", scaled_value, superscript_exponent))
+	        // Return formatted scientific notation with "×" symbol.
+	        Ok(format!("{:.1}×10{}", scaled_value, superscript_exponent))
     }
 
     // Format the `difficulty` field as a scientific notation string.
@@ -95,37 +96,83 @@ impl BlockchainInfo {
     // Parse and format UNIX timestamps into Datetime.
     pub fn parse_mediantime(&self) -> Result<String, MyError> {
         Utc.timestamp_opt(self.mediantime as i64, 0)
-        .single()
-        .map_or_else(
-            || Err(MyError::InvalidMedianTime(self.mediantime)),
-            |t| Ok(t.to_string())
-        )
+            .single()
+            .map_or_else(
+                || Err(MyError::InvalidMedianTime(self.mediantime)),
+                |t| Ok(t.to_string()),
+            )
     }
 
     pub fn parse_time(&self) -> Result<String, MyError> {
         Utc.timestamp_opt(self.time as i64, 0)
-        .single()
-        .map_or_else(
-            || Err(MyError::InvalidBlockTime(self.time)),
-            |t| Ok(t.to_string())
-        )
+            .single()
+            .map_or_else(
+                || Err(MyError::InvalidBlockTime(self.time)),
+                |t| Ok(t.to_string()),
+            )
     }
-   
-   // Calculate time since last block was produced.
+
+    // Calculate time since the last block was produced.
     pub fn calculate_time_diff(&self) -> Result<String, MyError> {
         let current_time = Utc::now();
         Utc.timestamp_opt(self.time as i64, 0)
-        .single()
-        .map_or_else(
-            || Err(MyError::InvalidBlockTime(self.time)),
-            |block_time| {
-                let duration = current_time.signed_duration_since(block_time);
-                Ok(format!(
-                    "{} hours, {} minutes ago", 
-                    duration.num_hours(), 
-                    duration.num_minutes() % 60
-                ))
-            }
-        )
+            .single()
+            .map_or_else(
+                || Err(MyError::InvalidBlockTime(self.time)),
+                |block_time| {
+                    let duration = current_time.signed_duration_since(block_time);
+                    Ok(format!(
+                        "{} hours, {} minutes ago",
+                        duration.num_hours(),
+                        duration.num_minutes() % 60
+                    ))
+                },
+            )
     }
+
+    // Calculate blocks until the next difficulty adjustment.
+    pub fn blocks_until_adjustment(&self) -> Result<u64, MyError> {
+        const DIFFICULTY_ADJUSTMENT_INTERVAL: u64 = 2016;
+        if self.blocks == 0 {
+            return Err(MyError::InvalidBlockHeight(self.blocks)); // Custom error for invalid block height.
+        }
+        Ok((DIFFICULTY_ADJUSTMENT_INTERVAL - (self.blocks % DIFFICULTY_ADJUSTMENT_INTERVAL)) - 1)
+    }
+    
+
+    // Determine the color based on blocks until the next difficulty adjustment.
+    pub fn difficulty_adjustment_color(&self) -> Result<&str, MyError> {
+        let blocks_left = self.blocks_until_adjustment()?;
+        let color = match blocks_left {
+            1001..=2016 => "White",
+           // 1001..=1500 => "Green",
+            251..=1000 => "Yellow",
+           // 251..=500 => "Bright Yellow",
+            0..=250 => "Red",
+           // 0..=100 => "Bright Red",
+            _ => "Unknown",
+        };
+        Ok(color)
+    }
+    
+
+    // Combine blocks until adjustment and color into a formatted string.
+    pub fn display_blocks_until_difficulty_adjustment(&self) -> Result<(), MyError> {
+        let blocks_left = self.blocks_until_adjustment()?;
+        let color_name = self.difficulty_adjustment_color()?;
+    
+        let colored_text = match color_name {
+            "White" => format!("{}", blocks_left).normal(),
+            "Green" => format!("{}", blocks_left).green(),
+            "Yellow" => format!("{}", blocks_left).yellow(),
+            "Bright Yellow" => format!("{}", blocks_left).bright_yellow(),
+            "Red" => format!("{}", blocks_left).red(),
+            "Bright Red" => format!("{}", blocks_left).bright_red(),
+            _ => format!("{}", blocks_left).normal(),
+        };
+    
+        println!("Blocks until adjustment: {}", colored_text);
+        Ok(())
+    }    
 }
+

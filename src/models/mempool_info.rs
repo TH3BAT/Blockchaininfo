@@ -1,6 +1,6 @@
-//
+
 // models/mempool_info.rs
-//
+
 use serde::{Deserialize, Serialize}; // For serializing and deserializing structures.
 
 // Wrapper Struct - The Bitcoin RPC response wraps the actual mempoolinfo data inside the result field.

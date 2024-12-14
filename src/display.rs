@@ -1,6 +1,6 @@
-//
+
 // display.rs
-//
+
 /// Summary of Color Usage:
 /// Green: Used for healthy values like block count, transactions, and connections.
 ///
