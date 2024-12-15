@@ -1,7 +1,6 @@
 
 // display/display_blockchain_info.rs
 
-// use blockchaininfo::models::block_info::BlockInfo;
 use colored::*;
 use num_format::{Locale, ToFormattedString};
 use crate::utils::{format_size, estimate_difficulty_change};
