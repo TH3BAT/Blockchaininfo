@@ -52,12 +52,12 @@
 
 ```plaintext
 .
-├── benches
+├── benches/
 │   └── benchmark.rs      # For bench testing.
 ├── cargo.toml
-└── src
+└── src/
     ├── config.rs         # Configuration loading and validation.
-    ├── display
+    ├── display/
     │   ├── display_blockchain_info.rs  # Displays blockchain data.
     │   ├── display_mempool_info.rs     # Displays mempool data.
     │   └── display_network_info.rs     # Displays network data.
@@ -65,12 +65,14 @@
     ├── lib.rs            # For testing.
     ├── main.rs           # Application entry point.
     ├── models/           # Data and error handling modules.
+    │   ├── block_info.rs     # Block data model.
     │   ├── blockchain_info.rs  # Blockchain data model and implementations.
     │   ├── mempool_info.rs     # Mempool data model and implementations.
     │   ├── network_info.rs     # Network data model and implementations.
     │   └── errors.rs           # Error handling.
     ├── models.rs         # Aggregates Data and Error modules.
     ├── rpc/              # RPC modules for interacting with the Bitcoin node.
+    │   ├── block.rs      # Block data fetching.
     │   ├── blockchain.rs # Blockchain data fetching.
     │   ├── mempool.rs    # Mempool data fetching.
     │   └── network.rs    # Network data fetching.
