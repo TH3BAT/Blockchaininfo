@@ -32,11 +32,11 @@ async fn main() -> Result<(), MyError> {
     // Fetch blockchain info first since `blocks` is needed for the next call.
     let blockchain_info = fetch_blockchain_info(&config.bitcoin_rpc).await?;
 
-    // Extract the block height from BlockchainInfo.
+    // Extract the block height from BlockchainInfo
     let epoc_start_block = (
-        blockchain_info.blocks / DIFFICULTY_ADJUSTMENT_INTERVAL) * DIFFICULTY_ADJUSTMENT_INTERVAL;
+        (blockchain_info.blocks - 1) / DIFFICULTY_ADJUSTMENT_INTERVAL) * DIFFICULTY_ADJUSTMENT_INTERVAL;
     
-    // Concurrently fetch mempool info, network info, and block info (dependent on block height).
+    // Concurrently fetch mempool info, network info, and block info (dependent on block height)
     let (mempool_info, network_info, block_info) = try_join!(
         fetch_mempool_info(&config.bitcoin_rpc),
         fetch_network_info(&config.bitcoin_rpc),
