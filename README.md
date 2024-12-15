@@ -12,11 +12,13 @@
 
 1. **Blockchain Information**  
    - Details include:
-     - Best Block Hash (Removed)
      - Chain
-     - Number of Blocks
-     - Chainwork (in bits)
+     - Best Block
+     - Time since block
      - Difficulty
+     - Blocks until adjustment
+     - Estimated change
+     - Chainwork (in bits)
      - Verification Progress
      - Size on Disk
      - Median and Block Times
