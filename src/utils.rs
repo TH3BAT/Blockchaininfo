@@ -10,6 +10,11 @@ const MB: u64 = KB * 1024;
 const GB: u64 = MB * 1024;
 const TB: u64 = GB * 1024;
 
+// Constants for estimated difficulty adjustment change.
+pub const DIFFICULTY_ADJUSTMENT_INTERVAL: u64 = 2016;
+pub const BLOCK_TIME_SECONDS: u64 = 600;
+
+
 // Formats a size in bytes into a more readable format (KB, MB, etc.).
 pub fn format_size(bytes: u64) -> String {
     if bytes >= TB {
@@ -62,5 +67,19 @@ pub fn get_rpc_password_from_keychain() -> Result<String, MyError> {
 #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
 pub fn get_rpc_password_from_keychain() -> Result<String, MyError> {
     Err(MyError::Keychain("Unsupported OS for keychain access".to_string()))
+}
+
+// Estmate to the current epoch's difficulty change and return as a percentage.
+pub fn estimate_difficulty_change(
+    current_block_height: u64,
+    current_block_time: u64,
+    epoch_start_block_time: u64,
+) -> f64 {
+    let blocks_in_epoch = current_block_height % DIFFICULTY_ADJUSTMENT_INTERVAL;
+    let expected_duration = blocks_in_epoch * BLOCK_TIME_SECONDS;
+    let actual_duration = current_block_time - epoch_start_block_time;
+
+    let adjustment_factor = expected_duration as f64 / actual_duration as f64;
+    (adjustment_factor - 1.0) * 100.0 // Return percentage change
 }
 

@@ -8,11 +8,14 @@ mod utils;
 mod display;
 mod alarm;
 
+// use blockchaininfo::models::{block_info, blockchain_info};
 use config::load_config;
 use alarm::check_and_activate_alarm;
-use rpc::{fetch_blockchain_info, fetch_mempool_info, fetch_network_info};
+use rpc::{fetch_blockchain_info, fetch_mempool_info, fetch_network_info, fetch_block_data_by_height};
 use models::errors::MyError;
 use display::{display_blockchain_info, display_mempool_info, display_network_info};
+use crate::utils::DIFFICULTY_ADJUSTMENT_INTERVAL;
+use tokio::try_join;
 
 #[tokio::main]
 async fn main() -> Result<(), MyError> {
@@ -26,15 +29,22 @@ async fn main() -> Result<(), MyError> {
         return Err(MyError::Config("Invalid config data".to_string()));
     }
     
-    // Fetch initial data.
-    let (blockchain_info, mempool_info, network_info) = tokio::try_join!(
-        fetch_blockchain_info(&config.bitcoin_rpc),
+    // Fetch blockchain info first since `blocks` is needed for the next call.
+    let blockchain_info = fetch_blockchain_info(&config.bitcoin_rpc).await?;
+
+    // Extract the block height from BlockchainInfo.
+    let epoc_start_block = (
+        blockchain_info.blocks / DIFFICULTY_ADJUSTMENT_INTERVAL) * DIFFICULTY_ADJUSTMENT_INTERVAL;
+    
+    // Concurrently fetch mempool info, network info, and block info (dependent on block height).
+    let (mempool_info, network_info, block_info) = try_join!(
         fetch_mempool_info(&config.bitcoin_rpc),
-        fetch_network_info(&config.bitcoin_rpc)
+        fetch_network_info(&config.bitcoin_rpc),
+        fetch_block_data_by_height(&config.bitcoin_rpc, epoc_start_block)
     )?;
 
     // Display display.
-    display_blockchain_info(&blockchain_info)?;
+    display_blockchain_info(&blockchain_info, &block_info)?;
     display_mempool_info(&mempool_info)?;
     display_network_info(&network_info)?;
 

@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};  // For serializing and deserializing struc
 use chrono::{TimeZone, Utc};          // For handling and formatting timestamps.
 use crate::models::errors::MyError;   // Custom error type from the errors module.
 use colored::*; // Assuming you're using the `colored` crate for terminal colors.
+use crate::utils::DIFFICULTY_ADJUSTMENT_INTERVAL;
 
 // Data structure to deserialize blockchain information from the RPC response.
 #[derive(Debug, Serialize, Deserialize)]
@@ -132,7 +133,7 @@ impl BlockchainInfo {
 
     // Calculate blocks until the next difficulty adjustment.
     pub fn blocks_until_adjustment(&self) -> Result<u64, MyError> {
-        const DIFFICULTY_ADJUSTMENT_INTERVAL: u64 = 2016;
+        // const DIFFICULTY_ADJUSTMENT_INTERVAL: u64 = 2016;
         if self.blocks == 0 {
             return Err(MyError::InvalidBlockHeight(self.blocks)); // Custom error for invalid block height.
         }
@@ -147,8 +148,8 @@ impl BlockchainInfo {
            // 1001..=1500 => "Green",
             251..=1000 => "Yellow",
            // 251..=500 => "Bright Yellow",
-            0..=250 => "Red",
-           // 0..=100 => "Bright Red",
+            101..=250 => "Red",
+            0..=100 => "Bright Red",
             _ => "Unknown",
         };
         Ok(color)
@@ -169,7 +170,7 @@ impl BlockchainInfo {
             _ => format!("{}", blocks_left).normal(),
         };
     
-        println!("Blocks until adjustment: {}", colored_text);
+        println!("  Blocks until adjustment: {}", colored_text);
         Ok(())
     }    
 }

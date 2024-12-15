@@ -25,11 +25,12 @@ pub mod display_network_info;
 use crate::models::blockchain_info::BlockchainInfo;
 use crate::models::mempool_info::MempoolInfo;
 use crate::models::network_info::NetworkInfo;
+use crate::models::block_info::BlockInfo;
 use crate::models::errors::MyError;
 
 // Displays the blockchain information.
-pub fn display_blockchain_info(blockchain_info: &BlockchainInfo) -> Result<(), MyError> {
-    display_blockchain_info::display_blockchain_info(blockchain_info)
+pub fn display_blockchain_info(blockchain_info: &BlockchainInfo, block_info: &BlockInfo) -> Result<(), MyError> {
+    display_blockchain_info::display_blockchain_info(blockchain_info, block_info)
     
 }
 
