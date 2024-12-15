@@ -22,8 +22,7 @@
      - Verification Progress
      - Size on Disk
      - Median and Block Times
-     - Time Since Last Block
-     - Blocks until adjustment (Added)  
+     - Time Since Last Block  
 
    - Displays **warnings** from the Bitcoin node, if present.
 
