@@ -69,13 +69,13 @@ pub fn get_rpc_password_from_keychain() -> Result<String, MyError> {
     Err(MyError::Keychain("Unsupported OS for keychain access".to_string()))
 }
 
-// Estmate to the current epoch's difficulty change and return as a percentage.
+// Estimate the current epoch's difficulty change and return as a percentage.
 pub fn estimate_difficulty_change(
     current_block_height: u64,
     current_block_time: u64,
     epoch_start_block_time: u64,
 ) -> f64 {
-    let blocks_in_epoch = current_block_height % DIFFICULTY_ADJUSTMENT_INTERVAL;
+    let blocks_in_epoch = (current_block_height % DIFFICULTY_ADJUSTMENT_INTERVAL) - 1;
     let expected_duration = blocks_in_epoch * BLOCK_TIME_SECONDS;
     let actual_duration = current_block_time - epoch_start_block_time;
 
