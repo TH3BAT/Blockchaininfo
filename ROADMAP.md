@@ -60,6 +60,15 @@ This document outlines planned features and improvements for the BlockchainInfo 
 
 ---
 
+### **6. Custom RPC Endpoints**
+
+- **Description**: Enable users to specify custom RPC endpoints and credentials for use with multiple Bitcoin nodes or other blockchain networks.
+- **Planned Features**:
+  - Configurable through `config.toml` or environment variables.
+  - Ability to switch between multiple nodes dynamically.
+
+---
+
 ### **Contributing**
 
 We welcome contributions! If you have ideas or want to help with implementation, please check out our contribution guidelines.

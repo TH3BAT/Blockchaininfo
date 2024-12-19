@@ -156,10 +156,10 @@ impl BlockchainInfo {
     }
     
     // Combine blocks until adjustment and color into a formatted string.
-    pub fn display_blocks_until_difficulty_adjustment(&self) -> Result<(), MyError> {
+    pub fn display_blocks_until_difficulty_adjustment(&self) -> Result<String, MyError> {
         let blocks_left = self.blocks_until_adjustment()?;
         let color_name = self.difficulty_adjustment_color()?;
-    
+        
         let colored_text = match color_name {
             "White" => format!("{}", blocks_left).normal(),
             "Green" => format!("{}", blocks_left).green(),
@@ -169,9 +169,10 @@ impl BlockchainInfo {
             "Bright Red" => format!("{}", blocks_left).bright_red(),
             _ => format!("{}", blocks_left).normal(),
         };
-    
-        println!("  Blocks until adjustment: {}", colored_text);
-        Ok(())
-    }    
+        
+        // Convert ColoredString to a plain String
+        Ok(colored_text.to_string())
+    }
+        
 }
 

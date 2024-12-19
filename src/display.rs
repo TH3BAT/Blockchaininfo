@@ -22,26 +22,42 @@ pub mod display_blockchain_info;
 pub mod display_mempool_info;
 pub mod display_network_info;
 
+use tui::backend::Backend;
+use tui::Frame;
+use tui::layout::Rect;
 use crate::models::blockchain_info::BlockchainInfo;
+use crate::models::block_info::BlockInfo;
 use crate::models::mempool_info::MempoolInfo;
 use crate::models::network_info::NetworkInfo;
-use crate::models::block_info::BlockInfo;
 use crate::models::errors::MyError;
 
 // Displays the blockchain information.
-pub fn display_blockchain_info(blockchain_info: &BlockchainInfo, block_info: &BlockInfo) -> Result<(), MyError> {
-    display_blockchain_info::display_blockchain_info(blockchain_info, block_info)
-    
+pub fn display_blockchain_info<B: Backend>(
+    frame: &mut Frame<B>,
+    blockchain_info: &BlockchainInfo,
+    block_info: &BlockInfo,
+    area: Rect
+) -> Result<(), MyError> {
+    display_blockchain_info::display_blockchain_info(frame, blockchain_info, block_info, area)
 }
 
 // Displays the mempool information.
-pub fn display_mempool_info(mempool_info: &MempoolInfo) -> Result<(), MyError> {
-    display_mempool_info::display_mempool_info(mempool_info)
-    
+pub fn display_mempool_info<B: Backend>(
+    frame: &mut Frame<B>,
+    mempool_info: &MempoolInfo,
+    area: Rect, // Add the 'area' parameter.
+) -> Result<(), MyError> {
+    // Now, pass the 'area' parameter when calling the function.
+    display_mempool_info::display_mempool_info(frame, mempool_info, area)
 }
 
-// Displays the network information.
-pub fn display_network_info(network_info: &NetworkInfo) -> Result<(), MyError> {
-    display_network_info::display_network_info(network_info)
-    
+
+/// Displays the network information.
+pub fn display_network_info<B: Backend>(
+    frame: &mut Frame<B>,
+    network_info: &NetworkInfo,
+    area: Rect, // Add the 'area' parameter to the function.
+) -> Result<(), MyError> {
+    display_network_info::display_network_info(frame, network_info, area) // Pass the 'area' argument here.
 }
+

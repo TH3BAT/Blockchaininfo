@@ -21,7 +21,7 @@ pub enum MyError {
     InvalidBlockTime(u64),   
     InvalidBlockHeight(u64), // Difficulty adjustment calc error.
     CustomError(String),     // Format scientific superscript error.
-    Terminal(String),        // Terminal-related errors
+    // Terminal(String),        // Terminal-related errors
     Audio(String),           // Audio-related errors
 }
 
@@ -41,7 +41,7 @@ impl fmt::Display for MyError {
             MyError::InvalidBlockTime(time) => write!(f, "Invalid block time: {}", time),
             MyError::InvalidBlockHeight(time) => write!(f, "Invalid block height: {}", time),
             MyError::CustomError(err) => write!(f, "Custom error: {}", err),
-            MyError::Terminal(err) => write!(f, "Terminal error: {}", err),
+            // MyError::Terminal(err) => write!(f, "Terminal error: {}", err),
             MyError::Audio(err) => write!(f, "Audio error: {}", err),
         }
     }

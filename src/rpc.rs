@@ -1,10 +1,10 @@
 
 // rpc.rs
 
-pub mod blockchain;
-pub mod mempool;
-pub mod network;
-pub mod block;
+mod blockchain;
+mod mempool;
+mod network;
+mod block;
 
 use crate::models::blockchain_info::BlockchainInfo;
 use crate::models::block_info::BlockInfo;

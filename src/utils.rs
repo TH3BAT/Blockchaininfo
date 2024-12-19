@@ -3,7 +3,13 @@
 
 use std::process::Command;
 use crate::models::errors::MyError;
-  
+use tui::widgets::{Block, Borders, Paragraph};
+use tui::text::{Span, Spans};
+use tui::style::{Color, Style, Modifier};
+use tui::layout::{Rect, Alignment};
+use tui::Frame;
+use tui::backend::Backend;
+
 // Constants for bytes formatting.
 const KB: u64 = 1024;
 const MB: u64 = KB * 1024;
@@ -81,5 +87,48 @@ pub fn estimate_difficulty_change(
 
     let adjustment_factor = expected_duration as f64 / actual_duration as f64;
     (adjustment_factor - 1.0) * 100.0 // Return percentage change
+} 
+// Returns a `tui` widget for the blockchain header.
+pub fn display_header_widget() -> Paragraph<'static> {
+    // Create the header lines.
+    let lines = vec![
+        Spans::from(Span::styled(
+            r"__________.__                 __          .__           .__       .__        _____       ",
+            Style::default().fg(Color::Gray),
+        )),
+        Spans::from(Span::styled(
+            r"\______   \  |   ____   ____ |  | __ ____ |  |__ _____  |__| ____ |__| _____/ ____\____   ",
+            Style::default().fg(Color::Gray),
+        )),
+        Spans::from(Span::styled(
+            r" |    |  _/  |  /  _ \_/ ___\|  |/ // ___\|  |  \\__  \ |  |/    \|  |/    \   __\/  _ \ ",
+            Style::default().fg(Color::White).add_modifier(Modifier::BOLD),
+        )),
+        Spans::from(Span::styled(
+            r" |    |   \  |_(  <_> )  \___|    <\  \___|   Y  \/ __ \|  |   |  \  |   |  \  | (  <_> )",
+            Style::default().fg(Color::Cyan),
+        )),
+        Spans::from(Span::styled(
+            r" |______  /____/\____/ \___  >__|_ \\___  >___|  (____  /__|___|  /__|___|  /__|  \____/",
+            Style::default().fg(Color::LightBlue),
+        )),
+        Spans::from(Span::styled(
+            r"        \/                 \/     \/    \/     \/     \/        \/        \/             ",
+            Style::default().fg(Color::Gray),
+        )),
+    ];
+
+    // Create the paragraph widget.
+    Paragraph::new(lines)
+        .block(Block::default().title("").borders(Borders::NONE))
 }
+
+pub fn render_footer<B: Backend>(f: &mut Frame<B>, area: Rect) {
+    let footer = Paragraph::new("Press 'q' or ESC to quit.")
+        .style(Style::default().fg(Color::Gray))
+        .alignment(Alignment::Center)
+        .block(Block::default().borders(Borders::NONE));
+    f.render_widget(footer, area);
+}
+
 
