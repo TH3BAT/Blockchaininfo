@@ -66,34 +66,12 @@ pub fn display_blockchain_info<B: Backend>(
             Span::styled(formatted_difficulty, Style::default().fg(Color::LightRed)),
         ]),
 
-        /* Not formatting string correctly on updates.   
         Spans::from(vec![
             Span::styled("  Blocks until adjustment: ", Style::default().fg(Color::Gray)),
-            Span::styled(
-                match blockchain_info.display_blocks_until_difficulty_adjustment() {
-                    Ok(colored_text) => colored_text,
-                    Err(e) => format!("Error: {}", e),
-                },
-                Style::default().fg(match blockchain_info.difficulty_adjustment_color() {
-                    Ok("White") => Color::Gray,
-                    Ok("Green") => Color::Green,
-                    Ok("Yellow") => Color::Yellow,
-                    Ok("Bright Yellow") => Color::Yellow,
-                    Ok("Red") => Color::Red,
-                    Ok("Bright Red") => Color::LightRed,
-                    _ => Color::Gray,
-                }),
-            ),
-        ]),
-        */
-        // Replacement code for fix.
-        Spans::from(vec![
-            Span::styled("  Blocks until adjustment: ", Style::default().fg(Color::Gray)),
-            Span::raw(
-                blockchain_info
-                    .display_blocks_until_difficulty_adjustment()
-                    .unwrap_or_else(|e| format!("Error: {}", e)),
-            ),
+            match blockchain_info.display_blocks_until_difficulty_adjustment() {
+                Ok((block_text, block_color)) => Span::styled(block_text, Style::default().fg(block_color)),
+                Err(e) => Span::styled(format!("Error: {}", e), Style::default().fg(Color::Red)),
+            },
         ]),
     
         Spans::from(vec![

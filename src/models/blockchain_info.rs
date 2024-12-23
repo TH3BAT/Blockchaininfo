@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};  // For serializing and deserializing struc
 use chrono::{TimeZone, Utc};          // For handling and formatting timestamps.
 use crate::models::errors::MyError;   // Custom error type from the errors module.
 // use colored::*; // Assuming you're using the `colored` crate for terminal colors.
+use tui::style::Color;
 use crate::utils::DIFFICULTY_ADJUSTMENT_INTERVAL;
 
 // Data structure to deserialize blockchain information from the RPC response.
@@ -139,48 +140,17 @@ impl BlockchainInfo {
         Ok((DIFFICULTY_ADJUSTMENT_INTERVAL - (self.blocks % DIFFICULTY_ADJUSTMENT_INTERVAL)) - 1)
     }
     
-    /* Not displaying the formatted string properly. 
-    // Determine the color based on blocks until the next difficulty adjustment.
-    pub fn difficulty_adjustment_color(&self) -> Result<&str, MyError> {
+    pub fn display_blocks_until_difficulty_adjustment(&self) -> Result<(String, Color), MyError> {
         let blocks_left = self.blocks_until_adjustment()?;
         let color = match blocks_left {
-            1001..=2016 => "White",
-           // 1001..=1500 => "Green",
-            251..=1000 => "Yellow",
-           // 251..=500 => "Bright Yellow",
-            101..=250 => "Red",
-            0..=100 => "Bright Red",
-            _ => "Unknown",
+            1001..=2016 => Color::Gray,
+            251..=1000 => Color::Yellow,
+            101..=250 => Color::Red,
+            0..=100 => Color::LightRed,
+            _ => Color::Gray,
         };
-        Ok(color)
+        Ok((blocks_left.to_string(), color))
     }
-    
-    // Combine blocks until adjustment and color into a formatted string.
-    pub fn display_blocks_until_difficulty_adjustment(&self) -> Result<String, MyError> {
-        let blocks_left = self.blocks_until_adjustment()?;
-        let color_name = self.difficulty_adjustment_color()?;
-        
-        let colored_text = match color_name {
-            "White" => format!("{}", blocks_left).normal(),
-            "Green" => format!("{}", blocks_left).green(),
-            "Yellow" => format!("{}", blocks_left).yellow(),
-            "Bright Yellow" => format!("{}", blocks_left).bright_yellow(),
-            "Red" => format!("{}", blocks_left).red(),
-            "Bright Red" => format!("{}", blocks_left).bright_red(),
-            _ => format!("{}", blocks_left).normal(),
-        };
-        
-        // Convert ColoredString to a plain String
-        Ok(colored_text.to_string())
-    }
-    */
-    // Replacement code for fix.
-    pub fn display_blocks_until_difficulty_adjustment(&self) -> Result<String, MyError> {
-        let blocks_left = self.blocks_until_adjustment()?;
-        Ok(blocks_left.to_string())
-    }
-    
-
-        
+            
 }
 
