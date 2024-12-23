@@ -8,9 +8,9 @@ mod utils;
 mod display;
 
 use config::{load_config, BitcoinRpcConfig};
-use rpc::{fetch_blockchain_info, fetch_mempool_info, fetch_network_info, fetch_block_data_by_height};
+use rpc::{fetch_blockchain_info, fetch_mempool_info, fetch_network_info, fetch_block_data_by_height, fetch_chain_tips};
 use models::errors::MyError;
-use display::{display_blockchain_info, display_mempool_info, display_network_info};
+use display::{display_blockchain_info, display_mempool_info, display_network_info, display_consensus_security_info};
 use crate::utils::{DIFFICULTY_ADJUSTMENT_INTERVAL, display_header_widget};
 use tokio::try_join;
 use tui::backend::CrosstermBackend;
@@ -80,16 +80,17 @@ async fn run_app<B: tui::backend::Backend>(
             (blockchain_info.blocks - 1) / DIFFICULTY_ADJUSTMENT_INTERVAL
         ) * DIFFICULTY_ADJUSTMENT_INTERVAL;
 
-        // Concurrently fetch mempool info, network info, and block info.
-        let (mempool_info, network_info, block_info) = try_join!(
+        // Concurrently fetch mempool info, network info, block info, and chain tips.
+        let (mempool_info, network_info, block_info, chaintips_info) = try_join!(
             fetch_mempool_info(&config.bitcoin_rpc),
             fetch_network_info(&config.bitcoin_rpc),
-            fetch_block_data_by_height(&config.bitcoin_rpc, epoc_start_block)
+            fetch_block_data_by_height(&config.bitcoin_rpc, epoc_start_block),
+            fetch_chain_tips(&config.bitcoin_rpc)
         )?;
 
         // Draw the TUI.
         terminal.draw(|frame| {
-            // Define the layout with 3 sections (blocks).
+            // Define the layout with updated sections.
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .margin(1)
@@ -98,8 +99,9 @@ async fn run_app<B: tui::backend::Backend>(
                         Constraint::Length(8),   // Application title.
                         Constraint::Length(14),  // Blockchain section.
                         Constraint::Length(7),   // Mempool section.
-                        Constraint::Min(2),      // Network section.
-                        Constraint::Length(1),   // Footer section
+                        Constraint::Length(5),   // Network section.
+                        Constraint::Length(7),   // Consensus Security section.
+                        Constraint::Length(1),   // Footer section.
                     ]
                     .as_ref(),
                 )
@@ -108,12 +110,10 @@ async fn run_app<B: tui::backend::Backend>(
             // Block 1: App title.
             let block_1 = Block::default().borders(Borders::NONE);
             frame.render_widget(block_1, chunks[0]);
-
-            // Render the app title content in chunks[0].
             let header_widget = display_header_widget(); // Create header widget.
-            frame.render_widget(header_widget, chunks[0]); // Render the header widget within the app title block.
+            frame.render_widget(header_widget, chunks[0]); // Render the header widget.
 
-            // Block 2: Blockchain Info (Top 30% of the screen).
+            // Block 2: Blockchain Info.
             let block_2 = Block::default().borders(Borders::NONE).title(Span::styled(
                 "[Blockchain]",
                 Style::default()
@@ -123,31 +123,33 @@ async fn run_app<B: tui::backend::Backend>(
             frame.render_widget(block_2, chunks[1]);
             display_blockchain_info(frame, &blockchain_info, &block_info, chunks[1]).unwrap();
         
-            // Block 3: Mempool Info (Middle 30% of the screen).
+            // Block 3: Mempool Info.
             let block_3 = Block::default().borders(Borders::NONE).title(Span::styled(
                 "[Mempool]",
                 Style::default()
-                .fg(Color::Cyan)
-                .add_modifier(Modifier::BOLD | Modifier::UNDERLINED), 
+                    .fg(Color::Cyan)
+                    .add_modifier(Modifier::BOLD | Modifier::UNDERLINED), 
             ));
             frame.render_widget(block_3, chunks[2]);
             display_mempool_info(frame, &mempool_info, chunks[2]).unwrap();
         
-            // Block 4: Network Info (Bottom 40% of the screen).
+            // Block 4: Network Info.
             let block_4 = Block::default().borders(Borders::NONE).title(Span::styled(
                 "[Network]",
                 Style::default()
-                .fg(Color::Cyan)
-                .add_modifier(Modifier::BOLD | Modifier::UNDERLINED), 
+                    .fg(Color::Cyan)
+                    .add_modifier(Modifier::BOLD | Modifier::UNDERLINED), 
             ));
             frame.render_widget(block_4, chunks[3]);
             display_network_info(frame, &network_info, chunks[3]).unwrap();
 
-            // Block 5: Footer.
-            let block_5 = Block::default().borders(Borders::NONE);
-            frame.render_widget(block_5, chunks[4]);
-            render_footer(frame, chunks[4]);
+            // Block 5: Consensus Security.
+            display_consensus_security_info(frame, &chaintips_info, chunks[4]).unwrap();
 
+            // Block 6: Footer.
+            let block_6 = Block::default().borders(Borders::NONE);
+            frame.render_widget(block_6, chunks[5]);
+            render_footer(frame, chunks[5]);
         })?;
 
         // Exit the loop if 'q' or 'Esc' is pressed, or Ctrl+C is detected.

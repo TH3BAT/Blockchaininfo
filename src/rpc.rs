@@ -5,11 +5,13 @@ mod blockchain;
 mod mempool;
 mod network;
 mod block;
+mod chain_tips;
 
 use crate::models::blockchain_info::BlockchainInfo;
 use crate::models::block_info::BlockInfo;
 use crate::models::mempool_info::MempoolInfo;
 use crate::models::network_info::NetworkInfo;
+use crate::models::chaintips_info::ChainTip;
 use crate::models::errors::MyError;
 use crate::config::RpcConfig;
 
@@ -27,6 +29,10 @@ pub async fn fetch_network_info(config: &RpcConfig) -> Result<NetworkInfo, MyErr
 
 pub async fn fetch_block_data_by_height(config: &RpcConfig, block_height: u64) -> Result<BlockInfo, MyError> {
     block::fetch_block_data_by_height(config, block_height).await
+}
+
+pub async fn fetch_chain_tips(config: &RpcConfig) -> Result<Vec<ChainTip>, MyError> {
+    chain_tips::fetch_chain_tips(config).await
 }
 
 

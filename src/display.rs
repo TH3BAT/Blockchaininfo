@@ -21,6 +21,7 @@
 pub mod display_blockchain_info;
 pub mod display_mempool_info;
 pub mod display_network_info;
+pub mod display_consensus_security_info;
 
 use tui::backend::Backend;
 use tui::Frame;
@@ -29,6 +30,7 @@ use crate::models::blockchain_info::BlockchainInfo;
 use crate::models::block_info::BlockInfo;
 use crate::models::mempool_info::MempoolInfo;
 use crate::models::network_info::NetworkInfo;
+use crate::models::chaintips_info::ChainTip;
 use crate::models::errors::MyError;
 
 // Displays the blockchain information.
@@ -61,3 +63,10 @@ pub fn display_network_info<B: Backend>(
     display_network_info::display_network_info(frame, network_info, area) // Pass the 'area' argument here.
 }
 
+pub fn display_consensus_security_info<B: tui::backend::Backend>(
+    frame: &mut tui::Frame<B>,
+    chaintips_info: &[ChainTip], // Accepts a slice of ChainTip
+    area: tui::layout::Rect,
+) -> Result<(), MyError> {
+    display_consensus_security_info::display_consensus_security_info(frame, chaintips_info, area)
+}
