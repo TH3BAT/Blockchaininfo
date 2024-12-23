@@ -66,6 +66,7 @@ pub fn display_blockchain_info<B: Backend>(
             Span::styled(formatted_difficulty, Style::default().fg(Color::LightRed)),
         ]),
 
+        /* Not formatting string correctly on updates.   
         Spans::from(vec![
             Span::styled("  Blocks until adjustment: ", Style::default().fg(Color::Gray)),
             Span::styled(
@@ -84,7 +85,17 @@ pub fn display_blockchain_info<B: Backend>(
                 }),
             ),
         ]),
-
+        */
+        // Replacement code for fix.
+        Spans::from(vec![
+            Span::styled("  Blocks until adjustment: ", Style::default().fg(Color::Gray)),
+            Span::raw(
+                blockchain_info
+                    .display_blocks_until_difficulty_adjustment()
+                    .unwrap_or_else(|e| format!("Error: {}", e)),
+            ),
+        ]),
+    
         Spans::from(vec![
             Span::styled("  Estimated change: ", Style::default().fg(Color::Gray)),
             Span::styled(

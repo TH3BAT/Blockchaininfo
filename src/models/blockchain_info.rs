@@ -4,7 +4,7 @@
 use serde::{Deserialize, Serialize};  // For serializing and deserializing structures.
 use chrono::{TimeZone, Utc};          // For handling and formatting timestamps.
 use crate::models::errors::MyError;   // Custom error type from the errors module.
-use colored::*; // Assuming you're using the `colored` crate for terminal colors.
+// use colored::*; // Assuming you're using the `colored` crate for terminal colors.
 use crate::utils::DIFFICULTY_ADJUSTMENT_INTERVAL;
 
 // Data structure to deserialize blockchain information from the RPC response.
@@ -133,13 +133,13 @@ impl BlockchainInfo {
 
     // Calculate blocks until the next difficulty adjustment.
     pub fn blocks_until_adjustment(&self) -> Result<u64, MyError> {
-        // const DIFFICULTY_ADJUSTMENT_INTERVAL: u64 = 2016;
         if self.blocks == 0 {
             return Err(MyError::InvalidBlockHeight(self.blocks)); // Custom error for invalid block height.
         }
         Ok((DIFFICULTY_ADJUSTMENT_INTERVAL - (self.blocks % DIFFICULTY_ADJUSTMENT_INTERVAL)) - 1)
     }
     
+    /* Not displaying the formatted string properly. 
     // Determine the color based on blocks until the next difficulty adjustment.
     pub fn difficulty_adjustment_color(&self) -> Result<&str, MyError> {
         let blocks_left = self.blocks_until_adjustment()?;
@@ -173,6 +173,14 @@ impl BlockchainInfo {
         // Convert ColoredString to a plain String
         Ok(colored_text.to_string())
     }
+    */
+    // Replacement code for fix.
+    pub fn display_blocks_until_difficulty_adjustment(&self) -> Result<String, MyError> {
+        let blocks_left = self.blocks_until_adjustment()?;
+        Ok(blocks_left.to_string())
+    }
+    
+
         
 }
 
