@@ -41,6 +41,15 @@
    - Displays:
      - Number of inbound and outbound peer connections.
 
+4. **Consensus Security**  
+   - Introduced to provide insights into the blockchain's consensus state.
+   - Current metrics:
+     - **Fork Monitoring**:
+       - Displays:
+         - The **Active Chain** (height, status, branch length).
+         - The **Last Two Forks** (height, status, branch length).
+       - Tracks reorganization risks and stale forks to enhance network visibility.
+
 ---
 
 ## File Structure
@@ -55,7 +64,8 @@
     ├── display/
     │   ├── display_blockchain_info.rs  # Displays blockchain data.
     │   ├── display_mempool_info.rs     # Displays mempool data.
-    │   └── display_network_info.rs     # Displays network data.
+    │   ├── display_network_info.rs     # Displays network data.
+    │   ├── display_consensus_security_info.rs  # Displays consensus security data.
     ├── display.rs        # Aggregates display modules.
     ├── lib.rs            # For testing.
     ├── main.rs           # Application entry point.
@@ -64,16 +74,17 @@
     │   ├── blockchain_info.rs  # Blockchain data model and implementations.
     │   ├── mempool_info.rs     # Mempool data model and implementations.
     │   ├── network_info.rs     # Network data model and implementations.
+    │   ├── consensus_security.rs # Consensus security data model.
     │   └── errors.rs           # Error handling.
     ├── models.rs         # Aggregates Data and Error modules.
     ├── rpc/              # RPC modules for interacting with the Bitcoin node.
     │   ├── block.rs      # Block data fetching.
     │   ├── blockchain.rs # Blockchain data fetching.
     │   ├── mempool.rs    # Mempool data fetching.
-    │   └── network.rs    # Network data fetching.
+    │   ├── network.rs    # Network data fetching.
+    │   └── chain_tips.rs # Fetches chain tips for consensus monitoring.
     ├── rpc.rs            # Aggregates RPC modules.
-    ├── utils.rs          # Utility functions (e.g., data formatting).
-    └── dashboard.rs      # Implements the live terminal dashboard functionality.
+    └── utils.rs          # Utility functions (e.g., data formatting).
 ```
 
 ---
