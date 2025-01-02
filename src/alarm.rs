@@ -1,4 +1,4 @@
-
+// Not implemented at this time.
 // alarm.rs
 
 use crate::models::errors::MyError;

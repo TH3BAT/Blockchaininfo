@@ -53,8 +53,7 @@ pub fn display_mempool_info<B: Backend>(
     display_mempool_info::display_mempool_info(frame, mempool_info, area)
 }
 
-
-/// Displays the network information.
+// Displays the network information.
 pub fn display_network_info<B: Backend>(
     frame: &mut Frame<B>,
     network_info: &NetworkInfo,
@@ -63,9 +62,10 @@ pub fn display_network_info<B: Backend>(
     display_network_info::display_network_info(frame, network_info, area) // Pass the 'area' argument here.
 }
 
-pub fn display_consensus_security_info<B: tui::backend::Backend>(
+// Displays the consensus security information.
+pub fn display_consensus_security_info<B: Backend>(
     frame: &mut tui::Frame<B>,
-    chaintips_info: &[ChainTip], // Accepts a slice of ChainTip
+    chaintips_info: &[ChainTip], // Accepts a slice of ChainTip.
     area: tui::layout::Rect,
 ) -> Result<(), MyError> {
     display_consensus_security_info::display_consensus_security_info(frame, chaintips_info, area)

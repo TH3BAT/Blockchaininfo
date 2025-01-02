@@ -85,7 +85,7 @@ pub fn display_blockchain_info<B: Backend>(
                 }),
             ),
             Span::styled(
-                format!(" {:.2}%", estimate_difficulty_change),
+                format!(" {:.2}%", estimate_difficulty_change.abs()),
                 Style::default().fg(Color::Gray),
             ),
         ]),

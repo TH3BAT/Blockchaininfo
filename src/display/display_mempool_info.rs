@@ -25,7 +25,7 @@ pub fn display_mempool_info<B: Backend>(
     let max_mempool_size_in_memory = format_size(mempool_info.maxmempool);
 
     let mempool_size_in_memory_color = if mempool_info.usage < mempool_info.maxmempool / 3 {
-        Style::default().fg(Color::Green)
+        Style::default().fg(Color::Gray)
     } else if mempool_info.usage < 2 * mempool_info.maxmempool / 3 {
         Style::default().fg(Color::Yellow)
     } else {

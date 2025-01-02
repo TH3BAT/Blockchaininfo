@@ -1,6 +1,6 @@
-//
+
 // rpc/blockchain.rs
-//
+
 use reqwest::Client;
 use reqwest::header::CONTENT_TYPE;
 use serde_json::json;

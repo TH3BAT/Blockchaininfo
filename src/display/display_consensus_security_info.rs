@@ -1,3 +1,6 @@
+
+// display/display_consensus_security_info.rs
+
 use tui::{
     style::{Color, Style, Modifier},
     text::{Span, Spans},
@@ -16,13 +19,13 @@ pub fn display_consensus_security_info<B: tui::backend::Backend>(
     // Add a blank line for separation after the title.
     lines.push(Spans::from(vec![]));
 
-    // Add a "Fork Monitoring:" subheading
+    // Add a "Fork Monitoring:" subheading.
     lines.push(Spans::from(vec![
         Span::styled(
             "Fork Monitoring:",
             Style::default()
                 .fg(Color::Gray)
-                .add_modifier(Modifier::BOLD),
+                // .add_modifier(Modifier::BOLD),
         ),
     ]));
 
@@ -58,7 +61,7 @@ pub fn display_consensus_security_info<B: tui::backend::Backend>(
         lines.push(line);
     }
 
-    // Create a block with the title "[Consensus Security]"
+    // Create a block with the title [Consensus Security].
     let block = Block::default()
         .borders(Borders::NONE)
         .title(Span::styled(
