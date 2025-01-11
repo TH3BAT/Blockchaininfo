@@ -4,51 +4,20 @@
 
 ## Overview
 
-**Blockchaininfo** is a Rust-based application designed to interact with a Bitcoin node via RPC, providing detailed, real-time insights into the blockchain, mempool, and network status. It formats and color-codes output to make complex data more accessible and user-friendly. Recent updates focus on providing a live terminal dashboard for enhanced functionality.
+**Blockchaininfo** is your gateway to understanding the **heartbeat of the Bitcoin network**. Built in **Rust** for speed and reliability, this application connects seamlessly to your Bitcoin node via RPC, offering **real-time, detailed insights** into the blockchain, mempool, and overall network health.
 
----
+### Why Blockchaininfo?
 
-## Features
+In a world where decentralization and security are paramount, Blockchaininfo is designed to **monitor and showcase the state of Bitcoin's decentralization**, providing actionable insights to ensure the network remains robust and resistant to centralized control. It serves as a vital tool for tracking the **health and integrity of the blockchain**, offering a comprehensive view of node version distribution, network security metrics, and mempool activity.
 
-1. **Blockchain Information**  
-   - Details include:
-     - Chain
-     - Best Block
-     - Time since block
-     - Difficulty
-     - Blocks until adjustment
-     - Estimated change
-     - Chainwork (in bits)
-     - Verification Progress
-     - Size on Disk
-     - Median and Block Times
-     - Time Since Last Block  
+### Key Features
 
-   - Displays **warnings** from the Bitcoin node, if present.
+- **Real-Time Data:** Stay up-to-date with live blockchain and mempool metrics, ensuring you always have the latest pulse of the network.
+- **Decentralization Monitoring:** Analyze node version distribution to assess the diversity and resilience of the network.
+- **User-Friendly Dashboard:** A **live terminal interface** delivers formatted, color-coded output, making complex data intuitive and actionable.
+- **Rust-Powered Efficiency:** Leverage Rust’s performance and reliability for seamless and responsive interaction with your Bitcoin node.
 
-2. **Mempool Information**  
-   - Shows:
-     - Total Transactions
-     - Memory Usage
-     - Total Fees
-     - Minimum Transaction Fee in vSats/vByte  
-   - Color-coded memory usage:
-     - **Green**: Below 1/3 of max memory.
-     - **Yellow**: Between 1/3 and 2/3 of max memory.
-     - **Red**: Above 2/3 of max memory.
-
-3. **Network Information**  
-   - Displays:
-     - Number of inbound and outbound peer connections.
-
-4. **Consensus Security**  
-   - Introduced to provide insights into the blockchain's consensus state.
-   - Current metrics:
-     - **Fork Monitoring**:
-       - Displays:
-         - The **Active Chain** (height, status, branch length).
-         - The **Last Two Forks** (height, status, branch length).
-       - Tracks reorganization risks and stale forks to enhance network visibility.
+Whether you're a developer, node operator, or Bitcoin enthusiast, Blockchaininfo empowers you with the tools to monitor, analyze, and protect the decentralized future of Bitcoin. 🚀
 
 ---
 
@@ -57,34 +26,38 @@
 ```plaintext
 .
 ├── benches/
-│   └── benchmark.rs      # For bench testing.
+│   └── benchmark.rs          # For bench testing.
 ├── cargo.toml
 └── src/
-    ├── config.rs         # Configuration loading and validation.
+    ├── config.rs             # Configuration loading and validation.
     ├── display/
-    │   ├── display_blockchain_info.rs  # Displays blockchain data.
-    │   ├── display_mempool_info.rs     # Displays mempool data.
-    │   ├── display_network_info.rs     # Displays network data.
+    │   ├── display_blockchain_info.rs      # Displays blockchain data.
+    │   ├── display_mempool_info.rs         # Displays mempool data.
+    │   ├── display_network_info.rs         # Displays network data.
     │   ├── display_consensus_security_info.rs  # Displays consensus security data.
-    ├── display.rs        # Aggregates display modules.
-    ├── lib.rs            # For testing.
-    ├── main.rs           # Application entry point.
-    ├── models/           # Data and error handling modules.
-    │   ├── block_info.rs     # Block data model.
-    │   ├── blockchain_info.rs  # Blockchain data model and implementations.
-    │   ├── mempool_info.rs     # Mempool data model and implementations.
-    │   ├── network_info.rs     # Network data model and implementations.
-    │   ├── consensus_security.rs # Consensus security data model.
-    │   └── errors.rs           # Error handling.
-    ├── models.rs         # Aggregates Data and Error modules.
-    ├── rpc/              # RPC modules for interacting with the Bitcoin node.
-    │   ├── block.rs      # Block data fetching.
-    │   ├── blockchain.rs # Blockchain data fetching.
-    │   ├── mempool.rs    # Mempool data fetching.
-    │   ├── network.rs    # Network data fetching.
-    │   └── chain_tips.rs # Fetches chain tips for consensus monitoring.
-    ├── rpc.rs            # Aggregates RPC modules.
-    └── utils.rs          # Utility functions (e.g., data formatting).
+    ├── display.rs             # Aggregates display modules.
+    ├── lib.rs                 # For testing.
+    ├── main.rs                # Application entry point.
+    ├── models/                # Data and error handling modules.
+    │   ├── block_info.rs           # Block data model.
+    │   ├── blockchain_info.rs      # Blockchain data model and implementations.
+    │   ├── mempool_info.rs         # Mempool data model and implementations.
+    │   ├── network_info.rs         # Network data model.
+    │   ├── network_totals.rs       # Network data model (bytes reveived & sent).
+    │   ├── peer_info.rs            # Peers data model.
+    │   ├── consensus_security.rs   # Consensus security data model.
+    │   └── errors.rs               # Error handling.
+    ├── models.rs              # Aggregates Data and Error modules.
+    ├── rpc/                   # RPC modules for interacting with the Bitcoin node.
+    │   ├── block.rs           # Block data fetching.
+    │   ├── blockchain.rs      # Blockchain data fetching.
+    │   ├── mempool.rs         # Mempool data fetching.
+    │   ├── network.rs         # Network data fetching.
+    │   ├── network_peers.rs   # Peers data model.
+    │   ├── network_totals.rs  # Network data fetching (bytes reveived & sent).
+    │   └── chain_tips.rs      # Fetches chain tips for consensus monitoring.
+    ├── rpc.rs                 # Aggregates RPC modules.
+    └── utils.rs               # Utility functions (e.g., data formatting).
 ```
 
 ---

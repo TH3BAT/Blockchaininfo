@@ -1,6 +1,6 @@
 [package]
 name = "blockchaininfo"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 [[bench]]
@@ -16,17 +16,18 @@ name = "blockchaininfo"
 path = "src/lib.rs"
 
 [dependencies]
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1.43.0", features = ["full"] }
 reqwest = {version = "0.12.12", features = ["json", "rustls-tls"] }
-serde_json = "1.0.134"
+serde_json = "1.0.135"
 serde = {version = "1.0.217", features = ["derive"] }
 chrono = "0.4.39"
 toml = "0.8.19"
 num-format = "0.4.4"
-colored = "2.1.0"
+colored = "3.0.0"
 rodio = "0.20.1"
 crossterm = "0.28.1"
 tui = "0.19.0"
+regex = "1.11.1"
 
 
 

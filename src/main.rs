@@ -8,9 +8,11 @@ mod utils;
 mod display;
 
 use config::{load_config, BitcoinRpcConfig};
-use rpc::{fetch_blockchain_info, fetch_mempool_info, fetch_network_info, fetch_block_data_by_height, fetch_chain_tips};
+use rpc::{fetch_blockchain_info, fetch_mempool_info, fetch_network_info, fetch_block_data_by_height
+    , fetch_chain_tips, fetch_net_totals, fetch_peer_info};
 use models::errors::MyError;
-use display::{display_blockchain_info, display_mempool_info, display_network_info, display_consensus_security_info};
+use display::{display_blockchain_info, display_mempool_info, display_network_info
+    , display_consensus_security_info};
 use crate::utils::{DIFFICULTY_ADJUSTMENT_INTERVAL, display_header_widget};
 use tokio::try_join;
 use tui::backend::CrosstermBackend;
@@ -25,7 +27,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use std::io::{self, Stdout};
-use utils::render_footer;
+use utils::{render_footer, aggregate_and_sort_versions};
 
 #[tokio::main]
 async fn main() -> Result<(), MyError> {
@@ -81,12 +83,17 @@ async fn run_app<B: tui::backend::Backend>(
         ) * DIFFICULTY_ADJUSTMENT_INTERVAL;
 
         // Concurrently fetch mempool info, network info, block info, and chain tips.
-        let (mempool_info, network_info, block_info, chaintips_info) = try_join!(
+        let (mempool_info, network_info, block_info, chaintips_info, net_totals, peer_info) = try_join!(
             fetch_mempool_info(&config.bitcoin_rpc),
             fetch_network_info(&config.bitcoin_rpc),
             fetch_block_data_by_height(&config.bitcoin_rpc, epoc_start_block),
-            fetch_chain_tips(&config.bitcoin_rpc)
+            fetch_chain_tips(&config.bitcoin_rpc),
+            fetch_net_totals(&config.bitcoin_rpc),
+            fetch_peer_info(&config.bitcoin_rpc) 
         )?;
+
+        let version_counts = aggregate_and_sort_versions(&peer_info);
+        // let sorted_peers = sort_peers(&peer_info);
 
         // Draw the TUI.
         terminal.draw(|frame| {
@@ -99,7 +106,7 @@ async fn run_app<B: tui::backend::Backend>(
                         Constraint::Length(8),   // Application title.
                         Constraint::Length(14),  // Blockchain section.
                         Constraint::Length(7),   // Mempool section.
-                        Constraint::Length(5),   // Network section.
+                        Constraint::Max(17),     // Network section.
                         Constraint::Length(7),   // Consensus Security section.
                         Constraint::Length(1),   // Footer section.
                     ]
@@ -141,7 +148,7 @@ async fn run_app<B: tui::backend::Backend>(
                     .add_modifier(Modifier::BOLD | Modifier::UNDERLINED), 
             ));
             frame.render_widget(block_4, chunks[3]);
-            display_network_info(frame, &network_info, chunks[3]).unwrap();
+            display_network_info(frame, &network_info, &net_totals, &version_counts, chunks[3]).unwrap();
 
             // Block 5: Consensus Security.
             display_consensus_security_info(frame, &chaintips_info, chunks[4]).unwrap();

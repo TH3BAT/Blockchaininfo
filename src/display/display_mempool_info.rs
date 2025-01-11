@@ -73,7 +73,7 @@ pub fn display_mempool_info<B: Backend>(
         ]),
         Spans::from(vec![
             Span::styled("Total Fees: ", Style::default().fg(Color::Gray)),
-            Span::raw(format!("{} sats", mempool_info.total_fee)),
+            Span::raw(format!("{:.8}", mempool_info.total_fee)),
         ]),
         Spans::from(vec![
             // The label "Min Transaction Fee: " in gray.

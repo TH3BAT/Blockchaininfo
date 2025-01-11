@@ -9,6 +9,8 @@ use tui::style::{Color, Style, Modifier};
 use tui::layout::{Rect, Alignment};
 use tui::Frame;
 use tui::backend::Backend;
+use crate::models::peer_info::PeerInfo;
+use std::collections::HashMap;
 
 // Constants for bytes formatting.
 const KB: u64 = 1024;
@@ -131,4 +133,46 @@ pub fn render_footer<B: Backend>(f: &mut Frame<B>, area: Rect) {
     f.render_widget(footer, area);
 }
 
+/*
+// Helper function to extract the version number as a tuple
+fn extract_version(subver: &str) -> (u32, u32, u32) {
+    let version_pattern = regex::Regex::new(r"/Satoshi:(\d+)\.(\d+)\.(\d+)").unwrap();
+    if let Some(captures) = version_pattern.captures(subver) {
+        let major = captures.get(1).map_or(0, |m| m.as_str().parse::<u32>().unwrap_or(0));
+        let minor = captures.get(2).map_or(0, |m| m.as_str().parse::<u32>().unwrap_or(0));
+        let patch = captures.get(3).map_or(0, |m| m.as_str().parse::<u32>().unwrap_or(0));
+        (major, minor, patch)
+    } else {
+        (0, 0, 0) // Default to 0.0.0 if version is not found
+    }
+}
+*/
+
+pub fn normalize_version(subver: &str) -> String {
+    let version_pattern = regex::Regex::new(r"/Satoshi:(\d+\.\d+\.\d+)").unwrap();
+    if let Some(captures) = version_pattern.captures(subver) {
+        captures.get(1).map_or_else(|| "Unknown".to_string(), |m| m.as_str().to_string())
+    } else {
+        "Unknown".to_string()
+    }
+}
+
+// Aggregate and sort Node Version Distribution.
+pub fn aggregate_and_sort_versions(peer_info: &[PeerInfo]) -> Vec<(String, usize)> {
+    let mut counts: HashMap<String, usize> = HashMap::new();
+
+    // Aggregate peer counts for normalized versions
+    for peer in peer_info.iter().filter(|peer| peer.subver.contains("Satoshi")) {
+        let normalized_version = normalize_version(&peer.subver); // Stripped-down version
+        *counts.entry(normalized_version).or_insert(0) += 1;
+    }
+
+    // Convert HashMap to Vec
+    let mut sorted_counts: Vec<(String, usize)> = counts.into_iter().collect();
+
+    // Sort by peer count in descending order
+    sorted_counts.sort_by(|a, b| b.1.cmp(&a.1));
+
+    sorted_counts
+}
 

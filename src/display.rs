@@ -31,6 +31,7 @@ use crate::models::block_info::BlockInfo;
 use crate::models::mempool_info::MempoolInfo;
 use crate::models::network_info::NetworkInfo;
 use crate::models::chaintips_info::ChainTip;
+use crate::models::network_totals::NetTotals;
 use crate::models::errors::MyError;
 
 // Displays the blockchain information.
@@ -57,10 +58,13 @@ pub fn display_mempool_info<B: Backend>(
 pub fn display_network_info<B: Backend>(
     frame: &mut Frame<B>,
     network_info: &NetworkInfo,
-    area: Rect, // Add the 'area' parameter to the function.
+    net_totals: &NetTotals,
+    version_counts: &Vec<(String, usize)>, // Add the version_counts parameter
+    area: Rect,
 ) -> Result<(), MyError> {
-    display_network_info::display_network_info(frame, network_info, area) // Pass the 'area' argument here.
+    display_network_info::display_network_info(frame, network_info, net_totals, version_counts, area)
 }
+
 
 // Displays the consensus security information.
 pub fn display_consensus_security_info<B: Backend>(
