@@ -93,7 +93,6 @@ async fn run_app<B: tui::backend::Backend>(
         )?;
 
         let version_counts = aggregate_and_sort_versions(&peer_info);
-        // let sorted_peers = sort_peers(&peer_info);
 
         // Draw the TUI.
         terminal.draw(|frame| {
