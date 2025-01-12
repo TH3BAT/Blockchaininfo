@@ -27,7 +27,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use std::io::{self, Stdout};
-use utils::{render_footer, aggregate_and_sort_versions};
+use utils::{render_footer, aggregate_and_sort_versions, calculate_block_propagation_time};
 
 #[tokio::main]
 async fn main() -> Result<(), MyError> {
@@ -93,6 +93,7 @@ async fn run_app<B: tui::backend::Backend>(
         )?;
 
         let version_counts = aggregate_and_sort_versions(&peer_info);
+        let avg_block_propagate_time = calculate_block_propagation_time(&peer_info, blockchain_info.time);
 
         // Draw the TUI.
         terminal.draw(|frame| {
@@ -105,7 +106,7 @@ async fn run_app<B: tui::backend::Backend>(
                         Constraint::Length(8),   // Application title.
                         Constraint::Length(14),  // Blockchain section.
                         Constraint::Length(7),   // Mempool section.
-                        Constraint::Max(17),     // Network section.
+                        Constraint::Max(18),     // Network section.
                         Constraint::Length(7),   // Consensus Security section.
                         Constraint::Length(1),   // Footer section.
                     ]
@@ -147,7 +148,7 @@ async fn run_app<B: tui::backend::Backend>(
                     .add_modifier(Modifier::BOLD | Modifier::UNDERLINED), 
             ));
             frame.render_widget(block_4, chunks[3]);
-            display_network_info(frame, &network_info, &net_totals, &version_counts, chunks[3]).unwrap();
+            display_network_info(frame, &network_info, &net_totals, &version_counts, avg_block_propagate_time, chunks[3]).unwrap();
 
             // Block 5: Consensus Security.
             display_consensus_security_info(frame, &chaintips_info, chunks[4]).unwrap();

@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct NetTotalsJsonWrap {
+    pub error: Option<String>,    // Optional for any error message.
+    pub id: Option<String>,       // Optional Request ID.
     pub result: NetTotals,
 }
 

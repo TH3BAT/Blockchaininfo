@@ -7,9 +7,9 @@ use serde::{Deserialize, Serialize}; // For serializing and deserializing struct
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
     pub struct MempoolInfoJsonWrap {
-     pub result: MempoolInfo,
-     pub error: Option<String>,
-     pub id: String,
+        pub error: Option<String>,    // Optional for any error message.
+        pub id: Option<String>,       // Optional Request ID.
+        pub result: MempoolInfo,
 }
 
 // Represents the mempool information retrieved from the Bitcoin RPC `getmempoolinfo` call.

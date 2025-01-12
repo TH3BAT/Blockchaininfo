@@ -18,9 +18,19 @@ pub fn display_network_info<B: Backend>(
     frame: &mut Frame<B>,
     network_info: &NetworkInfo,
     net_totals: &NetTotals,
-    version_counts: &Vec<(String, usize)>, // Existing version counts
+    version_counts: &Vec<(String, usize)>, 
+    avg_block_propagate_time: u64,
     area: Rect,
 ) -> Result<(), MyError> {
+    
+    let color = if avg_block_propagate_time < 2 {
+        Color::Green // Propagation time < 2 minute = Green (ideal).
+    } else if avg_block_propagate_time < 5 {
+        Color::Yellow // Propagation time between 2-5 minutes = Yellow (caution).
+    } else {
+        Color::Red // Propagation time > 5 minutes = Red (critical).
+    };
+
     // Define layout for the network info, using the passed area.
     let chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -70,6 +80,14 @@ pub fn display_network_info<B: Backend>(
                 Style::default().fg(Color::Gray),
             ),
         ]),
+        // Determine the color based on the thresholds
+        Spans::from(vec![
+            Span::styled("Average Block Propagation Time: ", Style::default().fg(Color::Gray)),
+            Span::styled(
+                format!("{:.0} minutes", avg_block_propagate_time),
+                Style::default().fg(color),
+            ),
+        ]),
         // Spans::from(vec![]), // Blank line for separation.
     ];
 
@@ -77,7 +95,7 @@ pub fn display_network_info<B: Backend>(
     if !version_counts.is_empty() {
         network_content.push(
             Spans::from(vec![
-            Span::styled("Node Version Distribution:", Style::default().fg(Color::Gray)),
+            Span::styled("Node Version Distribution (Top 9):", Style::default().fg(Color::Gray)),
         ]));
 
         for (version, count) in version_counts {

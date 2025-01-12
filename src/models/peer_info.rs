@@ -8,6 +8,8 @@ use std::collections::HashMap;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub struct PeerInfoResponse {
+    pub error: Option<String>,    // Optional for any error message.
+    pub id: Option<String>,       // Optional Request ID.
     pub result: Vec<PeerInfo>, 
 }
 

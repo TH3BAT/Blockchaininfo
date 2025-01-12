@@ -176,3 +176,43 @@ pub fn aggregate_and_sort_versions(peer_info: &[PeerInfo]) -> Vec<(String, usize
     sorted_counts
 }
 
+pub fn calculate_block_propagation_time(peer_info: &[PeerInfo], best_block_time: u64) -> u64 {
+    let mut propagation_times: Vec<u64> = Vec::new(); // Specify u64 for the vector.
+
+    // Iterate over peers and filter those who match the condition.
+    for peer in peer_info.iter().filter(|peer| peer.subver.contains("Satoshi")) {
+        let mut peer_last_block_timestamp = peer.last_block;
+        
+        // If the last_block is 0, set it to the best_block_time.
+        if peer_last_block_timestamp == 0 {
+            peer_last_block_timestamp = best_block_time; // Set to best block time.
+        }
+
+        // Calculate the propagation time in seconds (timestamps are assumed to be in seconds).
+        let propagation_time_in_seconds = best_block_time - peer_last_block_timestamp;
+        
+        // Convert to milliseconds (multiply by 1000)
+        let propagation_time_in_ms = propagation_time_in_seconds * 1000;
+
+        // Store in the vector
+        propagation_times.push(propagation_time_in_ms);
+    }
+    
+    // Calculate the average propagation time in milliseconds.
+    let total_peers = propagation_times.len();
+    if total_peers == 0 {
+        return 0; // Avoid division by zero if no valid peers were found.
+    }
+
+    let total_time: u64 = propagation_times.iter().sum(); // Sum of the vector
+    let average_propagation_time_in_ms = total_time / total_peers as u64; // Division by number of peers.
+    
+    // Convert milliseconds to minutes (after calculating the average).
+    average_propagation_time_in_ms / 60000 // Convert milliseconds to minutes.
+}
+
+
+
+
+
+

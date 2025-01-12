@@ -6,6 +6,8 @@ use serde::{Serialize, Deserialize};  // For serializing and deserializing struc
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct BlockHash {
+    pub error: Option<String>,    // Optional for any error message.
+    pub id: Option<String>,       // Optional Request ID.
     pub result: String,           // The block hash is a plain string.
 }
 
