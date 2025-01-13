@@ -11,6 +11,7 @@ use tui::Frame;
 use tui::backend::Backend;
 use crate::models::peer_info::PeerInfo;
 use std::collections::HashMap;
+// use clap::Arg;
 
 // Constants for bytes formatting.
 const KB: u64 = 1024;
@@ -106,10 +107,15 @@ pub fn display_header_widget() -> Paragraph<'static> {
             r" |    |  _/  |  /  _ \_/ ___\|  |/ // ___\|  |  \\__  \ |  |/    \|  |/    \   __\/  _ \ ",
             Style::default().fg(Color::White).add_modifier(Modifier::BOLD),
         )),
-        Spans::from(Span::styled(
-            r" |    |   \  |_(  <_> )  \___|    <\  \___|   Y  \/ __ \|  |   |  \  |   |  \  | (  <_> )",
-            Style::default().fg(Color::Cyan),
-        )),
+        Spans::from(vec![
+            Span::styled(
+            r" |    |   \  |_(  <_> )  \___|    <\  \___|   Y  \/ __ \|  |   |  \  |   |  \  | (  <_> ) ",
+            Style::default().fg(Color::Cyan)),
+            Span::styled(
+                format!("v{}", env!("CARGO_PKG_VERSION").to_string()),
+                Style::default().fg(Color::DarkGray),
+            )
+        ]),
         Spans::from(Span::styled(
             r" |______  /____/\____/ \___  >__|_ \\___  >___|  (____  /__|___|  /__|___|  /__|  \____/",
             Style::default().fg(Color::LightBlue),
