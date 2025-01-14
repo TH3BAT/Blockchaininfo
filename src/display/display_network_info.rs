@@ -12,6 +12,7 @@ use tui::{
 use crate::models::network_info::NetworkInfo;
 use crate::models::network_totals::NetTotals;
 use crate::models::errors::MyError;
+use crate::utils::format_size;
 
 // Displays the network information in a `tui` terminal.
 pub fn display_network_info<B: Backend>(
@@ -29,6 +30,10 @@ pub fn display_network_info<B: Backend>(
         Color::Yellow // Propagation time between 2-5 minutes = Yellow (caution).
     } else {
         Color::Red // Propagation time > 5 minutes = Red (critical).
+    };
+
+    let abpt_text= if avg_block_propagate_time < 99 {"minutes"
+    } else { "minutes (corrupt)"
     };
 
     // Define layout for the network info, using the passed area.
@@ -69,14 +74,14 @@ pub fn display_network_info<B: Backend>(
         Spans::from(vec![
             Span::styled("Total Bytes Received: ", Style::default().fg(Color::Gray)),
             Span::styled(
-                format!("{:.2} MB", net_totals.totalbytesrecv as f64 / 1_048_576.0),
+                format!("{}", format_size(net_totals.totalbytesrecv)),
                 Style::default().fg(Color::Gray),
             ),
         ]),
         Spans::from(vec![
             Span::styled("Total Bytes Sent: ", Style::default().fg(Color::Gray)),
             Span::styled(
-                format!("{:.2} MB", net_totals.totalbytessent as f64 / 1_048_576.0),
+                format!("{}", format_size(net_totals.totalbytessent)),
                 Style::default().fg(Color::Gray),
             ),
         ]),
@@ -84,7 +89,7 @@ pub fn display_network_info<B: Backend>(
         Spans::from(vec![
             Span::styled("Average Block Propagation Time: ", Style::default().fg(Color::Gray)),
             Span::styled(
-                format!("{:.0} minutes", avg_block_propagate_time),
+                format!("{:.0} {}", avg_block_propagate_time, abpt_text),
                 Style::default().fg(color),
             ),
         ]),

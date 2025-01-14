@@ -11,7 +11,6 @@ use tui::Frame;
 use tui::backend::Backend;
 use crate::models::peer_info::PeerInfo;
 use std::collections::HashMap;
-// use clap::Arg;
 
 // Constants for bytes formatting.
 const KB: u64 = 1024;
@@ -214,7 +213,12 @@ pub fn calculate_block_propagation_time(peer_info: &[PeerInfo], best_block_time:
     let average_propagation_time_in_ms = total_time / total_peers as u64; // Division by number of peers.
     
     // Convert milliseconds to minutes (after calculating the average).
-    average_propagation_time_in_ms / 60000 // Convert milliseconds to minutes.
+    // If greater than 60 minutes, then we have corrupt data, and will return 99.
+    if average_propagation_time_in_ms / 60000 < 60 {
+        average_propagation_time_in_ms / 60000 // Convert milliseconds to minutes.
+    } else {
+        99
+    }
 }
 
 
