@@ -28,7 +28,7 @@ use tui::Frame;
 use tui::layout::Rect;
 use crate::models::blockchain_info::BlockchainInfo;
 use crate::models::block_info::BlockInfo;
-use crate::models::mempool_info::MempoolInfo;
+use crate::models::mempool_info::{MempoolInfo, MempoolDistribution};
 use crate::models::network_info::NetworkInfo;
 use crate::models::chaintips_info::ChainTip;
 use crate::models::network_totals::NetTotals;
@@ -48,10 +48,11 @@ pub fn display_blockchain_info<B: Backend>(
 pub fn display_mempool_info<B: Backend>(
     frame: &mut Frame<B>,
     mempool_info: &MempoolInfo,
+    distribution: &MempoolDistribution,
     area: Rect, // Add the 'area' parameter.
 ) -> Result<(), MyError> {
     // Now, pass the 'area' parameter when calling the function.
-    display_mempool_info::display_mempool_info(frame, mempool_info, area)
+    display_mempool_info::display_mempool_info(frame, mempool_info, distribution, area)
 }
 
 // Displays the network information.

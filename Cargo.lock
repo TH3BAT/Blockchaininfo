@@ -198,6 +198,7 @@ dependencies = [
  "criterion",
  "crossterm 0.28.1",
  "num-format",
+ "rand",
  "regex",
  "reqwest",
  "rodio",

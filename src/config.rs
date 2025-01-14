@@ -9,14 +9,14 @@ use crate::utils::get_rpc_password_from_keychain;  // Custom utility function.
 use serde::Deserialize;                            // For deserialization.
 
 // Configuration structure for Bitcoin RPC.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub struct BitcoinRpcConfig {
      pub bitcoin_rpc: RpcConfig, // Contains username, password, and address.
 }
 
 // Structure for RPC connection details.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub struct RpcConfig {
      pub username: String, // RPC username.

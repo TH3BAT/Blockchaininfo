@@ -1,7 +1,7 @@
 
 // models/blockchain_info.rs
 
-use serde::{Deserialize, Serialize};  // For serializing and deserializing structures.
+use serde::Deserialize;  // For serializing and deserializing structures.
 use chrono::{TimeZone, Utc};          // For handling and formatting timestamps.
 use crate::models::errors::MyError;   // Custom error type from the errors module.
 // use colored::*; // Assuming you're using the `colored` crate for terminal colors.
@@ -9,8 +9,9 @@ use tui::style::Color;
 use crate::utils::DIFFICULTY_ADJUSTMENT_INTERVAL;
 
 // Data structure to deserialize blockchain information from the RPC response.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
     pub struct BlockchainInfoJsonWrap {
     pub error: Option<String>,        // Optional field for any error message.
     pub id: String,                   // Request ID.
@@ -18,8 +19,9 @@ use crate::utils::DIFFICULTY_ADJUSTMENT_INTERVAL;
 }
 
 // Nested structure containing detailed blockchain information.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
     pub struct BlockchainInfo {
     pub bestblockhash: String,        // Hash of the best block.
     pub blocks: u64,                  // Total number of blocks in the chain.

@@ -9,7 +9,7 @@ mod display;
 
 use config::{load_config, BitcoinRpcConfig};
 use rpc::{fetch_blockchain_info, fetch_mempool_info, fetch_network_info, fetch_block_data_by_height
-    , fetch_chain_tips, fetch_net_totals, fetch_peer_info};
+    , fetch_chain_tips, fetch_net_totals, fetch_peer_info, fetch_mempool_distribution};
 use models::errors::MyError;
 use display::{display_blockchain_info, display_mempool_info, display_network_info
     , display_consensus_security_info};
@@ -28,6 +28,10 @@ use crossterm::{
 };
 use std::io::{self, Stdout};
 use utils::{render_footer, aggregate_and_sort_versions, calculate_block_propagation_time};
+use std::sync::Arc;
+use tokio::sync::Mutex as AsyncMutex;
+use models::mempool_info::MempoolDistribution;
+
 
 #[tokio::main]
 async fn main() -> Result<(), MyError> {
@@ -73,6 +77,7 @@ async fn run_app<B: tui::backend::Backend>(
     terminal: &mut Terminal<B>,
     config: &BitcoinRpcConfig,
 ) -> Result<(), MyError> {
+    let distribution = Arc::new(AsyncMutex::new(MempoolDistribution::default()));
     loop {
         // Fetch blockchain info first since `blocks` is needed for the next call.
         let blockchain_info = fetch_blockchain_info(&config.bitcoin_rpc).await?;
@@ -83,8 +88,8 @@ async fn run_app<B: tui::backend::Backend>(
         ) * DIFFICULTY_ADJUSTMENT_INTERVAL;
 
         // Concurrently fetch mempool info, network info, block info, and chain tips.
-        let (mempool_info, network_info, block_info, chaintips_info, net_totals, peer_info) = try_join!(
-            fetch_mempool_info(&config.bitcoin_rpc),
+        let ((mempool_info, sample_ids), network_info, block_info, chaintips_info, net_totals, peer_info) = try_join!(
+            fetch_mempool_info(&config.bitcoin_rpc, 5.0),
             fetch_network_info(&config.bitcoin_rpc),
             fetch_block_data_by_height(&config.bitcoin_rpc, epoc_start_block),
             fetch_chain_tips(&config.bitcoin_rpc),
@@ -95,6 +100,32 @@ async fn run_app<B: tui::backend::Backend>(
         let version_counts = aggregate_and_sort_versions(&peer_info);
         let avg_block_propagate_time = calculate_block_propagation_time(&peer_info, blockchain_info.time);
 
+        tokio::spawn({
+            let config_clone = config.bitcoin_rpc.clone();
+            let distribution_clone = distribution.clone();
+            async move {
+                if let Ok(((small, medium, large), (young, moderate, old), (rbf, non_rbf))) =
+                    fetch_mempool_distribution(&config_clone, sample_ids).await
+                {
+                    let mut dist = distribution_clone.lock().await;
+                    // Update size distribution
+                    dist.small = small;
+                    dist.medium = medium;
+                    dist.large = large;
+                    // Update age distribution
+                    dist.young = young;
+                    dist.moderate = moderate;
+                    dist.old = old;
+                    // Update RBF stats
+                    dist.rbf_count = rbf;
+                    dist.non_rbf_count = non_rbf;
+                }
+            }
+        });
+        
+        // Lock the Mutex to access MempoolDistribution
+        let dist = distribution.lock().await;
+        
         // Draw the TUI.
         terminal.draw(|frame| {
             // Define the layout with updated sections.
@@ -105,7 +136,7 @@ async fn run_app<B: tui::backend::Backend>(
                     [
                         Constraint::Length(8),   // Application title.
                         Constraint::Length(14),  // Blockchain section.
-                        Constraint::Length(7),   // Mempool section.
+                        Constraint::Length(18),   // Mempool section.
                         Constraint::Max(18),     // Network section.
                         Constraint::Length(7),   // Consensus Security section.
                         Constraint::Length(1),   // Footer section.
@@ -136,9 +167,9 @@ async fn run_app<B: tui::backend::Backend>(
                 Style::default()
                     .fg(Color::Cyan)
                     .add_modifier(Modifier::BOLD | Modifier::UNDERLINED), 
-            ));
+            ));            
             frame.render_widget(block_3, chunks[2]);
-            display_mempool_info(frame, &mempool_info, chunks[2]).unwrap();
+            display_mempool_info(frame, &mempool_info, &*dist, chunks[2]).unwrap();
         
             // Block 4: Network Info.
             let block_4 = Block::default().borders(Borders::NONE).title(Span::styled(

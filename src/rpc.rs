@@ -8,6 +8,7 @@ mod block;
 mod chain_tips;
 mod network_totals; 
 mod network_peers;
+mod mempool_distro;
 
 use crate::models::blockchain_info::BlockchainInfo;
 use crate::models::block_info::BlockInfo;
@@ -23,8 +24,8 @@ pub async fn fetch_blockchain_info(config: &RpcConfig) -> Result<BlockchainInfo,
     blockchain::fetch_blockchain_info(config).await
 }
 
-pub async fn fetch_mempool_info(config: &RpcConfig) -> Result<MempoolInfo, MyError> {
-    mempool::fetch_mempool_info(config).await
+pub async fn fetch_mempool_info(config: &RpcConfig, sample_percentage: f64) -> Result<(MempoolInfo, Vec<String>), MyError> {
+    mempool::fetch_mempool_info(config, sample_percentage).await
 }
 
 pub async fn fetch_network_info(config: &RpcConfig) -> Result<NetworkInfo, MyError> {
@@ -45,4 +46,11 @@ pub async fn fetch_net_totals(config: &RpcConfig) -> Result<NetTotals, MyError> 
 
 pub async fn fetch_peer_info(config: &RpcConfig) -> Result<Vec<PeerInfo>, MyError> {
     network_peers::fetch_peer_info(config).await
+}
+
+pub async fn fetch_mempool_distribution(
+    config: &RpcConfig,
+    sample_ids: Vec<String>,
+) -> Result<((usize, usize, usize), (usize, usize, usize), (usize, usize)), MyError> {
+    mempool_distro::fetch_mempool_distribution(config, sample_ids).await
 }

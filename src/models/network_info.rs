@@ -1,12 +1,13 @@
 
 // models/network_info.rs
 
-use serde::{Deserialize, Serialize}; // For struct serialization and deserialization.
+use serde::Deserialize; // For struct serialization and deserialization.
 
 // Represents the information returned from the `getnetworkinfo` RPC call.
 // This struct represents the root response from the RPC call, which contains the `result` field.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
       pub struct NetworkInfoJsonWrap {
             pub error: Option<String>,    // Optional for any error message.
             pub id: Option<String>,       // Optional Request ID.
@@ -14,8 +15,9 @@ use serde::{Deserialize, Serialize}; // For struct serialization and deserializa
 }
 
 // This struct encapsulates various details about the Bitcoin node's network status.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
 pub struct NetworkInfo {
       pub version: u32,                          // The version number of the node software.
       pub subversion: String,                    // The subversion of the node software.
@@ -37,8 +39,9 @@ pub struct NetworkInfo {
 
 // Represents a specific network type (e.g., IPv4, IPv6, Onion) and its properties.
 // This struct is used in the `networks` field of the `NetworkInfo` struct.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
 pub struct Network {
       pub name: String,                          // The name of the network (e.g., "ipv4").
       pub limited: bool,                         // Boolean flag indicating if network is limited. 
@@ -49,8 +52,9 @@ pub struct Network {
 
 // Represents a local address used by the node.
 // This struct is used in the `localaddresses` field of the `NetworkInfo` struct.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
 pub struct LocalAddress {
       pub address: String,                       // The address of the local node.
       pub port: u16,                             // The port number used for the connection.

@@ -1,11 +1,12 @@
 
 // models/chain_tips.rs
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 // Wraps the response for deserialization.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
 pub struct ChainTipsResponse {
     pub error: Option<String>,    // Optional for any error message.
     pub id: Option<String>,       // Optional Request ID.
@@ -13,8 +14,9 @@ pub struct ChainTipsResponse {
 }
 
 // Represents a single chain tip.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
 pub struct ChainTip {
     pub height: u64,
     pub hash: String,

@@ -110,10 +110,6 @@ pub fn display_header_widget() -> Paragraph<'static> {
             Span::styled(
             r" |    |   \  |_(  <_> )  \___|    <\  \___|   Y  \/ __ \|  |   |  \  |   |  \  | (  <_> ) ",
             Style::default().fg(Color::Cyan)),
-            Span::styled(
-                format!("v{}", env!("CARGO_PKG_VERSION").to_string()),
-                Style::default().fg(Color::DarkGray),
-            )
         ]),
         Spans::from(Span::styled(
             r" |______  /____/\____/ \___  >__|_ \\___  >___|  (____  /__|___|  /__|___|  /__|  \____/",

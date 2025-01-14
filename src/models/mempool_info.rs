@@ -1,11 +1,24 @@
 
 // models/mempool_info.rs
 
-use serde::{Deserialize, Serialize}; // For serializing and deserializing structures.
+use serde::Deserialize; // For serializing and deserializing structures.
+
+#[derive(Default)]
+pub struct MempoolDistribution {
+    pub small: usize,
+    pub medium: usize,
+    pub large: usize,
+    pub young: usize,
+    pub moderate: usize,
+    pub old: usize,
+    pub rbf_count: usize,
+    pub non_rbf_count: usize,
+}
 
 // Wrapper Struct - The Bitcoin RPC response wraps the actual mempoolinfo data inside the result field.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
     pub struct MempoolInfoJsonWrap {
         pub error: Option<String>,    // Optional for any error message.
         pub id: Option<String>,       // Optional Request ID.
@@ -13,8 +26,9 @@ use serde::{Deserialize, Serialize}; // For serializing and deserializing struct
 }
 
 // Represents the mempool information retrieved from the Bitcoin RPC `getmempoolinfo` call.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
 pub struct MempoolInfo {
       pub loaded: bool,             // Indicates if mempool data is fully loaded in memory.
       pub size: u64,                // The current number of transactions in the mempool.

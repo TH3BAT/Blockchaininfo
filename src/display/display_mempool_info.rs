@@ -11,13 +11,14 @@ use tui::{
 };
 use num_format::{Locale, ToFormattedString};
 use crate::utils::format_size;
-use crate::models::mempool_info::MempoolInfo;
+use crate::models::mempool_info::{MempoolInfo, MempoolDistribution};
 use crate::models::errors::MyError;
 
 // Displays the mempool information in a `tui` terminal.
 pub fn display_mempool_info<B: Backend>(
     frame: &mut Frame<B>,
     mempool_info: &MempoolInfo,
+    distribution: &MempoolDistribution,
     area: Rect, // Added 'area' parameter
 ) -> Result<(), MyError> {
     // Calculate formatted and colored memory usage.
@@ -63,6 +64,7 @@ pub fn display_mempool_info<B: Backend>(
                 Style::default().fg(Color::Green),
             ),
         ]),
+        // Spans::from(vec![]), // Blank line for separation.
         Spans::from(vec![
             Span::styled("Memory: ", Style::default().fg(Color::Gray)),
             Span::styled(
@@ -87,7 +89,46 @@ pub fn display_mempool_info<B: Backend>(
             
             // The "vSats/vByte" text in gray.
             Span::styled(" vSats/vByte", Style::default().fg(Color::Gray)),
-        ]),        
+        ]), 
+         // Spans::from(vec![]), // Blank line for separation.
+         Spans::from(vec![Span::styled("Size Distribution (5%):", Style::default().fg(Color::Gray)),]), 
+         // Size Distribution
+         Spans::from(vec![
+            Span::styled("  Small (< 250 vBytes)    : ", Style::default().fg(Color::Yellow)),
+            Span::styled((distribution.small * 20).to_formatted_string(&Locale::en), Style::default().fg(Color::Gray)),
+        ]),
+        Spans::from(vec![
+            Span::styled("  Medium (250-1000 vBytes): ", Style::default().fg(Color::Yellow)),
+            Span::styled((distribution.medium * 20).to_formatted_string(&Locale::en), Style::default().fg(Color::Gray)),
+        ]),
+        Spans::from(vec![
+            Span::styled("  Large (> 1000 vBytes)   : ", Style::default().fg(Color::Yellow)),
+            Span::styled((distribution.large * 20).to_formatted_string(&Locale::en), Style::default().fg(Color::Gray)),
+        ]),
+        Spans::from(vec![Span::styled("Age Distribution (5%):", Style::default().fg(Color::Gray)),]), 
+        // Age Distribution
+        Spans::from(vec![
+            Span::styled("  Young (< 5 min)         : ", Style::default().fg(Color::Yellow)),
+            Span::styled((distribution.young * 20).to_formatted_string(&Locale::en), Style::default().fg(Color::Gray)),
+        ]),
+        Spans::from(vec![
+            Span::styled("  Moderate (5 min - 1 hr) : ", Style::default().fg(Color::Yellow)),
+            Span::styled((distribution.moderate * 20).to_formatted_string(&Locale::en), Style::default().fg(Color::Gray)),
+        ]),
+        Spans::from(vec![
+            Span::styled("  Old (> 1 hr)            : ", Style::default().fg(Color::Yellow)),
+            Span::styled((distribution.old * 20).to_formatted_string(&Locale::en), Style::default().fg(Color::Gray)),
+        ]),       
+        Spans::from(vec![Span::styled("RBF Distribution (5%):", Style::default().fg(Color::Gray)),]), 
+         // Existing size and age stats
+        Spans::from(vec![
+            Span::styled("  RBF Transactions    : ", Style::default().fg(Color::Yellow)),
+            Span::styled((distribution.rbf_count * 20).to_formatted_string(&Locale::en), Style::default().fg(Color::Gray)),
+        ]),
+        Spans::from(vec![
+            Span::styled("  Non-RBF Transactions: ", Style::default().fg(Color::Yellow)),
+            Span::styled((distribution.non_rbf_count * 20).to_formatted_string(&Locale::en), Style::default().fg(Color::Gray)),
+        ]),
     ];
 
     // No borders for empty sections.

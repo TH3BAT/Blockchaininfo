@@ -1,20 +1,22 @@
 
 // models/peer_info.rs
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::collections::HashMap;
 
 // Wrapper for JSON-RPC response.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
 pub struct PeerInfoResponse {
     pub error: Option<String>,    // Optional for any error message.
     pub id: Option<String>,       // Optional Request ID.
     pub result: Vec<PeerInfo>, 
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
 pub struct PeerInfo {
     pub id: u64,                           // Unique identifier for the peer.
     pub addr: String,                      // IP address and port of the peer.

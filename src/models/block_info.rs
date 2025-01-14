@@ -1,24 +1,27 @@
 
 // models/block_info.rs
 
-use serde::{Serialize, Deserialize};  // For serializing and deserializing structures.
+use serde::Deserialize;  // For serializing and deserializing structures.
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
 pub struct BlockHash {
     pub error: Option<String>,    // Optional for any error message.
     pub id: Option<String>,       // Optional Request ID.
     pub result: String,           // The block hash is a plain string.
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
 pub struct BlockInfoJsonWrap {
     pub result: BlockInfo,        // Contains the block's details.
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
 pub struct BlockInfo {
      pub hash: String,             // Block hash.
      pub confirmations: u64,       // Number of confirmations.

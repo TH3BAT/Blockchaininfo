@@ -1,19 +1,21 @@
 
 // models/network_totals.rs
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 // Wrapper for the full JSON response.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
 pub struct NetTotalsJsonWrap {
     pub error: Option<String>,    // Optional for any error message.
     pub id: Option<String>,       // Optional Request ID.
     pub result: NetTotals,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
 pub struct NetTotals {
     pub totalbytesrecv: u64,    // Total bytes received across all connections.
     pub totalbytessent: u64,    // Total bytes sent across all connections.
@@ -21,8 +23,9 @@ pub struct NetTotals {
     pub uploadtarget: UploadTarget, // Upload target information and statistics.
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
 pub struct UploadTarget {
     pub timeframe: u64,               // Timeframe for the upload target in seconds.
     pub target: u64,                  // Maximum upload target in bytes.
