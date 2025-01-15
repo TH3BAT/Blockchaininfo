@@ -52,11 +52,11 @@ pub fn display_consensus_security_info<B: tui::backend::Backend>(
         };
 
         let line = Spans::from(vec![
-            Span::styled(format!("Height: {:>8}", tip.height), Style::default().fg(Color::Gray)),
+            Span::styled(format!("Height: {:>7}", tip.height), Style::default().fg(Color::Gray)),
             Span::raw(" | "),
-            Span::styled(format!("Status: {:<15}", status), Style::default().fg(Color::Yellow)),
+            Span::styled(format!("Status: {:<12}", status), Style::default().fg(Color::Yellow)),
             Span::raw(" | "),
-            Span::styled(format!("Branch Length: {:>2}", tip.branchlen), Style::default().fg(Color::Gray)),
+            Span::styled(format!("Length: {:>2}", tip.branchlen), Style::default().fg(Color::Gray)),
         ]);
         lines.push(line);
     }
