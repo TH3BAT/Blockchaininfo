@@ -55,6 +55,7 @@ Whether you're a developer, node operator, or Bitcoin enthusiast, Blockchaininfo
     │   ├── network.rs         # Network data fetching.
     │   ├── network_peers.rs   # Peers data model.
     │   ├── network_totals.rs  # Network data fetching (bytes reveived & sent).
+    │   ├── mempool_distro.rs  # Fetches the sampled tx IDs for distribution metrics.
     │   └── chain_tips.rs      # Fetches chain tips for consensus monitoring.
     ├── rpc.rs                 # Aggregates RPC modules.
     └── utils.rs               # Utility functions (e.g., data formatting).
