@@ -197,9 +197,6 @@ async fn run_app<B: tui::backend::Backend>(
                     KeyCode::Char('q') | KeyCode::Esc => {
                         break; // Allow quitting with 'q' or Escape key.
                     }
-                    KeyCode::Char('c') => {
-                        break; // Allow quitting with Ctrl+C.
-                    }
                     _ => {}
                 }
             }

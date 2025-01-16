@@ -1,6 +1,7 @@
 
 // utils.rs
 
+#[cfg(target_os = "macos")]
 use std::process::Command;
 use crate::models::errors::MyError;
 use tui::widgets::{Block, Borders, Paragraph};
