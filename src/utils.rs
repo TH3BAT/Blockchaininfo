@@ -10,8 +10,6 @@ use tui::style::{Color, Style, Modifier};
 use tui::layout::{Rect, Alignment};
 use tui::Frame;
 use tui::backend::Backend;
-use crate::models::peer_info::PeerInfo;
-use std::collections::HashMap;
 
 // Constants for bytes formatting.
 const KB: u64 = 1024;
@@ -134,92 +132,5 @@ pub fn render_footer<B: Backend>(f: &mut Frame<B>, area: Rect) {
         .block(Block::default().borders(Borders::NONE));
     f.render_widget(footer, area);
 }
-
-/*
-// Helper function to extract the version number as a tuple
-fn extract_version(subver: &str) -> (u32, u32, u32) {
-    let version_pattern = regex::Regex::new(r"/Satoshi:(\d+)\.(\d+)\.(\d+)").unwrap();
-    if let Some(captures) = version_pattern.captures(subver) {
-        let major = captures.get(1).map_or(0, |m| m.as_str().parse::<u32>().unwrap_or(0));
-        let minor = captures.get(2).map_or(0, |m| m.as_str().parse::<u32>().unwrap_or(0));
-        let patch = captures.get(3).map_or(0, |m| m.as_str().parse::<u32>().unwrap_or(0));
-        (major, minor, patch)
-    } else {
-        (0, 0, 0) // Default to 0.0.0 if version is not found
-    }
-}
-*/
-
-pub fn normalize_version(subver: &str) -> String {
-    let version_pattern = regex::Regex::new(r"/Satoshi:(\d+\.\d+\.\d+)").unwrap();
-    if let Some(captures) = version_pattern.captures(subver) {
-        captures.get(1).map_or_else(|| "Unknown".to_string(), |m| m.as_str().to_string())
-    } else {
-        "Unknown".to_string()
-    }
-}
-
-// Aggregate and sort Node Version Distribution.
-pub fn aggregate_and_sort_versions(peer_info: &[PeerInfo]) -> Vec<(String, usize)> {
-    let mut counts: HashMap<String, usize> = HashMap::new();
-
-    // Aggregate peer counts for normalized versions
-    for peer in peer_info.iter().filter(|peer| peer.subver.contains("Satoshi")) {
-        let normalized_version = normalize_version(&peer.subver); // Stripped-down version
-        *counts.entry(normalized_version).or_insert(0) += 1;
-    }
-
-    // Convert HashMap to Vec
-    let mut sorted_counts: Vec<(String, usize)> = counts.into_iter().collect();
-
-    // Sort by peer count in descending order
-    sorted_counts.sort_by(|a, b| b.1.cmp(&a.1));
-
-    sorted_counts
-}
-
-pub fn calculate_block_propagation_time(peer_info: &[PeerInfo], best_block_time: u64) -> u64 {
-    let mut propagation_times: Vec<u64> = Vec::new(); // Specify u64 for the vector.
-
-    // Iterate over peers and filter those who match the condition.
-    for peer in peer_info.iter().filter(|peer| peer.subver.contains("Satoshi")) {
-        let mut peer_last_block_timestamp = peer.last_block;
-        
-        // If the last_block is 0, set it to the best_block_time.
-        if peer_last_block_timestamp == 0 {
-            peer_last_block_timestamp = best_block_time; // Set to best block time.
-        }
-
-        // Calculate the propagation time in seconds (timestamps are assumed to be in seconds).
-        let propagation_time_in_seconds = best_block_time - peer_last_block_timestamp;
-        
-        // Convert to milliseconds (multiply by 1000)
-        let propagation_time_in_ms = propagation_time_in_seconds * 1000;
-
-        // Store in the vector
-        propagation_times.push(propagation_time_in_ms);
-    }
-    
-    // Calculate the average propagation time in milliseconds.
-    let total_peers = propagation_times.len();
-    if total_peers == 0 {
-        return 0; // Avoid division by zero if no valid peers were found.
-    }
-
-    let total_time: u64 = propagation_times.iter().sum(); // Sum of the vector
-    let average_propagation_time_in_ms = total_time / total_peers as u64; // Division by number of peers.
-    
-    // Convert milliseconds to minutes (after calculating the average).
-    // If greater than 60 minutes, then we have corrupt data, and will return 99.
-    if average_propagation_time_in_ms / 60000 < 60 {
-        average_propagation_time_in_ms / 60000 // Convert milliseconds to minutes.
-    } else {
-        99
-    }
-}
-
-
-
-
 
 

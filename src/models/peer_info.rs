@@ -57,4 +57,81 @@ pub struct PeerInfo {
     pub session_id: Option<String>,        // Unique session identifier for the peer.
 }
 
+impl PeerInfo {
+    /// Normalize the version from the `subver` field to `major.minor.patch`.
+    pub fn normalize_version(subver: &str) -> String {
+        let version_pattern = regex::Regex::new(r"/Satoshi:(\d+\.\d+\.\d+)").unwrap();
+        if let Some(captures) = version_pattern.captures(subver) {
+            captures.get(1).map_or_else(|| "Unknown".to_string(), |m| m.as_str().to_string())
+        } else {
+            "Unknown".to_string()
+        }
+    }
+
+    /// Aggregate and sort Node Version Distribution by peer count.
+    pub fn aggregate_and_sort_versions(peer_info: &[PeerInfo]) -> Vec<(String, usize)> {
+        let mut counts: HashMap<String, usize> = HashMap::new();
+
+        // Aggregate peer counts for normalized versions
+        for peer in peer_info.iter().filter(|peer| peer.subver.contains("Satoshi")) {
+            let normalized_version = PeerInfo::normalize_version(&peer.subver); // Use `normalize_version`
+            *counts.entry(normalized_version).or_insert(0) += 1;
+        }
+
+        // Convert HashMap to Vec and sort by peer count in descending order
+        let mut sorted_counts: Vec<(String, usize)> = counts.into_iter().collect();
+        sorted_counts.sort_by(|a, b| b.1.cmp(&a.1)); // Sort by peer count
+
+        sorted_counts
+    }
+
+    /// Calculate block propagation time in minutes.
+    pub fn calculate_block_propagation_time(peer_info: &[PeerInfo], best_block_time: u64) -> u64 {
+        let mut propagation_times: Vec<u64> = Vec::new();
+
+        // Iterate over peers to calculate propagation time
+        for peer in peer_info.iter().filter(|peer| peer.subver.contains("Satoshi")) {
+            let peer_last_block_timestamp = if peer.last_block == 0 {
+                best_block_time // Use best block time if last_block is 0
+            } else {
+                peer.last_block
+            };
+
+            // Calculate propagation time in milliseconds
+            let propagation_time_in_ms = (best_block_time - peer_last_block_timestamp) * 1000;
+            propagation_times.push(propagation_time_in_ms);
+        }
+
+        // Calculate the average propagation time
+        let total_peers = propagation_times.len();
+        if total_peers == 0 {
+            return 0; // Return 0 if no valid peers
+        }
+
+        let total_time: u64 = propagation_times.iter().sum();
+        let average_propagation_time_in_ms = total_time / total_peers as u64;
+
+        // Convert milliseconds to minutes and ensure valid data
+        if average_propagation_time_in_ms / 60000 < 60 {
+            average_propagation_time_in_ms / 60000 // Return in minutes
+        } else {
+            99 // Return 99 for invalid data
+        }
+    }
+
+    /*
+    // Helper function to extract the version number as a tuple
+    pub fn extract_version(subver: &str) -> (u32, u32, u32) {
+        let version_pattern = regex::Regex::new(r"/Satoshi:(\d+)\.(\d+)\.(\d+)").unwrap();
+        if let Some(captures) = version_pattern.captures(subver) {
+            let major = captures.get(1).map_or(0, |m| m.as_str().parse::<u32>().unwrap_or(0));
+            let minor = captures.get(2).map_or(0, |m| m.as_str().parse::<u32>().unwrap_or(0));
+            let patch = captures.get(3).map_or(0, |m| m.as_str().parse::<u32>().unwrap_or(0));
+            (major, minor, patch)
+        } else {
+            (0, 0, 0) // Default to 0.0.0 if version is not found
+        }
+    }
+    */
+}
 

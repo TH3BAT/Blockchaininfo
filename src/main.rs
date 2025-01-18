@@ -27,7 +27,8 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use std::io::{self, Stdout};
-use utils::{render_footer, aggregate_and_sort_versions, calculate_block_propagation_time};
+use utils::render_footer;
+use crate::models::peer_info::PeerInfo;
 use std::sync::Arc;
 use tokio::sync::Mutex as AsyncMutex;
 use models::mempool_info::MempoolDistribution;
@@ -97,8 +98,8 @@ async fn run_app<B: tui::backend::Backend>(
             fetch_peer_info(&config.bitcoin_rpc) 
         )?;
 
-        let version_counts = aggregate_and_sort_versions(&peer_info);
-        let avg_block_propagate_time = calculate_block_propagation_time(&peer_info, blockchain_info.time);
+        let version_counts = PeerInfo::aggregate_and_sort_versions(&peer_info);
+        let avg_block_propagate_time = PeerInfo::calculate_block_propagation_time(&peer_info, blockchain_info.time);
 
         tokio::spawn({
             let config_clone = config.bitcoin_rpc.clone();
