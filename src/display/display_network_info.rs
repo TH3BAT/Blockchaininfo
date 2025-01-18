@@ -55,7 +55,7 @@ pub fn display_network_info<B: Backend>(
         .style(Style::default().fg(Color::Cyan));
     frame.render_widget(header, chunks[0]);
 
-    // Network information content
+    // Network information content.
     let mut network_content = vec![
         Spans::from(vec![
             Span::styled("Connections in: ", Style::default().fg(Color::Gray)),
@@ -85,7 +85,7 @@ pub fn display_network_info<B: Backend>(
                 Style::default().fg(Color::Gray),
             ),
         ]),
-        // Determine the color based on the thresholds
+        // Determine the color based on the thresholds.
         Spans::from(vec![
             Span::styled("Average Block Propagation Time: ", Style::default().fg(Color::Gray)),
             Span::styled(
@@ -111,7 +111,7 @@ pub fn display_network_info<B: Backend>(
         }
     }
 
-    // Render the content
+    // Render the content.
     let network_paragraph = Paragraph::new(network_content)
         .block(Block::default().borders(Borders::NONE));
     frame.render_widget(network_paragraph, chunks[1]);

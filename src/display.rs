@@ -60,7 +60,7 @@ pub fn display_network_info<B: Backend>(
     frame: &mut Frame<B>,
     network_info: &NetworkInfo,
     net_totals: &NetTotals,
-    version_counts: &Vec<(String, usize)>, // Add the version_counts parameter
+    version_counts: &Vec<(String, usize)>, 
     avg_block_propagate_time: u64,
     area: Rect,
 ) -> Result<(), MyError> {

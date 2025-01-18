@@ -108,22 +108,22 @@ async fn run_app<B: tui::backend::Backend>(
                     fetch_mempool_distribution(&config_clone, sample_ids).await
                 {
                     let mut dist = distribution_clone.lock().await;
-                    // Update size distribution
+                    // Update size distribution.
                     dist.small = small;
                     dist.medium = medium;
                     dist.large = large;
-                    // Update age distribution
+                    // Update age distribution.
                     dist.young = young;
                     dist.moderate = moderate;
                     dist.old = old;
-                    // Update RBF stats
+                    // Update RBF stats.
                     dist.rbf_count = rbf;
                     dist.non_rbf_count = non_rbf;
                 }
             }
         });
         
-        // Lock the Mutex to access MempoolDistribution
+        // Lock the Mutex to access MempoolDistribution.
         let dist = distribution.lock().await;
         
         // Draw the TUI.
@@ -190,8 +190,8 @@ async fn run_app<B: tui::backend::Backend>(
             render_footer(frame, chunks[5]);
         })?;
 
-        // Exit the loop if 'q' or 'Esc' is pressed, or Ctrl+C is detected.
-        if event::poll(std::time::Duration::from_millis(3000))? {
+        // Exit the loop if 'q' or 'Esc' is pressed.
+        if event::poll(std::time::Duration::from_millis(9000))? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
                     KeyCode::Char('q') | KeyCode::Esc => {
