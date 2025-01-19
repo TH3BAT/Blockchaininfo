@@ -1,7 +1,7 @@
 
 // models/mempool_info.rs
 
-use serde::Deserialize; // For serializing and deserializing structures.
+use serde::{Deserialize, Serialize}; // For serializing and deserializing structures.
 
 #[derive(Default)]
 pub struct MempoolDistribution {
@@ -49,3 +49,50 @@ impl MempoolInfo {
         (self.minrelaytxfee * 100_000_000.0 / 1_000.0) as u64
     }
 }
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
+    pub struct RawMempoolTxsJsonWrap {
+        pub error: Option<String>,    // Optional for any error message.
+        pub id: Option<String>,       // Optional Request ID.
+        pub result: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct MempoolEntryJsonWrap {
+    pub error: Option<String>,
+    pub id: Option<String>,
+    pub result: MempoolEntry,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct MempoolEntry {
+    pub vsize: u64,
+    pub weight: u64,
+    pub time: u64,
+    pub height: u64,
+    pub descendantcount: u64,
+    pub descendantsize: u64,
+    pub ancestorcount: u64,
+    pub ancestorsize: u64,
+    pub wtxid: String,
+    pub fees: Fees,
+    pub depends: Option<Vec<String>>,
+    pub spentby: Option<Vec<String>>,
+    #[serde(rename = "bip125-replaceable")]
+    pub bip125_replaceable: bool,
+    pub unbroadcast: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct Fees {
+    pub base: f64,
+    pub modified: f64,
+    pub ancestor: f64,
+    pub descendant: f64,
+}
+

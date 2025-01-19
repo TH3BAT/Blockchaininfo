@@ -4,7 +4,8 @@
 use reqwest::Client;
 use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
-use crate::models::mempool_info::{MempoolInfoJsonWrap, MempoolInfo};
+use crate::models::mempool_info::{MempoolInfoJsonWrap, MempoolInfo, 
+    RawMempoolTxsJsonWrap};
 use crate::models::errors::MyError;
 use crate::config::RpcConfig;
 
@@ -53,11 +54,12 @@ pub async fn fetch_mempool_info(
         .json(&json_rpc_request)
         .send()
         .await?
-        .json::<serde_json::Value>() // Use generic JSON to handle a large list
+        .json::<RawMempoolTxsJsonWrap>() // Use generic JSON to handle a large list
         .await?;
 
     // Extract transaction IDs (Vec<String>) from the response.
-    let all_tx_ids: Vec<String> = serde_json::from_value(raw_mempool_response["result"].clone())?;
+    // let all_tx_ids: Vec<String> = serde_json::from_value(raw_mempool_response["result"].clone())?;
+    let all_tx_ids = raw_mempool_response.result;
 
     // Step 4: Randomly sample the transactions (if sample size is smaller than total transactions).
     use rand::seq::SliceRandom;
