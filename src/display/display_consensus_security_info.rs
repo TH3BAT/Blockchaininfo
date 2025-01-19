@@ -2,9 +2,10 @@
 // display/display_consensus_security_info.rs
 
 use tui::{
-    style::{Color, Style, Modifier},
+    style::{Color, Style},
     text::{Span, Spans},
     widgets::{Block, Borders, Paragraph},
+    layout::{Constraint, Direction, Layout},
 };
 use crate::models::chaintips_info::ChainTip;
 use crate::models::errors::MyError;  
@@ -14,18 +15,33 @@ pub fn display_consensus_security_info<B: tui::backend::Backend>(
     chaintips_info: &[ChainTip],
     area: tui::layout::Rect,
 ) -> Result<(), MyError> {
-    let mut lines = Vec::new();
+    // Create the layout for this specific chunk (using passed 'area').
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .margin(1)
+        .constraints(
+            [
+                Constraint::Length(1), // Header section (only title).
+                Constraint::Min(5),    // Content section.
+            ]
+            .as_ref(),
+        )
+        .split(area);
 
-    // Add a blank line for separation after the title.
-    lines.push(Spans::from(vec![]));
+    // Render header
+    let header = Block::default()
+        .borders(Borders::NONE) // Show borders for the header.
+        .style(Style::default().fg(Color::Cyan)); // Style for borders (Cyan color).
+    frame.render_widget(header, chunks[0]);
+
+    // Prepare content for the TUI display.
+    let mut lines = Vec::new();
 
     // Add a "Fork Monitoring:" subheading.
     lines.push(Spans::from(vec![
         Span::styled(
             "Fork Monitoring:",
-            Style::default()
-                .fg(Color::Gray)
-                // .add_modifier(Modifier::BOLD),
+            Style::default().fg(Color::Gray),
         ),
     ]));
 
@@ -61,21 +77,9 @@ pub fn display_consensus_security_info<B: tui::backend::Backend>(
         lines.push(line);
     }
 
-    // Create a block with the title [Consensus Security].
-    let block = Block::default()
-        .borders(Borders::NONE)
-        .title(Span::styled(
-            "[Consensus Security]",
-            Style::default()
-                .fg(Color::Cyan)
-                .add_modifier(Modifier::BOLD | Modifier::UNDERLINED),
-        ));
-
-    // Render the block with the data inside.
-    let paragraph = Paragraph::new(lines).block(block);
-    frame.render_widget(paragraph, area);
+    // Render the content in the second chunk.
+    let paragraph = Paragraph::new(lines);
+    frame.render_widget(paragraph, chunks[1]);
 
     Ok(())
 }
-
-

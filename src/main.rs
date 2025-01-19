@@ -183,6 +183,15 @@ async fn run_app<B: tui::backend::Backend>(
             display_network_info(frame, &network_info, &net_totals, &version_counts, avg_block_propagate_time, chunks[3]).unwrap();
 
             // Block 5: Consensus Security.
+            let block_5 = Block::default()
+            .borders(Borders::NONE)
+            .title(Span::styled(
+                "[Consensus Security]",
+                Style::default()
+                    .fg(Color::Cyan)
+                    .add_modifier(Modifier::BOLD | Modifier::UNDERLINED),
+            ));
+            frame.render_widget(block_5, chunks[4]);
             display_consensus_security_info(frame, &chaintips_info, chunks[4]).unwrap();
 
             // Block 6: Footer.
