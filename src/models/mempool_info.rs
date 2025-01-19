@@ -1,7 +1,7 @@
 
 // models/mempool_info.rs
 
-use serde::{Deserialize, Serialize}; // For serializing and deserializing structures.
+use serde::Deserialize; // For serializing and deserializing structures.
 
 #[derive(Default)]
 pub struct MempoolDistribution {
@@ -59,16 +59,18 @@ impl MempoolInfo {
         pub result: Vec<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
 pub struct MempoolEntryJsonWrap {
     pub error: Option<String>,
     pub id: Option<String>,
     pub result: MempoolEntry,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
 pub struct MempoolEntry {
     pub vsize: u64,
     pub weight: u64,
@@ -87,8 +89,9 @@ pub struct MempoolEntry {
     pub unbroadcast: Option<bool>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
 pub struct Fees {
     pub base: f64,
     pub modified: f64,
