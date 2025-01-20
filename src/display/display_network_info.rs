@@ -32,8 +32,8 @@ pub fn display_network_info<B: Backend>(
         Color::Red // Propagation time > 5 minutes = Red (critical).
     };
 
-    let abpt_text= if avg_block_propagate_time < 99 {"minutes"
-    } else { "minutes (corrupt)"
+    let abpt_text= if avg_block_propagate_time < 1000 {"minutes"
+    } else { "minutes (corrupt?)"
     };
 
     // Define layout for the network info, using the passed area.

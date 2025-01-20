@@ -21,8 +21,8 @@ pub enum MyError {
     InvalidBlockTime(u64),   
     InvalidBlockHeight(u64), // Difficulty adjustment calc error.
     CustomError(String),     // Format scientific superscript error.
-    // Terminal(String),        // Terminal-related errors
-    Audio(String),           // Audio-related errors
+    // Terminal(String),        // Terminal-related errors.
+    // Audio(String),           // Audio-related errors.
 }
 
 // Implementation of `fmt::Display` for custom error messages.
@@ -42,7 +42,7 @@ impl fmt::Display for MyError {
             MyError::InvalidBlockHeight(time) => write!(f, "Invalid block height: {}", time),
             MyError::CustomError(err) => write!(f, "Custom error: {}", err),
             // MyError::Terminal(err) => write!(f, "Terminal error: {}", err),
-            MyError::Audio(err) => write!(f, "Audio error: {}", err),
+            // MyError::Audio(err) => write!(f, "Audio error: {}", err),
         }
     }
 }
@@ -92,6 +92,7 @@ impl From<std::env::VarError> for MyError {
     }
 }
 
+/*
 impl From<rodio::decoder::DecoderError> for MyError {
     fn from(err: rodio::decoder::DecoderError) -> MyError {
         MyError::Audio(format!("Audio decoder error: {}", err))
@@ -103,6 +104,7 @@ impl From<std::sync::PoisonError<std::sync::MutexGuard<'_, rodio::Sink>>> for My
         MyError::Audio("Mutex poisoned while accessing Sink".to_string())
     }
 }
+*/
 
 #[derive(Debug)]
 #[allow(dead_code)]

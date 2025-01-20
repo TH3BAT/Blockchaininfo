@@ -112,11 +112,11 @@ impl PeerInfo {
         let average_propagation_time_in_ms = total_time / total_peers as u64;
 
         // Convert milliseconds to minutes and ensure valid data
-        if average_propagation_time_in_ms / 60000 < 60 {
-            average_propagation_time_in_ms / 60000 // Return in minutes
-        } else {
-            99 // Return 99 for invalid data
-        }
+        // if average_propagation_time_in_ms / 60000 < 180 {
+        average_propagation_time_in_ms / 60000 // Return in minutes
+        // } else {
+        //    99 // Return 99 for invalid data
+        // }
     }
 
     /*
