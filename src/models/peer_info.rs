@@ -115,7 +115,7 @@ impl PeerInfo {
             if propagation_time_in_ms.abs() <= 600_000 {
                 propagation_times.push(propagation_time_in_ms);
             } else {
-                continue;
+                continue; // Skip peers with invalid timestamps / bad clocks.
             }
         }
     
@@ -128,7 +128,7 @@ impl PeerInfo {
         let total_time: i64 = propagation_times.iter().sum();
         let average_propagation_time_in_ms = total_time / total_peers as i64;
     
-        average_propagation_time_in_ms / 60000 // Return in minutes.
+        average_propagation_time_in_ms / 6000 // Return in seconds.
     }
 
     /*

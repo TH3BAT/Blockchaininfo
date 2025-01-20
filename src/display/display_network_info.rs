@@ -24,18 +24,16 @@ pub fn display_network_info<B: Backend>(
     area: Rect,
 ) -> Result<(), MyError> {
     
-    let color = if avg_block_propagate_time < 2 {
+    let color = if avg_block_propagate_time < 120 {
         Color::Green // Propagation time < 2 minute = Green (ideal).
-    } else if avg_block_propagate_time < 5 {
+    } else if avg_block_propagate_time < 300 {
         Color::Yellow // Propagation time between 2-5 minutes = Yellow (caution).
     } else {
         Color::Red // Propagation time > 5 minutes = Red (critical).
     };
 
-    let abpt_text= if avg_block_propagate_time < 1000 {"minutes"
-    } else { "minutes (corrupt?)"
-    };
-
+    let abpt_text= "seconds";
+    
     // Define layout for the network info, using the passed area.
     let chunks = Layout::default()
         .direction(Direction::Vertical)
