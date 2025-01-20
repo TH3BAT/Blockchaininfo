@@ -25,11 +25,11 @@ pub fn display_network_info<B: Backend>(
 ) -> Result<(), MyError> {
     
     let color = if avg_block_propagate_time.abs() < 3 {
-        Color::Green // Propagation time < 3 seconds = Green (ideal).
+        Color::Green // Ideal: propagation time within 3 seconds.
     } else if avg_block_propagate_time.abs() < 60 {
-        Color::Yellow // Propagation time between 3 seconds and 1 minute = Yellow (caution).
+        Color::Yellow // Caution: propagation time between 3 and 60 seconds.
     } else {
-        Color::Red // Propagation time > 5 minutes = Red (critical).
+        Color::Red // Critical: propagation time over 60 seconds.
     };
 
     let abpt_text= "seconds";
