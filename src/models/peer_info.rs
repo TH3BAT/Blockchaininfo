@@ -110,8 +110,13 @@ impl PeerInfo {
             let peer_last_block_timestamp = peer.last_block as i64;
     
             // Calculate propagation time in milliseconds.
+            // Discard where peer's last_block timestamp is 'invalid'. 
             let propagation_time_in_ms = (peer_last_block_timestamp - best_block_time as i64) * 1000;
-            propagation_times.push(propagation_time_in_ms);
+            if propagation_time_in_ms.abs() <= 600_000 {
+                propagation_times.push(propagation_time_in_ms);
+            } else {
+                continue;
+            }
         }
     
         // Calculate the average propagation time.
