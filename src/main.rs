@@ -99,7 +99,7 @@ async fn run_app<B: tui::backend::Backend>(
         )?;
 
         let version_counts = PeerInfo::aggregate_and_sort_versions(&peer_info);
-        let avg_block_propagate_time = PeerInfo::calculate_block_propagation_time(&peer_info, blockchain_info.time);
+        let avg_block_propagate_time = PeerInfo::calculate_block_propagation_time(&peer_info, blockchain_info.time, blockchain_info.blocks);
 
         tokio::spawn({
             let config_clone = config.bitcoin_rpc.clone();

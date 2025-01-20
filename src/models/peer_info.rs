@@ -86,20 +86,22 @@ impl PeerInfo {
     }
 
     /// Calculate block propagation time in minutes.
-    pub fn calculate_block_propagation_time(peer_info: &[PeerInfo], best_block_time: u64) -> u64 {
+    pub fn calculate_block_propagation_time(peer_info: &[PeerInfo], best_block_time: u64, best_block: u64) -> u64 {
         let mut propagation_times: Vec<u64> = Vec::new();
 
         // Iterate over peers to calculate propagation time
         for peer in peer_info.iter().filter(|peer| peer.subver.contains("Satoshi")) {
-            let peer_last_block_timestamp = if peer.last_block == 0 {
-                best_block_time // Use best block time if last_block is 0
-            } else {
-                peer.last_block
-            };
+            if peer.synced_blocks == best_block as i64 {
+                let peer_last_block_timestamp = if peer.last_block == 0 {
+                    best_block_time // Use best block time if last_block is 0
+                } else {
+                    peer.last_block
+                };
 
-            // Calculate propagation time in milliseconds
-            let propagation_time_in_ms = (best_block_time - peer_last_block_timestamp) * 1000;
-            propagation_times.push(propagation_time_in_ms);
+                // Calculate propagation time in milliseconds
+                let propagation_time_in_ms = (best_block_time - peer_last_block_timestamp) * 1000;
+                propagation_times.push(propagation_time_in_ms);
+            }
         }
 
         // Calculate the average propagation time
@@ -111,12 +113,8 @@ impl PeerInfo {
         let total_time: u64 = propagation_times.iter().sum();
         let average_propagation_time_in_ms = total_time / total_peers as u64;
 
-        // Convert milliseconds to minutes and ensure valid data
-        // if average_propagation_time_in_ms / 60000 < 180 {
         average_propagation_time_in_ms / 60000 // Return in minutes
-        // } else {
-        //    99 // Return 99 for invalid data
-        // }
+        
     }
 
     /*
