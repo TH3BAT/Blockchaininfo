@@ -3,6 +3,7 @@
 
 use serde::Deserialize;
 use std::collections::HashMap;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 // Wrapper for JSON-RPC response.
 #[derive(Debug, Deserialize, Clone)]
@@ -86,35 +87,43 @@ impl PeerInfo {
     }
 
     /// Calculate block propagation time in minutes.
-    pub fn calculate_block_propagation_time(peer_info: &[PeerInfo], best_block_time: u64, best_block: u64) -> i64 {
+    pub fn calculate_block_propagation_time(
+        peer_info: &[PeerInfo],
+        best_block_time: u64,
+        best_block: u64,
+    ) -> i64 {
         let mut propagation_times: Vec<i64> = Vec::new();
-
+        let current_time = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards")
+            .as_secs();
+    
+        let best_block_i64 = best_block as i64;
+    
         // Iterate over peers to calculate propagation time.
-        for peer in peer_info.iter().filter(|peer| peer.subver.contains("Satoshi")) {
-            if peer.synced_blocks == best_block as i64 {
-                let peer_last_block_timestamp = if peer.last_block == 0 {
-                    best_block_time // Use best block time if last_block is 0.
-                } else {
-                    peer.last_block
-                };
-
-                // Calculate propagation time in milliseconds.
-                let propagation_time_in_ms = (best_block_time as i64 - peer_last_block_timestamp as i64) * 1000;
-                propagation_times.push(propagation_time_in_ms);
-            }
+        for peer in peer_info.iter().filter(|peer| {
+            peer.subver.contains("Satoshi") &&
+            peer.last_block > 0 &&
+            peer.last_block <= current_time &&
+            peer.synced_blocks == best_block_i64
+        }) {
+            let peer_last_block_timestamp = peer.last_block as i64;
+    
+            // Calculate propagation time in milliseconds.
+            let propagation_time_in_ms = (peer_last_block_timestamp - best_block_time as i64) * 1000;
+            propagation_times.push(propagation_time_in_ms);
         }
-
+    
         // Calculate the average propagation time.
         let total_peers = propagation_times.len();
         if total_peers == 0 {
-            return 0; // Return 0 if no valid peers.
+            return 0; // Return 0 if no valid peers
         }
-
+    
         let total_time: i64 = propagation_times.iter().sum();
         let average_propagation_time_in_ms = total_time / total_peers as i64;
-
+    
         average_propagation_time_in_ms / 60000 // Return in minutes.
-        
     }
 
     /*
