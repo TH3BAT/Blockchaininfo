@@ -13,7 +13,8 @@ use rpc::{fetch_blockchain_info, fetch_mempool_info, fetch_network_info, fetch_b
 use models::errors::MyError;
 use display::{display_blockchain_info, display_mempool_info, display_network_info
     , display_consensus_security_info};
-use crate::utils::{DIFFICULTY_ADJUSTMENT_INTERVAL, display_header_widget};
+use crate::utils::{DIFFICULTY_ADJUSTMENT_INTERVAL, render_header, render_footer};
+use crate::models::peer_info::PeerInfo;
 use tokio::try_join;
 use tui::backend::CrosstermBackend;
 use tui::layout::{Layout, Constraint, Direction};
@@ -27,8 +28,6 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use std::io::{self, Stdout};
-use utils::render_footer;
-use crate::models::peer_info::PeerInfo;
 use std::sync::Arc;
 use tokio::sync::Mutex as AsyncMutex;
 use models::mempool_info::MempoolDistribution;
@@ -149,7 +148,7 @@ async fn run_app<B: tui::backend::Backend>(
             // Block 1: App title.
             let block_1 = Block::default().borders(Borders::NONE);
             frame.render_widget(block_1, chunks[0]);
-            let header_widget = display_header_widget(); // Create header widget.
+            let header_widget = render_header(); // Create header widget.
             frame.render_widget(header_widget, chunks[0]); // Render the header widget.
 
             // Block 2: Blockchain Info.

@@ -23,8 +23,6 @@ pub async fn fetch_mempool_distribution(
     let mut rbf_count = 0;
     let mut non_rbf_count = 0;
 
-    
-
     for tx_id in sample_ids {
         let json_rpc_request = json!({
             "jsonrpc": "1.0",
@@ -43,22 +41,22 @@ pub async fn fetch_mempool_distribution(
             .json::<MempoolEntryJsonWrap>()
             .await?;
     
-        // Access the result directly
+        // Access the result directly.
         let mempool_entry = response.result;
     
-        // Categorize by transaction size
+        // Categorize by transaction size.
         match mempool_entry.vsize {
             0..=249 => small += 1,
             250..=1000 => medium += 1,
             _ => large += 1,
         }
     
-        // Categorize by age
+        // Categorize by age.
         let current_time = match SystemTime::now().duration_since(UNIX_EPOCH) {
             Ok(duration) => duration.as_secs(),
             Err(e) => {
                 eprintln!("Failed to get current time: {}", e);
-                continue; // Skip this transaction if there's an error
+                continue; // Skip this transaction if there's an error.
             }
         };
 
@@ -71,12 +69,12 @@ pub async fn fetch_mempool_distribution(
         };
     
         match age {
-            0..=300 => young += 1,             // < 5 minutes
-            301..=3600 => moderate += 1,       // 5 minutes to 1 hour
-            _ => old += 1,                     // > 1 hour
+            0..=300 => young += 1,             // < 5 minutes.
+            301..=3600 => moderate += 1,       // 5 minutes to 1 hour.
+            _ => old += 1,                     // > 1 hour.
         }
     
-        // Monitor RBF status
+        // Monitor RBF status.
         if mempool_entry.bip125_replaceable {
             rbf_count += 1;
         } else {
@@ -84,6 +82,6 @@ pub async fn fetch_mempool_distribution(
         }
     }
 
-    // Return both size, age distributions, and RBF stats
+    // Return both size, age distributions, and RBF stats.
     Ok(((small, medium, large), (young, moderate, old), (rbf_count, non_rbf_count)))
 }

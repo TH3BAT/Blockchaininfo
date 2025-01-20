@@ -90,7 +90,7 @@ pub fn estimate_difficulty_change(
     (adjustment_factor - 1.0) * 100.0 // Return percentage change
 } 
 // Returns a `tui` widget for the blockchain header.
-pub fn display_header_widget() -> Paragraph<'static> {
+pub fn render_header() -> Paragraph<'static> {
     // Create the header lines.
     let lines = vec![
         Spans::from(Span::styled(
