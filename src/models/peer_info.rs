@@ -74,51 +74,51 @@ impl PeerInfo {
 
         // Aggregate peer counts for normalized versions
         for peer in peer_info.iter().filter(|peer| peer.subver.contains("Satoshi")) {
-            let normalized_version = PeerInfo::normalize_version(&peer.subver); // Use `normalize_version`
+            let normalized_version = PeerInfo::normalize_version(&peer.subver); // Use `normalize_version`.
             *counts.entry(normalized_version).or_insert(0) += 1;
         }
 
-        // Convert HashMap to Vec and sort by peer count in descending order
+        // Convert HashMap to Vec and sort by peer count in descending order.
         let mut sorted_counts: Vec<(String, usize)> = counts.into_iter().collect();
-        sorted_counts.sort_by(|a, b| b.1.cmp(&a.1)); // Sort by peer count
+        sorted_counts.sort_by(|a, b| b.1.cmp(&a.1)); // Sort by peer count.
 
         sorted_counts
     }
 
     /// Calculate block propagation time in minutes.
-    pub fn calculate_block_propagation_time(peer_info: &[PeerInfo], best_block_time: u64, best_block: u64) -> u64 {
-        let mut propagation_times: Vec<u64> = Vec::new();
+    pub fn calculate_block_propagation_time(peer_info: &[PeerInfo], best_block_time: u64, best_block: u64) -> i64 {
+        let mut propagation_times: Vec<i64> = Vec::new();
 
-        // Iterate over peers to calculate propagation time
+        // Iterate over peers to calculate propagation time.
         for peer in peer_info.iter().filter(|peer| peer.subver.contains("Satoshi")) {
             if peer.synced_blocks == best_block as i64 {
                 let peer_last_block_timestamp = if peer.last_block == 0 {
-                    best_block_time // Use best block time if last_block is 0
+                    best_block_time // Use best block time if last_block is 0.
                 } else {
                     peer.last_block
                 };
 
-                // Calculate propagation time in milliseconds
-                let propagation_time_in_ms = (peer_last_block_timestamp - best_block_time) * 1000;
+                // Calculate propagation time in milliseconds.
+                let propagation_time_in_ms = (best_block_time as i64 - peer_last_block_timestamp as i64) * 1000;
                 propagation_times.push(propagation_time_in_ms);
             }
         }
 
-        // Calculate the average propagation time
+        // Calculate the average propagation time.
         let total_peers = propagation_times.len();
         if total_peers == 0 {
-            return 0; // Return 0 if no valid peers
+            return 0; // Return 0 if no valid peers.
         }
 
-        let total_time: u64 = propagation_times.iter().sum();
-        let average_propagation_time_in_ms = total_time / total_peers as u64;
+        let total_time: i64 = propagation_times.iter().sum();
+        let average_propagation_time_in_ms = total_time / total_peers as i64;
 
-        average_propagation_time_in_ms / 60000 // Return in minutes
+        average_propagation_time_in_ms / 60000 // Return in minutes.
         
     }
 
     /*
-    // Helper function to extract the version number as a tuple
+    // Helper function to extract the version number as a tuple.
     pub fn extract_version(subver: &str) -> (u32, u32, u32) {
         let version_pattern = regex::Regex::new(r"/Satoshi:(\d+)\.(\d+)\.(\d+)").unwrap();
         if let Some(captures) = version_pattern.captures(subver) {
@@ -127,7 +127,7 @@ impl PeerInfo {
             let patch = captures.get(3).map_or(0, |m| m.as_str().parse::<u32>().unwrap_or(0));
             (major, minor, patch)
         } else {
-            (0, 0, 0) // Default to 0.0.0 if version is not found
+            (0, 0, 0) // Default to 0.0.0 if version is not found.
         }
     }
     */

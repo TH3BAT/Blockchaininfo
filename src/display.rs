@@ -61,7 +61,7 @@ pub fn display_network_info<B: Backend>(
     network_info: &NetworkInfo,
     net_totals: &NetTotals,
     version_counts: &Vec<(String, usize)>, 
-    avg_block_propagate_time: u64,
+    avg_block_propagate_time: i64,
     area: Rect,
 ) -> Result<(), MyError> {
     display_network_info::display_network_info(frame, network_info, net_totals, version_counts, avg_block_propagate_time, area)
