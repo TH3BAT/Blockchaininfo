@@ -99,7 +99,7 @@ impl PeerInfo {
                 };
 
                 // Calculate propagation time in milliseconds
-                let propagation_time_in_ms = (best_block_time - peer_last_block_timestamp) * 1000;
+                let propagation_time_in_ms = (peer_last_block_timestamp - best_block_time) * 1000;
                 propagation_times.push(propagation_time_in_ms);
             }
         }
