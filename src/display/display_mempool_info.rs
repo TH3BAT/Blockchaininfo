@@ -91,7 +91,7 @@ pub fn display_mempool_info<B: Backend>(
             Span::styled(" vSats/vByte", Style::default().fg(Color::Gray)),
         ]), 
          // Spans::from(vec![]), // Blank line for separation.
-         Spans::from(vec![Span::styled("Size Distribution (5%):", Style::default().fg(Color::Gray)),]), 
+         Spans::from(vec![Span::styled("Size Distribution (5%, excluding dust transactions):", Style::default().fg(Color::Gray)),]), 
          // Size Distribution
          Spans::from(vec![
             Span::styled("  Small (< 250 vBytes)    : ", Style::default().fg(Color::Yellow)),
@@ -105,7 +105,7 @@ pub fn display_mempool_info<B: Backend>(
             Span::styled("  Large (> 1000 vBytes)   : ", Style::default().fg(Color::Yellow)),
             Span::styled((distribution.large * 20).to_formatted_string(&Locale::en), Style::default().fg(Color::Gray)),
         ]),
-        Spans::from(vec![Span::styled("Age Distribution (5%):", Style::default().fg(Color::Gray)),]), 
+        Spans::from(vec![Span::styled("Age Distribution (5%, excluding dust transactions):", Style::default().fg(Color::Gray)),]), 
         // Age Distribution
         Spans::from(vec![
             Span::styled("  Young (< 5 min)         : ", Style::default().fg(Color::Yellow)),
@@ -119,7 +119,7 @@ pub fn display_mempool_info<B: Backend>(
             Span::styled("  Old (> 1 hr)            : ", Style::default().fg(Color::Yellow)),
             Span::styled((distribution.old * 20).to_formatted_string(&Locale::en), Style::default().fg(Color::Gray)),
         ]),       
-        Spans::from(vec![Span::styled("RBF Distribution (5%):", Style::default().fg(Color::Gray)),]), 
+        Spans::from(vec![Span::styled("RBF Distribution (5%, excluding dust transactions):", Style::default().fg(Color::Gray)),]), 
          // Existing size and age stats
         Spans::from(vec![
             Span::styled("  RBF Transactions    : ", Style::default().fg(Color::Yellow)),

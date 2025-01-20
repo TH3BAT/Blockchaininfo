@@ -22,7 +22,9 @@ pub async fn fetch_mempool_distribution(
     let mut old = 0;
     let mut rbf_count = 0;
     let mut non_rbf_count = 0;
-
+    // Define a dust threshold (e.g., 546 satoshis for standard transactions).
+    const DUST_THRESHOLD: f64 = 0.00000546; // 546 satoshis in BTC.
+    
     for tx_id in sample_ids {
         let json_rpc_request = json!({
             "jsonrpc": "1.0",
@@ -43,6 +45,12 @@ pub async fn fetch_mempool_distribution(
     
         // Access the result directly.
         let mempool_entry = response.result;
+
+        // Exclude dust transactions
+        if mempool_entry.fees.base < DUST_THRESHOLD {
+            // eprintln!("Skipping dust transaction: tx_id = {}", tx_id);
+            continue;
+        }
     
         // Categorize by transaction size.
         match mempool_entry.vsize {
