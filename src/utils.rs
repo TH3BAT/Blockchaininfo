@@ -20,6 +20,8 @@ const TB: u64 = GB * 1024;
 // Constants for estimated difficulty adjustment change.
 pub const DIFFICULTY_ADJUSTMENT_INTERVAL: u64 = 2016;
 pub const BLOCK_TIME_SECONDS: u64 = 600;
+const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 
 
 // Formats a size in bytes into a more readable format (KB, MB, etc.).
@@ -122,14 +124,27 @@ pub fn render_header() -> Paragraph<'static> {
 
     // Create the paragraph widget.
     Paragraph::new(lines)
-        .block(Block::default().title("").borders(Borders::NONE))
+    .block(Block::default().title("").borders(Borders::NONE))
 }
 
 pub fn render_footer<B: Backend>(f: &mut Frame<B>, area: Rect) {
-    let footer = Paragraph::new("Press 'q' or ESC to quit.")
-        .style(Style::default().fg(Color::Gray))
+    // Combine the footer message and app version.
+    let footer_text = vec![
+        Spans::from(Span::styled(
+            "Press 'q' or ESC to quit.",
+            Style::default().fg(Color::Gray),
+        )),
+        Spans::from(Span::styled(
+            format!("v{}", APP_VERSION),
+            Style::default().fg(Color::DarkGray).add_modifier(Modifier::ITALIC),
+        )),
+    ];
+
+    let footer = Paragraph::new(footer_text)
+        .style(Style::default())
         .alignment(Alignment::Center)
         .block(Block::default().borders(Borders::NONE));
+
     f.render_widget(footer, area);
 }
 
