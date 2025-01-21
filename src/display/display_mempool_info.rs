@@ -190,13 +190,29 @@ pub fn display_mempool_info<B: Backend>(
                 Style::default().fg(Color::Gray),
             ),
         ]),
+        Spans::from(vec![Span::styled("Fee Metrics (5%, excluding dust transactions):", Style::default().fg(Color::Gray))]),
         Spans::from(vec![
-            Span::styled("Average Fee (5%, BTC): ", Style::default().fg(Color::Gray)),
-            Span::styled(format!("{:.8}", distribution.average_fee), Style::default().fg(Color::Yellow)),
+            Span::styled("  Average Fee (BTC): ", Style::default().fg(Color::Yellow)),
+            Span::styled(
+                format!("{:.8}", distribution.average_fee),
+                Style::default().fg(Color::Gray),
+            ),
         ]),
+
         Spans::from(vec![
-            Span::styled("Median Fee (5%, BTC): ", Style::default().fg(Color::Gray)),
-            Span::styled(format!("{:.8}", distribution.median_fee), Style::default().fg(Color::Yellow)),
+            Span::styled("  Median Fee (BTC): ", Style::default().fg(Color::Yellow)),
+            Span::styled(
+                format!("{:.8}", distribution.median_fee),
+                Style::default().fg(Color::Gray),
+            ),
+        ]),
+
+        Spans::from(vec![
+            Span::styled("  Average Fee Rate (sats/vByte): ", Style::default().fg(Color::Yellow)),
+            Span::styled(
+                format!("{:.2}", distribution.average_fee_rate), // Show two decimal places for precision.
+                Style::default().fg(Color::Gray),
+            ),
         ]),
     ];
 

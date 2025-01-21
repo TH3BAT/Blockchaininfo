@@ -51,6 +51,6 @@ pub async fn fetch_peer_info(config: &RpcConfig) -> Result<Vec<PeerInfo>, MyErro
 pub async fn fetch_mempool_distribution(
     config: &RpcConfig,
     sample_ids: Vec<String>,
-) -> Result<((usize, usize, usize), (usize, usize, usize), (usize, usize), f64, f64), MyError> {
+) -> Result<((usize, usize, usize), (usize, usize, usize), (usize, usize), f64, f64, f64), MyError> {
     mempool_distro::fetch_mempool_distribution(config, sample_ids).await
 }

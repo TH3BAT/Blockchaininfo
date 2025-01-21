@@ -12,7 +12,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 pub async fn fetch_mempool_distribution(
     config: &RpcConfig,
     sample_ids: Vec<String>,
-) -> Result<((usize, usize, usize), (usize, usize, usize), (usize, usize), f64, f64), MyError> {
+) -> Result<((usize, usize, usize), (usize, usize, usize), (usize, usize), f64, f64, f64), MyError> {
     let client = Client::new();
     let mut small = 0;
     let mut medium = 0;
@@ -23,12 +23,13 @@ pub async fn fetch_mempool_distribution(
     let mut rbf_count = 0;
     let mut non_rbf_count = 0;
     let mut total_fee = 0.0;
+    let mut total_vsize = 0; // Accumulate total transaction sizes.
     let mut count = 0;
     let mut fees: Vec<f64> = Vec::new(); // Store all fees for median calculation.
 
     // Define a dust threshold (e.g., 546 satoshis for standard transactions).
     const DUST_THRESHOLD: f64 = 0.00000546; // 546 satoshis in BTC.
-    
+
     for tx_id in sample_ids {
         let json_rpc_request = json!({
             "jsonrpc": "1.0",
@@ -36,7 +37,7 @@ pub async fn fetch_mempool_distribution(
             "method": "getmempoolentry",
             "params": [tx_id]
         });
-    
+
         let response = client
             .post(&config.address)
             .basic_auth(&config.username, Some(&config.password))
@@ -46,22 +47,22 @@ pub async fn fetch_mempool_distribution(
             .await?
             .json::<MempoolEntryJsonWrap>()
             .await?;
-    
+
         // Access the result directly.
         let mempool_entry = response.result;
 
-        // Exclude dust transactions
+        // Exclude dust transactions.
         if mempool_entry.fees.base < DUST_THRESHOLD {
             continue;
         }
-    
+
         // Categorize by transaction size.
         match mempool_entry.vsize {
             0..=249 => small += 1,
             250..=1000 => medium += 1,
             _ => large += 1,
         }
-    
+
         // Categorize by age.
         let current_time = match SystemTime::now().duration_since(UNIX_EPOCH) {
             Ok(duration) => duration.as_secs(),
@@ -78,13 +79,13 @@ pub async fn fetch_mempool_distribution(
                 continue;
             }
         };
-    
+
         match age {
             0..=300 => young += 1,             // < 5 minutes.
             301..=3600 => moderate += 1,       // 5 minutes to 1 hour.
             _ => old += 1,                     // > 1 hour.
         }
-    
+
         // Monitor RBF status.
         if mempool_entry.bip125_replaceable {
             rbf_count += 1;
@@ -92,8 +93,9 @@ pub async fn fetch_mempool_distribution(
             non_rbf_count += 1;
         }
 
-        // Accumulate fees for average and median calculation.
+        // Accumulate fees and transaction sizes for calculations.
         total_fee += mempool_entry.fees.base;
+        total_vsize += mempool_entry.vsize; // Add transaction size in vBytes.
         fees.push(mempool_entry.fees.base);
         count += 1;
     }
@@ -116,8 +118,16 @@ pub async fn fetch_mempool_distribution(
         0.0
     };
 
-    // Return size, age distributions, RBF stats, average fee, and median fee.
-    Ok(((small, medium, large), (young, moderate, old), (rbf_count, non_rbf_count), average_fee, median_fee))
+    // Calculate the average fee rate (sats/vByte).
+    let average_fee_rate = if total_vsize > 0 {
+        (total_fee * 100_000_000.0) / total_vsize as f64 // Convert BTC to sats.
+    } else {
+        0.0
+    };
+
+    // Return size, age distributions, RBF stats, average fee, median fee, and average fee rate.
+    Ok(((small, medium, large), (young, moderate, old), (rbf_count, non_rbf_count), average_fee, median_fee, average_fee_rate))
 }
+
 
 

@@ -15,6 +15,7 @@ pub struct MempoolDistribution {
     pub non_rbf_count: usize,
     pub average_fee: f64,
     pub median_fee: f64,
+    pub average_fee_rate: f64,
 }
 
 // Wrapper Struct - The Bitcoin RPC response wraps the actual mempoolinfo data inside the result field.

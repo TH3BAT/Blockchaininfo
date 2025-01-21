@@ -104,7 +104,8 @@ async fn run_app<B: tui::backend::Backend>(
             let config_clone = config.bitcoin_rpc.clone();
             let distribution_clone = distribution.clone();
             async move {
-                if let Ok(((small, medium, large), (young, moderate, old), (rbf, non_rbf), average_fee, median_fee)) =
+                if let Ok(((small, medium, large), (young, moderate, old), (rbf, non_rbf), 
+                    average_fee, median_fee, average_fee_rate)) =
                     fetch_mempool_distribution(&config_clone, sample_ids).await
                 {
                     let mut dist = distribution_clone.lock().await;
@@ -121,6 +122,7 @@ async fn run_app<B: tui::backend::Backend>(
                     dist.non_rbf_count = non_rbf;
                     dist.average_fee = average_fee;
                     dist.median_fee = median_fee;
+                    dist.average_fee_rate = average_fee_rate;
                 }
             }
         });
@@ -138,7 +140,7 @@ async fn run_app<B: tui::backend::Backend>(
                     [
                         Constraint::Length(8),   // Application title.
                         Constraint::Length(14),  // Blockchain section.
-                        Constraint::Length(20),   // Mempool section.
+                        Constraint::Length(22),   // Mempool section.
                         Constraint::Max(18),     // Network section.
                         Constraint::Length(7),   // Consensus Security section.
                         Constraint::Length(1),   // Footer section.
