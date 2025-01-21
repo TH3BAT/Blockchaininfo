@@ -12,7 +12,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 pub async fn fetch_mempool_distribution(
     config: &RpcConfig,
     sample_ids: Vec<String>,
-) -> Result<((usize, usize, usize), (usize, usize, usize), (usize, usize)), MyError> {
+) -> Result<((usize, usize, usize), (usize, usize, usize), (usize, usize), f64, f64), MyError> {
     let client = Client::new();
     let mut small = 0;
     let mut medium = 0;
@@ -22,6 +22,10 @@ pub async fn fetch_mempool_distribution(
     let mut old = 0;
     let mut rbf_count = 0;
     let mut non_rbf_count = 0;
+    let mut total_fee = 0.0;
+    let mut count = 0;
+    let mut fees: Vec<f64> = Vec::new(); // Store all fees for median calculation.
+
     // Define a dust threshold (e.g., 546 satoshis for standard transactions).
     const DUST_THRESHOLD: f64 = 0.00000546; // 546 satoshis in BTC.
     
@@ -48,7 +52,6 @@ pub async fn fetch_mempool_distribution(
 
         // Exclude dust transactions
         if mempool_entry.fees.base < DUST_THRESHOLD {
-            // eprintln!("Skipping dust transaction: tx_id = {}", tx_id);
             continue;
         }
     
@@ -88,8 +91,33 @@ pub async fn fetch_mempool_distribution(
         } else {
             non_rbf_count += 1;
         }
+
+        // Accumulate fees for average and median calculation.
+        total_fee += mempool_entry.fees.base;
+        fees.push(mempool_entry.fees.base);
+        count += 1;
     }
 
-    // Return both size, age distributions, and RBF stats.
-    Ok(((small, medium, large), (young, moderate, old), (rbf_count, non_rbf_count)))
+    // Calculate the average fee.
+    let average_fee = if count > 0 { total_fee / count as f64 } else { 0.0 };
+
+    // Calculate the median fee.
+    let median_fee = if !fees.is_empty() {
+        fees.sort_by(|a, b| a.partial_cmp(b).unwrap()); // Sort the fees.
+        let mid = fees.len() / 2;
+        if fees.len() % 2 == 0 {
+            // Average of two middle values if even number of elements.
+            (fees[mid - 1] + fees[mid]) / 2.0
+        } else {
+            // Middle value if odd number of elements.
+            fees[mid]
+        }
+    } else {
+        0.0
+    };
+
+    // Return size, age distributions, RBF stats, average fee, and median fee.
+    Ok(((small, medium, large), (young, moderate, old), (rbf_count, non_rbf_count), average_fee, median_fee))
 }
+
+

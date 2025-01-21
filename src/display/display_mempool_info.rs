@@ -190,6 +190,14 @@ pub fn display_mempool_info<B: Backend>(
                 Style::default().fg(Color::Gray),
             ),
         ]),
+        Spans::from(vec![
+            Span::styled("Average Fee (5%, BTC): ", Style::default().fg(Color::Gray)),
+            Span::styled(format!("{:.8}", distribution.average_fee), Style::default().fg(Color::Yellow)),
+        ]),
+        Spans::from(vec![
+            Span::styled("Median Fee (5%, BTC): ", Style::default().fg(Color::Gray)),
+            Span::styled(format!("{:.8}", distribution.median_fee), Style::default().fg(Color::Yellow)),
+        ]),
     ];
 
     // No borders for empty sections.
