@@ -18,7 +18,7 @@ use crate::models::peer_info::PeerInfo;
 use tokio::try_join;
 use tui::backend::CrosstermBackend;
 use tui::layout::{Layout, Constraint, Direction};
-use tui::widgets::{Block, Borders};
+use tui::widgets::{Block, Borders, BorderType};
 use tui::Terminal;
 use tui::text::Span;
 use tui::style::{Color, Style, Modifier};
@@ -89,7 +89,7 @@ async fn run_app<B: tui::backend::Backend>(
 
         // Concurrently fetch mempool info, network info, block info, and chain tips.
         let ((mempool_info, sample_ids), network_info, block_info, chaintips_info, net_totals, peer_info) = try_join!(
-            fetch_mempool_info(&config.bitcoin_rpc, 5.0),
+            fetch_mempool_info(&config.bitcoin_rpc, 10.0),
             fetch_network_info(&config.bitcoin_rpc),
             fetch_block_data_by_height(&config.bitcoin_rpc, epoc_start_block),
             fetch_chain_tips(&config.bitcoin_rpc),
@@ -138,7 +138,7 @@ async fn run_app<B: tui::backend::Backend>(
                 .margin(1)
                 .constraints(
                     [
-                        Constraint::Length(8),   // Application title.
+                        Constraint::Length(3),   // Application title.
                         Constraint::Length(14),  // Blockchain section.
                         Constraint::Length(22),   // Mempool section.
                         Constraint::Max(18),     // Network section.
@@ -156,41 +156,53 @@ async fn run_app<B: tui::backend::Backend>(
             frame.render_widget(header_widget, chunks[0]); // Render the header widget.
 
             // Block 2: Blockchain Info.
-            let block_2 = Block::default().borders(Borders::NONE).title(Span::styled(
+            let block_2 = Block::default().borders(Borders::ALL)
+                .border_style(Style::default().fg(Color::DarkGray))
+                .border_type(BorderType::Rounded)
+                .title(Span::styled(
                 "[Blockchain]",
                 Style::default()
-                    .fg(Color::Cyan)
-                    .add_modifier(Modifier::BOLD | Modifier::UNDERLINED), 
+                    .fg(Color::DarkGray)
+                    .add_modifier(Modifier::BOLD), 
             ));
             frame.render_widget(block_2, chunks[1]);
             display_blockchain_info(frame, &blockchain_info, &block_info, chunks[1]).unwrap();
         
             // Block 3: Mempool Info.
-            let block_3 = Block::default().borders(Borders::NONE).title(Span::styled(
+            let block_3 = Block::default().borders(Borders::ALL)
+                .border_style(Style::default().fg(Color::DarkGray))
+                .border_type(BorderType::Rounded)
+                .title(Span::styled(
                 "[Mempool]",
                 Style::default()
-                    .fg(Color::Cyan)
-                    .add_modifier(Modifier::BOLD | Modifier::UNDERLINED), 
+                    .fg(Color::DarkGray)
+                    .add_modifier(Modifier::BOLD), 
             ));            
             frame.render_widget(block_3, chunks[2]);
             display_mempool_info(frame, &mempool_info, &*dist, chunks[2]).unwrap();
         
             // Block 4: Network Info.
-            let block_4 = Block::default().borders(Borders::NONE).title(Span::styled(
+            let block_4 = Block::default().borders(Borders::ALL)
+                .border_style(Style::default().fg(Color::DarkGray))
+                .border_type(BorderType::Rounded)
+                .title(Span::styled(
                 "[Network]",
                 Style::default()
-                    .fg(Color::Cyan)
-                    .add_modifier(Modifier::BOLD | Modifier::UNDERLINED), 
+                    .fg(Color::DarkGray)
+                    .add_modifier(Modifier::BOLD), 
             ));
             frame.render_widget(block_4, chunks[3]);
             display_network_info(frame, &network_info, &net_totals, &version_counts, avg_block_propagate_time, chunks[3]).unwrap();
 
             // Block 5: Consensus Security.
-            let block_5 = Block::default().borders(Borders::NONE).title(Span::styled(
+            let block_5 = Block::default().borders(Borders::ALL)
+                .border_style(Style::default().fg(Color::DarkGray))
+                .border_type(BorderType::Rounded)
+                .title(Span::styled(
                 "[Consensus Security]",
                 Style::default()
-                    .fg(Color::Cyan)
-                    .add_modifier(Modifier::BOLD | Modifier::UNDERLINED),
+                    .fg(Color::DarkGray)
+                    .add_modifier(Modifier::BOLD),
             ));
             frame.render_widget(block_5, chunks[4]);
             display_consensus_security_info(frame, &chaintips_info, chunks[4]).unwrap();

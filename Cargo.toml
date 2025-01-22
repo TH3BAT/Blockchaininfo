@@ -1,6 +1,6 @@
 [package]
 name = "blockchaininfo"
-version = "0.2.3"
+version = "0.2.4"
 edition = "2021"
 
 [[bench]]
@@ -28,7 +28,7 @@ colored = "3.0.0"
 crossterm = "0.28.1"
 tui = "0.19.0"
 regex = "1.11.1"
-clap = "4.5.26"
+clap = "4.5.27"
 rand = "0.8.5"
 
 

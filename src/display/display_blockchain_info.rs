@@ -114,7 +114,7 @@ pub fn display_blockchain_info<B: Backend>(
         ]),
 
         Spans::from(vec![
-            Span::styled("Block Time: ", Style::default().fg(Color::Gray)),
+            Span::styled("Block Time : ", Style::default().fg(Color::Gray)),
             Span::styled(time, Style::default().fg(Color::Gray)),
         ]),
     ];

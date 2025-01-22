@@ -4,6 +4,7 @@
 use reqwest::Client;
 use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
+use rand::seq::SliceRandom;
 use crate::models::mempool_info::{MempoolInfoJsonWrap, MempoolInfo, 
     RawMempoolTxsJsonWrap};
 use crate::models::errors::MyError;
@@ -34,7 +35,7 @@ pub async fn fetch_mempool_info(
         .await?;
 
     let mempool_info = response.result;
-    let total_transactions = mempool_info.size; // Number of transactions in the mempool
+    let total_transactions = mempool_info.size; // Number of transactions in the mempool.
 
     // Step 2: Calculate the sample size based on the percentage provided.
     let sample_size = ((sample_percentage / 100.0) * total_transactions as f64).round() as usize;
@@ -44,7 +45,7 @@ pub async fn fetch_mempool_info(
         "jsonrpc": "1.0",
         "id": "2",
         "method": "getrawmempool",
-        "params": [false] // false to return transaction IDs only
+        "params": [false] // false to return transaction IDs only.
     });
 
     let raw_mempool_response = client
@@ -54,16 +55,14 @@ pub async fn fetch_mempool_info(
         .json(&json_rpc_request)
         .send()
         .await?
-        .json::<RawMempoolTxsJsonWrap>() // Use generic JSON to handle a large list
+        .json::<RawMempoolTxsJsonWrap>() // Use generic JSON to handle a large list.
         .await?;
 
     // Extract transaction IDs (Vec<String>) from the response.
-    // let all_tx_ids: Vec<String> = serde_json::from_value(raw_mempool_response["result"].clone())?;
     let all_tx_ids = raw_mempool_response.result;
 
     // Step 4: Randomly sample the transactions (if sample size is smaller than total transactions).
-    use rand::seq::SliceRandom;
-    let mut rng = rand::thread_rng();
+    let mut rng = &mut rand::thread_rng();
     let sampled_tx_ids = if sample_size < all_tx_ids.len() {
         all_tx_ids.choose_multiple(&mut rng, sample_size).cloned().collect()
     } else {

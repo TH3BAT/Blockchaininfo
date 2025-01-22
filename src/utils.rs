@@ -93,6 +93,25 @@ pub fn estimate_difficulty_change(
 } 
 // Returns a `tui` widget for the blockchain header.
 pub fn render_header() -> Paragraph<'static> {
+    // Combine the footer message and app version.
+    let lines = vec![
+        Spans::from(Span::styled(
+            r"BlockChainInfo",
+            Style::default().fg(Color::Cyan),
+        )),
+        Spans::from(Span::styled(
+            format!("v{}", APP_VERSION),
+            Style::default().fg(Color::DarkGray).add_modifier(Modifier::ITALIC),
+        )),
+    ];
+     // Create the paragraph widget.
+     Paragraph::new(lines)
+     .alignment(Alignment::Center)
+     .block(Block::default().title("").borders(Borders::NONE))
+}
+
+/*
+pub fn render_header() -> Paragraph<'static> {
     // Create the header lines.
     let lines = vec![
         Spans::from(Span::styled(
@@ -126,6 +145,7 @@ pub fn render_header() -> Paragraph<'static> {
     Paragraph::new(lines)
     .block(Block::default().title("").borders(Borders::NONE))
 }
+*/
 
 pub fn render_footer<B: Backend>(f: &mut Frame<B>, area: Rect) {
     // Combine the footer message and app version.
@@ -134,10 +154,12 @@ pub fn render_footer<B: Backend>(f: &mut Frame<B>, area: Rect) {
             "Press 'q' or ESC to quit.",
             Style::default().fg(Color::Gray),
         )),
+        /*
         Spans::from(Span::styled(
             format!("v{}", APP_VERSION),
             Style::default().fg(Color::DarkGray).add_modifier(Modifier::ITALIC),
         )),
+        */
     ];
 
     let footer = Paragraph::new(footer_text)
