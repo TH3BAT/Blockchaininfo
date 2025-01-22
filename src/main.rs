@@ -214,7 +214,7 @@ async fn run_app<B: tui::backend::Backend>(
         })?;
 
         // Exit the loop if 'q' or 'Esc' is pressed.
-        if event::poll(std::time::Duration::from_millis(9000))? {
+        if event::poll(std::time::Duration::from_millis(3000))? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
                     KeyCode::Char('q') | KeyCode::Esc => {
