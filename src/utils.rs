@@ -110,43 +110,6 @@ pub fn render_header() -> Paragraph<'static> {
      .block(Block::default().title("").borders(Borders::NONE))
 }
 
-/*
-pub fn render_header() -> Paragraph<'static> {
-    // Create the header lines.
-    let lines = vec![
-        Spans::from(Span::styled(
-            r"__________.__                 __          .__           .__       .__        _____       ",
-            Style::default().fg(Color::Gray),
-        )),
-        Spans::from(Span::styled(
-            r"\______   \  |   ____   ____ |  | __ ____ |  |__ _____  |__| ____ |__| _____/ ____\____   ",
-            Style::default().fg(Color::Gray),
-        )),
-        Spans::from(Span::styled(
-            r" |    |  _/  |  /  _ \_/ ___\|  |/ // ___\|  |  \\__  \ |  |/    \|  |/    \   __\/  _ \ ",
-            Style::default().fg(Color::White).add_modifier(Modifier::BOLD),
-        )),
-        Spans::from(vec![
-            Span::styled(
-            r" |    |   \  |_(  <_> )  \___|    <\  \___|   Y  \/ __ \|  |   |  \  |   |  \  | (  <_> ) ",
-            Style::default().fg(Color::Cyan)),
-        ]),
-        Spans::from(Span::styled(
-            r" |______  /____/\____/ \___  >__|_ \\___  >___|  (____  /__|___|  /__|___|  /__|  \____/",
-            Style::default().fg(Color::LightBlue),
-        )),
-        Spans::from(Span::styled(
-            r"        \/                 \/     \/    \/     \/     \/        \/        \/             ",
-            Style::default().fg(Color::Gray),
-        )),
-    ];
-
-    // Create the paragraph widget.
-    Paragraph::new(lines)
-    .block(Block::default().title("").borders(Borders::NONE))
-}
-*/
-
 pub fn render_footer<B: Backend>(f: &mut Frame<B>, area: Rect) {
     // Combine the footer message and app version.
     let footer_text = vec![
@@ -154,12 +117,6 @@ pub fn render_footer<B: Backend>(f: &mut Frame<B>, area: Rect) {
             "Press 'q' or ESC to quit.",
             Style::default().fg(Color::Gray),
         )),
-        /*
-        Spans::from(Span::styled(
-            format!("v{}", APP_VERSION),
-            Style::default().fg(Color::DarkGray).add_modifier(Modifier::ITALIC),
-        )),
-        */
     ];
 
     let footer = Paragraph::new(footer_text)

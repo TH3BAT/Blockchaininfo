@@ -19,7 +19,7 @@ pub fn display_mempool_info<B: Backend>(
     frame: &mut Frame<B>,
     mempool_info: &MempoolInfo,
     distribution: &MempoolDistribution,
-    area: Rect, // Added 'area' parameter
+    area: Rect, 
 ) -> Result<(), MyError> {
     // Calculate formatted and colored memory usage.
     let mempool_size_in_memory = format_size(mempool_info.usage);
@@ -53,12 +53,10 @@ pub fn display_mempool_info<B: Backend>(
 
     // Render header
     let header = Block::default()
-        .borders(Borders::NONE) // Show borders for the header.
-        .style(Style::default().fg(Color::Cyan)); // Style for borders (Cyan color).
+        .borders(Borders::NONE) 
+        .style(Style::default().fg(Color::Cyan)); 
     frame.render_widget(header, chunks[0]);
 
-
-    // Mempool information content (without repeating title).
     let mempool_content = vec![
         Spans::from(vec![
             Span::styled("Transactions: ", Style::default().fg(Color::Gray)),
@@ -67,7 +65,6 @@ pub fn display_mempool_info<B: Backend>(
                 Style::default().fg(Color::Green),
             ),
         ]),
-        // Spans::from(vec![]), // Blank line for separation.
         Spans::from(vec![
             Span::styled("Memory: ", Style::default().fg(Color::Gray)),
             Span::styled(
@@ -81,27 +78,21 @@ pub fn display_mempool_info<B: Backend>(
             Span::raw(format!("{:.8}", mempool_info.total_fee)),
         ]),
         Spans::from(vec![
-            // The label "Min Transaction Fee: " in gray.
             Span::styled("Min Transaction Fee: ", Style::default().fg(Color::Gray)),
-            
-            // The value in yellow.
             Span::styled(
                 format!("{}", min_relay_fee_vsats.to_formatted_string(&Locale::en)),
                 Style::default().fg(Color::Yellow),
             ),
-            
-            // The "vSats/vByte" text in gray.
             Span::styled(" vSats/vByte", Style::default().fg(Color::Gray)),
         ]), 
-         // Spans::from(vec![]), // Blank line for separation.
-         // Size Distribution
+         // Size Distribution.
         Spans::from(vec![Span::styled("Size Distribution (excludes dust):", Style::default().fg(Color::Gray)),]),
         Spans::from(vec![
             Span::styled("  Small (< 250 vBytes)    : ", Style::default().fg(Color::Yellow)),
             Span::styled(
                 format!(
                     "{} ({}%)",
-                    (distribution.small * 10).to_formatted_string(&Locale::en),
+                    (distribution.small * 20).to_formatted_string(&Locale::en),
                     if total_size > 0 { distribution.small * 100 / total_size } else { 0 }
                 ),
                 Style::default().fg(Color::Gray),
@@ -112,7 +103,7 @@ pub fn display_mempool_info<B: Backend>(
             Span::styled(
                 format!(
                     "{} ({}%)",
-                    (distribution.medium * 10).to_formatted_string(&Locale::en),
+                    (distribution.medium * 20).to_formatted_string(&Locale::en),
                     if total_size > 0 { distribution.medium * 100 / total_size } else { 0 }
                 ),
                 Style::default().fg(Color::Gray),
@@ -123,21 +114,21 @@ pub fn display_mempool_info<B: Backend>(
             Span::styled(
                 format!(
                     "{} ({}%)",
-                    (distribution.large * 10).to_formatted_string(&Locale::en),
+                    (distribution.large * 20).to_formatted_string(&Locale::en),
                     if total_size > 0 { distribution.large * 100 / total_size } else { 0 }
                 ),
                 Style::default().fg(Color::Gray),
             ),
         ]),
 
-        // Age Distribution
+        // Age Distribution.
         Spans::from(vec![Span::styled("Age Distribution (excludes dust):", Style::default().fg(Color::Gray)),]),
         Spans::from(vec![
             Span::styled("  Young (< 5 min)         : ", Style::default().fg(Color::Yellow)),
             Span::styled(
                 format!(
                     "{} ({}%)",
-                    (distribution.young * 10).to_formatted_string(&Locale::en),
+                    (distribution.young * 20).to_formatted_string(&Locale::en),
                     if total_age > 0 { distribution.young * 100 / total_age } else { 0 }
                 ),
                 Style::default().fg(Color::Gray),
@@ -148,7 +139,7 @@ pub fn display_mempool_info<B: Backend>(
             Span::styled(
                 format!(
                     "{} ({}%)",
-                    (distribution.moderate * 10).to_formatted_string(&Locale::en),
+                    (distribution.moderate * 20).to_formatted_string(&Locale::en),
                     if total_age > 0 { distribution.moderate * 100 / total_age } else { 0 }
                 ),
                 Style::default().fg(Color::Gray),
@@ -159,21 +150,21 @@ pub fn display_mempool_info<B: Backend>(
             Span::styled(
                 format!(
                     "{} ({}%)",
-                    (distribution.old * 10).to_formatted_string(&Locale::en),
+                    (distribution.old * 20).to_formatted_string(&Locale::en),
                     if total_age > 0 { distribution.old * 100 / total_age } else { 0 }
                 ),
                 Style::default().fg(Color::Gray),
             ),
         ]),
 
-        // RBF Distribution
+        // RBF Distribution.
         Spans::from(vec![Span::styled("RBF Distribution (excludes dust):", Style::default().fg(Color::Gray)),]),
         Spans::from(vec![
             Span::styled("  RBF Transactions    : ", Style::default().fg(Color::Yellow)),
             Span::styled(
                 format!(
                     "{} ({}%)",
-                    (distribution.rbf_count * 10).to_formatted_string(&Locale::en),
+                    (distribution.rbf_count * 20).to_formatted_string(&Locale::en),
                     if total_rbf > 0 { distribution.rbf_count * 100 / total_rbf } else { 0 }
                 ),
                 Style::default().fg(Color::Gray),
@@ -184,7 +175,7 @@ pub fn display_mempool_info<B: Backend>(
             Span::styled(
                 format!(
                     "{} ({}%)",
-                    (distribution.non_rbf_count * 10).to_formatted_string(&Locale::en),
+                    (distribution.non_rbf_count * 20).to_formatted_string(&Locale::en),
                     if total_rbf > 0 { distribution.non_rbf_count * 100 / total_rbf } else { 0 }
                 ),
                 Style::default().fg(Color::Gray),
@@ -210,15 +201,14 @@ pub fn display_mempool_info<B: Backend>(
         Spans::from(vec![
             Span::styled("  Average Fee Rate (sats/vByte): ", Style::default().fg(Color::Yellow)),
             Span::styled(
-                format!("{:.2}", distribution.average_fee_rate), // Show two decimal places for precision.
+                format!("{:.2}", distribution.average_fee_rate), 
                 Style::default().fg(Color::Gray),
             ),
         ]),
     ];
 
-    // No borders for empty sections.
     let mempool_paragraph = Paragraph::new(mempool_content)
-        .block(Block::default().borders(Borders::NONE)); // No border.
+        .block(Block::default().borders(Borders::NONE)); 
     
     frame.render_widget(mempool_paragraph, chunks[1]);
 

@@ -89,7 +89,7 @@ async fn run_app<B: tui::backend::Backend>(
 
         // Concurrently fetch mempool info, network info, block info, and chain tips.
         let ((mempool_info, sample_ids), network_info, block_info, chaintips_info, net_totals, peer_info) = try_join!(
-            fetch_mempool_info(&config.bitcoin_rpc, 10.0),
+            fetch_mempool_info(&config.bitcoin_rpc, 5.0),
             fetch_network_info(&config.bitcoin_rpc),
             fetch_block_data_by_height(&config.bitcoin_rpc, epoc_start_block),
             fetch_chain_tips(&config.bitcoin_rpc),
@@ -214,7 +214,7 @@ async fn run_app<B: tui::backend::Backend>(
         })?;
 
         // Exit the loop if 'q' or 'Esc' is pressed.
-        if event::poll(std::time::Duration::from_millis(3000))? {
+        if event::poll(std::time::Duration::from_millis(10000))? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
                     KeyCode::Char('q') | KeyCode::Esc => {
