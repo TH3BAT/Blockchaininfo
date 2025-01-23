@@ -96,7 +96,7 @@ pub fn render_header() -> Paragraph<'static> {
     // Combine the footer message and app version.
     let lines = vec![
         Spans::from(Span::styled(
-            r"BlockChainInfo",
+            r"₿lockChainInfo",
             Style::default().fg(Color::Cyan),
         )),
         Spans::from(Span::styled(

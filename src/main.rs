@@ -140,7 +140,7 @@ async fn run_app<B: tui::backend::Backend>(
                     [
                         Constraint::Length(3),   // Application title.
                         Constraint::Length(14),  // Blockchain section.
-                        Constraint::Length(22),   // Mempool section.
+                        Constraint::Length(25),   // Mempool section.
                         Constraint::Max(18),     // Network section.
                         Constraint::Length(7),   // Consensus Security section.
                         Constraint::Length(1),   // Footer section.
@@ -160,7 +160,7 @@ async fn run_app<B: tui::backend::Backend>(
                 .border_style(Style::default().fg(Color::DarkGray))
                 .border_type(BorderType::Rounded)
                 .title(Span::styled(
-                "[Blockchain]",
+                "[₿lockChain]",
                 Style::default()
                     .fg(Color::DarkGray)
                     .add_modifier(Modifier::BOLD), 

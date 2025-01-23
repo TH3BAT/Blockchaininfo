@@ -6,7 +6,7 @@ use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Span, Spans},
-    widgets::{Block, Borders, Paragraph},
+    widgets::{Block, Borders, Gauge, Paragraph},
     Frame,
 };
 use num_format::{Locale, ToFormattedString};
@@ -24,6 +24,8 @@ pub fn display_mempool_info<B: Backend>(
     // Calculate formatted and colored memory usage.
     let mempool_size_in_memory = format_size(mempool_info.usage);
     let max_mempool_size_in_memory = format_size(mempool_info.maxmempool);
+
+    let mempool_usage_percent = (mempool_info.usage as f64 / mempool_info.maxmempool as f64) * 100.0;
 
     let mempool_size_in_memory_color = if mempool_info.usage < mempool_info.maxmempool / 3 {
         Style::default().fg(Color::Gray)
@@ -45,6 +47,7 @@ pub fn display_mempool_info<B: Backend>(
         .constraints(
             [
                 Constraint::Length(1),  // Header section (only title).
+                Constraint::Length(3),  // Gauge section.
                 Constraint::Min(5),     // Content section.
             ]
             .as_ref(),
@@ -56,6 +59,13 @@ pub fn display_mempool_info<B: Backend>(
         .borders(Borders::NONE) 
         .style(Style::default().fg(Color::Cyan)); 
     frame.render_widget(header, chunks[0]);
+
+    // Render the gauge for mempool memory usage.
+    let mempool_gauge = Gauge::default()
+        .block(Block::default().title("Mempool Usage").borders(Borders::ALL))
+        .gauge_style(Style::default().fg(Color::DarkGray).bg(Color::Black))
+        .percent(mempool_usage_percent as u16);
+    frame.render_widget(mempool_gauge, chunks[1]);
 
     let mempool_content = vec![
         Spans::from(vec![
@@ -71,11 +81,15 @@ pub fn display_mempool_info<B: Backend>(
                 format!("{} ", mempool_size_in_memory),
                 mempool_size_in_memory_color,
             ),
-            Span::raw(format!("/ {}", max_mempool_size_in_memory)),
+            Span::styled(format!("/ {}", max_mempool_size_in_memory),
+            Style::default().fg(Color::Gray),
+            ),
         ]),
         Spans::from(vec![
             Span::styled("Total Fees: ", Style::default().fg(Color::Gray)),
-            Span::raw(format!("{:.8}", mempool_info.total_fee)),
+            Span::styled(format!("{:.8}", mempool_info.total_fee),
+            Style::default().fg(Color::Gray),
+            ),
         ]),
         Spans::from(vec![
             Span::styled("Min Transaction Fee: ", Style::default().fg(Color::Gray)),
@@ -210,7 +224,7 @@ pub fn display_mempool_info<B: Backend>(
     let mempool_paragraph = Paragraph::new(mempool_content)
         .block(Block::default().borders(Borders::NONE)); 
     
-    frame.render_widget(mempool_paragraph, chunks[1]);
+    frame.render_widget(mempool_paragraph, chunks[2]);
 
     Ok(())
 }
