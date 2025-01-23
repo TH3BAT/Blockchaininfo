@@ -31,6 +31,7 @@ use std::io::{self, Stdout};
 use std::sync::Arc;
 use tokio::sync::Mutex as AsyncMutex;
 use models::mempool_info::MempoolDistribution;
+use std::collections::VecDeque;
 
 
 #[tokio::main]
@@ -78,6 +79,9 @@ async fn run_app<B: tui::backend::Backend>(
     config: &BitcoinRpcConfig,
 ) -> Result<(), MyError> {
     let distribution = Arc::new(AsyncMutex::new(MempoolDistribution::default()));
+    let mut last_known_block_number: u64 = 0;
+    let mut propagation_times: VecDeque<i64> = VecDeque::with_capacity(20);
+
     loop {
         // Fetch blockchain info first since `blocks` is needed for the next call.
         let blockchain_info = fetch_blockchain_info(&config.bitcoin_rpc).await?;
@@ -99,6 +103,13 @@ async fn run_app<B: tui::backend::Backend>(
 
         let version_counts = PeerInfo::aggregate_and_sort_versions(&peer_info);
         let avg_block_propagate_time = PeerInfo::calculate_block_propagation_time(&peer_info, blockchain_info.time, blockchain_info.blocks);
+        if blockchain_info.blocks != last_known_block_number {
+            if propagation_times.len() == 20 {
+                propagation_times.pop_front();
+            }
+            propagation_times.push_back(avg_block_propagate_time);
+            last_known_block_number = blockchain_info.blocks;
+        }
 
         tokio::spawn({
             let config_clone = config.bitcoin_rpc.clone();
@@ -192,7 +203,7 @@ async fn run_app<B: tui::backend::Backend>(
                     .add_modifier(Modifier::BOLD), 
             ));
             frame.render_widget(block_4, chunks[3]);
-            display_network_info(frame, &network_info, &net_totals, &version_counts, avg_block_propagate_time, chunks[3]).unwrap();
+            display_network_info(frame, &network_info, &net_totals, &version_counts, &avg_block_propagate_time, &propagation_times, chunks[3]).unwrap();
 
             // Block 5: Consensus Security.
             let block_5 = Block::default().borders(Borders::ALL)

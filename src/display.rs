@@ -33,6 +33,7 @@ use crate::models::network_info::NetworkInfo;
 use crate::models::chaintips_info::ChainTip;
 use crate::models::network_totals::NetTotals;
 use crate::models::errors::MyError;
+use std::collections::VecDeque;
 
 // Displays the blockchain information.
 pub fn display_blockchain_info<B: Backend>(
@@ -60,11 +61,12 @@ pub fn display_network_info<B: Backend>(
     frame: &mut Frame<B>,
     network_info: &NetworkInfo,
     net_totals: &NetTotals,
-    version_counts: &Vec<(String, usize)>, 
-    avg_block_propagate_time: i64,
+    version_counts: &Vec<(String, usize)>,
+    avg_block_propagate_time: &i64, 
+    propagation_times: &VecDeque<i64>,
     area: Rect,
 ) -> Result<(), MyError> {
-    display_network_info::display_network_info(frame, network_info, net_totals, version_counts, avg_block_propagate_time, area)
+    display_network_info::display_network_info(frame, network_info, net_totals, version_counts, avg_block_propagate_time, propagation_times, area)
 }
 
 

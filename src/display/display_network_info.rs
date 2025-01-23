@@ -6,13 +6,14 @@ use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Span, Spans},
-    widgets::{BarChart, Block, Borders, Paragraph},
+    widgets::{BarChart, Block, Borders, Paragraph, Sparkline},
     Frame,
 };
 use crate::models::network_info::NetworkInfo;
 use crate::models::network_totals::NetTotals;
 use crate::models::errors::MyError;
 use crate::utils::format_size;
+use std::collections::VecDeque;
 
 // Displays the network information in a `tui` terminal.
 pub fn display_network_info<B: Backend>(
@@ -20,7 +21,8 @@ pub fn display_network_info<B: Backend>(
     network_info: &NetworkInfo,
     net_totals: &NetTotals,
     version_counts: &Vec<(String, usize)>,
-    avg_block_propagate_time: i64,
+    avg_block_propagate_time: &i64,
+    propagation_times: &VecDeque<i64>,
     area: Rect,
 ) -> Result<(), MyError> {
     // Determine color based on average block propagation time.
@@ -33,7 +35,7 @@ pub fn display_network_info<B: Backend>(
     };
     let abpt_text = "seconds";
 
-    // Define layout with space for Node Version Distribution bar chart.
+    // Define layout with space for Node Version Distribution bar chart and sparkline.
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
@@ -41,7 +43,7 @@ pub fn display_network_info<B: Backend>(
             [
                 Constraint::Length(1),  // Header section.
                 Constraint::Length(6), // Network info section.
-                Constraint::Min(8),    // Bar chart section.
+                Constraint::Min(8),    // Bar chart and sparkline section.
             ]
             .as_ref(),
         )
@@ -97,10 +99,16 @@ pub fn display_network_info<B: Backend>(
         .block(Block::default().borders(Borders::NONE));
     frame.render_widget(network_paragraph, chunks[1]);
 
+    // Define sub-chunks for bar chart and sparkline.
+    let sub_chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(68), Constraint::Percentage(32)])
+        .split(chunks[2]);
+
     // Node Version Distribution Bar Chart.
     if !version_counts.is_empty() {
         // Take only the top 7 versions.
-        let limited_version_counts = version_counts.iter().take(7);
+        let limited_version_counts = version_counts.iter().take(5);
     
         // Convert limited version counts into BarChart format.
         let data: Vec<(&str, u64)> = limited_version_counts
@@ -111,7 +119,7 @@ pub fn display_network_info<B: Backend>(
         let barchart = BarChart::default()
             .block(
                 Block::default()
-                    .title("Node Version Distribution (Top 7)")
+                    .title("Version Distribution (Top 5)")
                     .borders(Borders::ALL),
             )
             .data(&data)
@@ -120,8 +128,28 @@ pub fn display_network_info<B: Backend>(
             .bar_style(Style::default().fg(Color::DarkGray))
             .value_style(Style::default().fg(Color::White));
     
-        // Render the BarChart in the appropriate chunk.
-        frame.render_widget(barchart, chunks[2]);
+        // Render the BarChart in the left sub-chunk.
+        frame.render_widget(barchart, sub_chunks[0]);
+    }
+
+    // Sparkline for block propagation times.
+    if !propagation_times.is_empty() {
+        // Bind the temporary vector to a variable for longer lifetime.
+        let propagation_data: Vec<u64> = propagation_times.iter().map(|&t| t.abs() as u64).collect();
+
+        let sparkline = Sparkline::default()
+            .block(
+                Block::default()
+                    .title("Propagation Times")
+                    .borders(Borders::ALL),
+            )
+            .data(&propagation_data) // Pass the reference to the bound variable.
+            .style(Style::default().fg(Color::DarkGray));
+
+        // Render the Sparkline in the right sub-chunk.
+        frame.render_widget(sparkline, sub_chunks[1]);
+    } else {
+        println!("Propagation times are empty. Sparkline won't render.");
     }
 
     Ok(())
