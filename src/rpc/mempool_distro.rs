@@ -54,7 +54,7 @@ pub async fn fetch_mempool_distribution(
         if mempool_entry.fees.base < DUST_THRESHOLD {
             continue;
         }
-
+        
         // Categorize by transaction size.
         match mempool_entry.vsize {
             0..=249 => small += 1,
