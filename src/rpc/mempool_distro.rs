@@ -128,7 +128,7 @@ pub async fn fetch_mempool_distribution(
         0.0
     };
 
-    // Return size, age distributions, RBF stats, average fee, median fee, average fee rate, and next-block fee rate.
+    // Return size, age distributions, RBF stats, average fee, median fee, average fee rate.
     Ok((
         (small, medium, large),
         (young, moderate, old),
