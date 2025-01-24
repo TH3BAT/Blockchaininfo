@@ -4,7 +4,6 @@
 use serde::Deserialize;  // For serializing and deserializing structures.
 use chrono::{TimeZone, Utc};          // For handling and formatting timestamps.
 use crate::models::errors::MyError;   // Custom error type from the errors module.
-// use colored::*; // Assuming you're using the `colored` crate for terminal colors.
 use tui::style::Color;
 use crate::utils::DIFFICULTY_ADJUSTMENT_INTERVAL;
 

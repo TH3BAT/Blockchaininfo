@@ -1,3 +1,6 @@
+
+// rpc/network_totals.rs
+
 use reqwest::Client;
 use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
@@ -26,6 +29,5 @@ pub async fn fetch_net_totals(config: &RpcConfig) -> Result<NetTotals, MyError> 
         .json::<NetTotalsJsonWrap>() // Deserialize into the wrapper
         .await?;
 
-    // Return only the result field (NetTotals struct)
     Ok(response.result)
 }

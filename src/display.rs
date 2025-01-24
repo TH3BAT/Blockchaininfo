@@ -16,7 +16,7 @@
 /// White: Used for neutral data, like timestamps, sizes, and fees, where urgency is not a factor.
 ///
 /// This approach ensures that critical, urgent, and less critical information is presented in a way 
-/// that emphasizes what’s most important at a glance.
+/// that emphasizes what's most important at a glance.
 ///
 pub mod display_blockchain_info;
 pub mod display_mempool_info;
@@ -66,7 +66,8 @@ pub fn display_network_info<B: Backend>(
     propagation_times: &VecDeque<i64>,
     area: Rect,
 ) -> Result<(), MyError> {
-    display_network_info::display_network_info(frame, network_info, net_totals, version_counts, avg_block_propagate_time, propagation_times, area)
+    display_network_info::display_network_info(frame, network_info, net_totals, version_counts, 
+        avg_block_propagate_time, propagation_times, area)
 }
 
 

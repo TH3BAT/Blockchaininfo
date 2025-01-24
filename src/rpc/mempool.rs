@@ -55,7 +55,7 @@ pub async fn fetch_mempool_info(
         .json(&json_rpc_request)
         .send()
         .await?
-        .json::<RawMempoolTxsJsonWrap>() // Use generic JSON to handle a large list.
+        .json::<RawMempoolTxsJsonWrap>() 
         .await?;
 
     // Extract transaction IDs (Vec<String>) from the response.

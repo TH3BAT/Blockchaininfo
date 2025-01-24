@@ -203,7 +203,8 @@ async fn run_app<B: tui::backend::Backend>(
                     .add_modifier(Modifier::BOLD), 
             ));
             frame.render_widget(block_4, chunks[3]);
-            display_network_info(frame, &network_info, &net_totals, &version_counts, &avg_block_propagate_time, &propagation_times, chunks[3]).unwrap();
+            display_network_info(frame, &network_info, &net_totals, &version_counts, &avg_block_propagate_time, 
+                &propagation_times, chunks[3]).unwrap();
 
             // Block 5: Consensus Security.
             let block_5 = Block::default().borders(Borders::ALL)

@@ -107,19 +107,22 @@ pub fn display_network_info<B: Backend>(
 
     // Node Version Distribution Bar Chart.
     if !version_counts.is_empty() {
-        // Take only the top 7 versions.
+        // Take only the top 5 versions.
         let limited_version_counts = version_counts.iter().take(5);
-    
+
         // Convert limited version counts into BarChart format.
         let data: Vec<(&str, u64)> = limited_version_counts
             .map(|(version, count)| (version.as_str(), *count as u64))
             .collect();
-    
+
+        // Get the total number of versions for the title.
+        let total_versions = version_counts.len();
+
         // BarChart for node version distribution.
         let barchart = BarChart::default()
             .block(
                 Block::default()
-                    .title("Version Distribution (Top 5)")
+                    .title(format!("Version Distribution (Top 5 of {})", total_versions)) // Dynamic title
                     .borders(Borders::ALL),
             )
             .data(&data)
@@ -127,7 +130,7 @@ pub fn display_network_info<B: Backend>(
             .bar_gap(1)
             .bar_style(Style::default().fg(Color::DarkGray))
             .value_style(Style::default().fg(Color::White));
-    
+
         // Render the BarChart in the left sub-chunk.
         frame.render_widget(barchart, sub_chunks[0]);
     }

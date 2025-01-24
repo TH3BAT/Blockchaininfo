@@ -48,7 +48,6 @@ pub async fn fetch_mempool_distribution(
             .json::<MempoolEntryJsonWrap>()
             .await?;
 
-        // Access the result directly.
         let mempool_entry = response.result;
 
         // Exclude dust transactions.
@@ -93,10 +92,16 @@ pub async fn fetch_mempool_distribution(
             non_rbf_count += 1;
         }
 
+        // **Sum all relevant fees** (base, ancestor, modified, descendant).
+        let total_entry_fee = mempool_entry.fees.base
+            + mempool_entry.fees.ancestor
+            + mempool_entry.fees.modified
+            + mempool_entry.fees.descendant;
+
         // Accumulate fees and transaction sizes for calculations.
-        total_fee += mempool_entry.fees.base;
-        total_vsize += mempool_entry.vsize; // Add transaction size in vBytes.
-        fees.push(mempool_entry.fees.base);
+        total_fee += total_entry_fee;
+        total_vsize += mempool_entry.vsize;
+        fees.push(total_entry_fee);
         count += 1;
     }
 
@@ -108,10 +113,8 @@ pub async fn fetch_mempool_distribution(
         fees.sort_by(|a, b| a.partial_cmp(b).unwrap()); // Sort the fees.
         let mid = fees.len() / 2;
         if fees.len() % 2 == 0 {
-            // Average of two middle values if even number of elements.
             (fees[mid - 1] + fees[mid]) / 2.0
         } else {
-            // Middle value if odd number of elements.
             fees[mid]
         }
     } else {
@@ -125,9 +128,17 @@ pub async fn fetch_mempool_distribution(
         0.0
     };
 
-    // Return size, age distributions, RBF stats, average fee, median fee, and average fee rate.
-    Ok(((small, medium, large), (young, moderate, old), (rbf_count, non_rbf_count), average_fee, median_fee, average_fee_rate))
+    // Return size, age distributions, RBF stats, average fee, median fee, average fee rate, and next-block fee rate.
+    Ok((
+        (small, medium, large),
+        (young, moderate, old),
+        (rbf_count, non_rbf_count),
+        average_fee,
+        median_fee,
+        average_fee_rate, 
+    ))
 }
+
 
 
 

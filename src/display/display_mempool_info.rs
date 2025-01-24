@@ -215,10 +215,18 @@ pub fn display_mempool_info<B: Backend>(
         Spans::from(vec![
             Span::styled("  Average Fee Rate (sats/vByte): ", Style::default().fg(Color::Yellow)),
             Span::styled(
-                format!("{:.2}", distribution.average_fee_rate), 
+                format!("{:.2}", distribution.average_fee_rate),
                 Style::default().fg(Color::Gray),
             ),
-        ]),
+            /* Maybe incorporate in future once logic is finalized.
+            Span::raw("  |  "), // Add a separator for better readability
+            Span::styled("Next block: ", Style::default().fg(Color::Yellow)),
+            Span::styled(
+                format!("{:.2}", distribution.next_block_fee_rate),
+                Style::default().fg(Color::Gray),
+            ),
+            */
+        ]),    
     ];
 
     let mempool_paragraph = Paragraph::new(mempool_content)
