@@ -72,7 +72,9 @@ Whether you're a developer, node operator, or Bitcoin enthusiast, Blockchaininfo
 The application requires Bitcoin Core RPC credentials to function properly. These credentials can be provided in one of the following ways:
 
 1. **`config.toml` File (Default)**  
-   Create a `config.toml` file in the root directory with the following structure:
+   Create a `config.toml` file in the same directory blockchaininfo will reside.
+         Default is ./target/release/
+   with the following structure:
 
    ```toml
    [bitcoin_rpc]
