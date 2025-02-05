@@ -50,7 +50,7 @@ pub fn get_rpc_password_from_keychain() -> Result<String, MyError> {
         .arg("bitcoin")
         .arg("-w")
         .output()
-        .map_err(|e| MyError::Keychain(format!("Keychain access error: {}", e)))?;
+        .map_err(|e| MyError::Keychain(format!("Failed to retrieve password: {}", e)))?;
 
     if output.status.success() {
         Ok(String::from_utf8_lossy(&output.stdout).to_string())
@@ -111,12 +111,11 @@ pub fn render_header() -> Paragraph<'static> {
 }
 
 pub fn render_footer<B: Backend>(f: &mut Frame<B>, area: Rect) {
-    // Combine the footer message and app version.
     let footer_text = vec![
-        Spans::from(Span::styled(
-            "Press 'q' or ESC to quit.",
-            Style::default().fg(Color::Gray),
-        )),
+        Spans::from(vec![
+            Span::styled("Press 'q' or ESC to quit. ", Style::default().fg(Color::Gray)),
+            Span::styled("'T' to lookup transaction.", Style::default().fg(Color::LightBlue)),
+        ]),
     ];
 
     let footer = Paragraph::new(footer_text)
@@ -126,5 +125,7 @@ pub fn render_footer<B: Backend>(f: &mut Frame<B>, area: Rect) {
 
     f.render_widget(footer, area);
 }
+
+
 
 

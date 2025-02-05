@@ -19,11 +19,10 @@ pub enum MyError {
     InvalidChainworkHexString(String),
     InvalidMedianTime(u64),
     InvalidBlockTime(u64),   
-    InvalidBlockHeight(u64), // Difficulty adjustment calc error.
-    CustomError(String),     // Format scientific superscript error.
-    // Terminal(String),        // Terminal-related errors.
-    // Audio(String),           // Audio-related errors.
+    InvalidBlockHeight(u64), 
+    CustomError(String),
 }
+
 
 // Implementation of `fmt::Display` for custom error messages.
 impl fmt::Display for MyError {
@@ -35,17 +34,21 @@ impl fmt::Display for MyError {
             MyError::Toml(err) => write!(f, "TOML parsing error: {}", err),
             MyError::Keychain(err) => write!(f, "Keychain error: {}", err),
             MyError::Config(err) => write!(f, "Configuration error: {}", err),
-            MyError::InvalidChainworkHexString(err) => write!(f, 
-                "Invalid chainwork hex string: {}", err),
+            MyError::InvalidChainworkHexString(err) => write!(f, "Invalid chainwork hex string: {}", err),
             MyError::InvalidMedianTime(time) => write!(f, "Invalid median time: {}", time),
             MyError::InvalidBlockTime(time) => write!(f, "Invalid block time: {}", time),
             MyError::InvalidBlockHeight(time) => write!(f, "Invalid block height: {}", time),
             MyError::CustomError(err) => write!(f, "Custom error: {}", err),
-            // MyError::Terminal(err) => write!(f, "Terminal error: {}", err),
-            // MyError::Audio(err) => write!(f, "Audio error: {}", err),
         }
     }
 }
+
+impl From<String> for MyError {
+    fn from(err: String) -> MyError {
+        MyError::CustomError(err)  // ✅ Default to `CustomError`
+    }
+}
+
 
 // Automatic conversion between error types.
 impl From<reqwest::Error> for MyError {
@@ -72,11 +75,6 @@ impl From<toml::de::Error> for MyError {
     }
 }
 
-impl From<String> for MyError {
-    fn from(err: String) -> MyError {
-        MyError::Keychain(err)
-    }
-}
 
 // Add a method to convert String into CustomError.
 impl MyError {

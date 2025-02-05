@@ -9,6 +9,7 @@ mod chain_tips;
 mod network_totals; 
 mod network_peers;
 mod mempool_distro;
+mod transaction;
 
 use crate::models::blockchain_info::BlockchainInfo;
 use crate::models::block_info::BlockInfo;
@@ -53,4 +54,8 @@ pub async fn fetch_mempool_distribution(
     sample_ids: Vec<String>,
 ) -> Result<((usize, usize, usize), (usize, usize, usize), (usize, usize), f64, f64, f64), MyError> {
     mempool_distro::fetch_mempool_distribution(config, sample_ids).await
+}
+
+pub async fn fetch_transaction(config: &RpcConfig, txid: &str) -> Result<String, MyError> {
+    transaction::fetch_transaction(config, txid).await
 }
