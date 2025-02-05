@@ -9,7 +9,6 @@ mod display;
 mod runapp;
 
 use config::load_config;
-
 use models::errors::MyError;
 use runapp::{setup_terminal, cleanup_terminal, run_app};
 
