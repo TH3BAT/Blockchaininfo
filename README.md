@@ -67,42 +67,92 @@ Whether you're a developer, node operator, or Bitcoin enthusiast, Blockchaininfo
 
 ## Requirements
 
+Here’s the updated **README.md** section with the **new configuration logic** (CLI flag & environment variable support). 🔥  
+
+---
+
 ### Configuration
 
 The application requires Bitcoin Core RPC credentials to function properly. These credentials can be provided in one of the following ways:
 
-1. **`config.toml` File (Default)**  
-   Create a `config.toml` file in the same directory blockchaininfo will reside.
-         Default is ./target/release/
-   with the following structure:
+---
 
-   ```toml
-   [bitcoin_rpc]
-   username = "your_username"
-   password = "your_password"
-   address = "http://127.0.0.1:8332"
-   ```
+### **1. `config.toml` File (Default & Customizable)**
 
-   Replace the values with your actual Bitcoin Core RPC credentials.
+By default, `blockchaininfo` looks for a `config.toml` file in:
 
-2. **Environment Variables (Alternative)**  
-   If `config.toml` is not provided, the application will look for the following environment variables:
-   - `RPC_USER`: Your Bitcoin Core RPC username
-   - `RPC_PASSWORD`: Your Bitcoin Core RPC password
-   - `RPC_ADDRESS`: The Bitcoin Core RPC server address (e.g., `http://127.0.0.1:8332`, `https://your-node.local`)
+- `./target/release/config.toml` (default location)
 
-3. **macOS Keychain (Preferred for macOS)**  
-   On macOS, you can securely store the RPC password in the system Keychain. This is the most secure and recommended method. To set it up:
-   - Use the following command to add the password to your Keychain:
+You can **specify a custom location** using:
 
-     ```bash
-     security add-generic-password -a bitcoin -s rpc-password -w "your_password"
-     ```
+- **CLI flag:** `--config /path/to/config.toml`
+- **Environment variable:** `BLOCKCHAININFO_CONFIG=/path/to/config.toml`
 
-   - The program will automatically retrieve the password using the Keychain during runtime. Ensure the username (`RPC_USER`) and address (`RPC_ADDRESS`) are provided either in the `config.toml` file or as environment variables.
+#### **Example `config.toml` file:**
 
-4. **Rust (Stable)**  
-   - Install Rust via [rustup.rs](https://rustup.rs/).  
+```toml
+[bitcoin_rpc]
+username = "your_username"
+password = "your_password"
+address = "http://127.0.0.1:8332"
+```
+
+Replace the values with your actual Bitcoin Core RPC credentials.
+
+---
+
+### **2. Environment Variables (Alternative)**
+
+If `config.toml` is not provided, the application will look for the following environment variables:
+
+| Variable         | Description |
+|-----------------|------------|
+| `RPC_USER`      | Your Bitcoin Core RPC username |
+| `RPC_PASSWORD`  | Your Bitcoin Core RPC password |
+| `RPC_ADDRESS`   | The Bitcoin Core RPC server address (e.g., `http://127.0.0.1:8332`, `https://your-node.local`) |
+
+Set them in your terminal before running:
+
+```bash
+export RPC_USER="your_username"
+export RPC_PASSWORD="your_password"
+export RPC_ADDRESS="http://127.0.0.1:8332"
+```
+
+---
+
+### **3. macOS Keychain (Preferred for macOS)**
+
+On macOS, you can securely store the RPC password in the system Keychain. This is the most secure and recommended method. To set it up:
+
+- Add the password to your Keychain:
+
+  ```bash
+  security add-generic-password -a bitcoin -s rpc-password -w "your_password"
+  ```
+
+- The program will automatically retrieve the password using the Keychain during runtime.  
+  **Ensure `RPC_USER` and `RPC_ADDRESS` are set** in either:
+  - `config.toml`
+  - Environment variables (`RPC_USER`, `RPC_ADDRESS`)
+
+---
+
+### **4. Priority Order (How the App Decides Which Config to Use)**
+
+The application loads configuration in the following order:
+
+1️⃣ **CLI Flag (`--config /path/to/config.toml`)** → **Highest priority**  
+2️⃣ **Environment Variable (`BLOCKCHAININFO_CONFIG`)** → If no CLI flag is set  
+3️⃣ **Default File Path (`./target/release/config.toml`)** → If no custom path is provided  
+4️⃣ **Environment Variables (`RPC_USER`, `RPC_PASSWORD`, `RPC_ADDRESS`)** → If no config file is found  
+5️⃣ **macOS Keychain** → If running on macOS & `RPC_PASSWORD` is missing  
+
+🚀 **This ensures maximum flexibility while keeping a secure & seamless setup!**
+
+### **5. Rust (Stable)**
+
+- Install Rust via [rustup.rs](https://rustup.rs/).  
 
 ---
 

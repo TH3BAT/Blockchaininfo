@@ -16,8 +16,7 @@ use runapp::{setup_terminal, cleanup_terminal, run_app};
 #[tokio::main]
 async fn main() -> Result<(), MyError> {
     // Parse and load RPC configuration or environment variables to connect to node.
-    let config_file = "config.toml";
-    let config = load_config(config_file)?;
+    let config = load_config()?;
 
     if config.bitcoin_rpc.username.is_empty()
         || config.bitcoin_rpc.password.is_empty()
