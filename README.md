@@ -57,6 +57,7 @@ Whether you're a developer, node operator, or Bitcoin enthusiast, Blockchaininfo
     │   ├── network_peers.rs   # Peers data model.
     │   ├── network_totals.rs  # Network data fetching (bytes reveived & sent).
     │   ├── mempool_distro.rs  # Fetches the sampled tx IDs for distribution metrics.
+    │   ├── transaction.rs     # Fetches Transaction for lookup.
     │   └── chain_tips.rs      # Fetches chain tips for consensus monitoring.
     ├── rpc.rs                 # Aggregates RPC modules.
     ├── runapp.rs              # Handles TUI terminal setup and main application flow.
