@@ -122,7 +122,7 @@ pub fn display_network_info<B: Backend>(
         let barchart = BarChart::default()
             .block(
                 Block::default()
-                    .title(format!("Version Distribution (Top 5 of {})", total_versions)) // Dynamic title
+                    .title(format!("Version Distribution (Top 5 of {})", total_versions)) // Dynamic title.
                     .borders(Borders::ALL),
             )
             .data(&data)

@@ -5,6 +5,8 @@ use reqwest::Client;
 use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
 use rand::seq::SliceRandom;
+use rand::rngs::StdRng;
+use rand::SeedableRng;
 use crate::models::mempool_info::{MempoolInfoJsonWrap, MempoolInfo, 
     RawMempoolTxsJsonWrap};
 use crate::models::errors::MyError;
@@ -58,14 +60,17 @@ pub async fn fetch_mempool_info(
         .json::<RawMempoolTxsJsonWrap>() 
         .await?;
 
-    // Extract transaction IDs (Vec<String>) from the response.
-    let all_tx_ids = raw_mempool_response.result;
+      // Extract transaction IDs (Vec<String>) from the response.
+    let mut all_tx_ids = raw_mempool_response.result;
 
-    // Step 4: Randomly sample the transactions (if sample size is smaller than total transactions).
-    let mut rng = &mut rand::thread_rng();
+    // Step 4: Initialize RNG correctly
+    let mut rng = StdRng::from_rng(&mut rand::rng());
+
+    // Step 5: Randomly sample the transactions (if sample size is smaller than total transactions).
     let sampled_tx_ids = if sample_size < all_tx_ids.len() {
-        all_tx_ids.choose_multiple(&mut rng, sample_size).cloned().collect()
+        all_tx_ids.partial_shuffle(&mut rng, sample_size).0.to_vec()
     } else {
+        all_tx_ids.shuffle(&mut rng);
         all_tx_ids
     };
 

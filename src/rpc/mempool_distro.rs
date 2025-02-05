@@ -23,12 +23,12 @@ pub async fn fetch_mempool_distribution(
     let mut rbf_count = 0;
     let mut non_rbf_count = 0;
     let mut total_fee = 0.0;
-    let mut total_vsize = 0; // Accumulate total transaction sizes.
+    let mut total_vsize = 0; 
     let mut count = 0;
     let mut fees: Vec<f64> = Vec::new(); // Store all fees for median calculation.
 
     // Define a dust threshold (e.g., 546 satoshis for standard transactions).
-    const DUST_THRESHOLD: f64 = 0.00000546; // 546 satoshis in BTC.
+    const DUST_THRESHOLD: f64 = 0.00000546; 
 
     for tx_id in sample_ids {
         let json_rpc_request = json!({
@@ -92,7 +92,7 @@ pub async fn fetch_mempool_distribution(
             non_rbf_count += 1;
         }
 
-        // **Sum all relevant fees** (base, ancestor, modified, descendant).
+        // Sum all relevant fees (base, ancestor, modified, descendant).
         let total_entry_fee = mempool_entry.fees.base
             + mempool_entry.fees.ancestor
             + mempool_entry.fees.modified

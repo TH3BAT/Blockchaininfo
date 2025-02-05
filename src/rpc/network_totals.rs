@@ -8,8 +8,7 @@ use crate::models::network_totals::{NetTotalsJsonWrap, NetTotals};
 use crate::models::errors::MyError;
 use crate::config::RpcConfig;
 
-// Fetch total network bytes sent and received
-/* */
+// Fetch total network bytes sent and received.
 pub async fn fetch_net_totals(config: &RpcConfig) -> Result<NetTotals, MyError> {
     let json_rpc_request = json!({
         "jsonrpc": "1.0",
@@ -26,7 +25,7 @@ pub async fn fetch_net_totals(config: &RpcConfig) -> Result<NetTotals, MyError> 
         .json(&json_rpc_request)
         .send()
         .await?
-        .json::<NetTotalsJsonWrap>() // Deserialize into the wrapper
+        .json::<NetTotalsJsonWrap>() 
         .await?;
 
     Ok(response.result)
