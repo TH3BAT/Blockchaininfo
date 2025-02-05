@@ -61,7 +61,7 @@ pub fn display_network_info<B: Backend>(
     frame: &mut Frame<B>,
     network_info: &NetworkInfo,
     net_totals: &NetTotals,
-    version_counts: &Vec<(String, usize)>,
+    version_counts: &[(String, usize)],
     avg_block_propagate_time: &i64, 
     propagation_times: &VecDeque<i64>,
     area: Rect,
