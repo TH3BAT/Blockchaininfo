@@ -187,7 +187,7 @@ The application loads configuration in the following order:
 
 ## Example Output
 
-![Sample Output](src/assets/output.png)
+![Sample Output](src/assets/Output.png)
 
 ---
 
