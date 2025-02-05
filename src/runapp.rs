@@ -186,7 +186,7 @@ pub async fn run_app<B: tui::backend::Backend>(
                             terminal.draw(|frame| {
                                 let popup_area = centered_rect(65, 27, frame.size());  // ✅ Ensure enough height
                                 let popup = Block::default()
-                                    .title("Transaction Lookup")
+                                    .title("Transaction Lookup (Press Esc to go back)")
                                     .borders(Borders::ALL)
                                     .style(Style::default().fg(Color::Yellow));
                     
@@ -281,7 +281,7 @@ pub async fn run_app<B: tui::backend::Backend>(
             if app.show_popup {
                 let popup_area = centered_rect(65, 27, frame.size());  // Increased height from 15 → 20
                 let popup = Block::default()
-                    .title("Transaction Lookup")
+                    .title("Transaction Lookup (Press Esc to go back)")
                     .borders(Borders::ALL)
                     .style(Style::default().fg(Color::Yellow));
             
