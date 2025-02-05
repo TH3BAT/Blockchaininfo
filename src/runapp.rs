@@ -160,7 +160,7 @@ pub async fn run_app<B: tui::backend::Backend>(
                     .add_modifier(Modifier::BOLD), 
             ));            
             frame.render_widget(block_3, chunks[2]);
-            display_mempool_info(frame, &mempool_info, &*dist, chunks[2]).unwrap();
+            display_mempool_info(frame, &mempool_info, &dist, chunks[2]).unwrap();
         
             // Block 4: Network Info.
             let block_4 = Block::default().borders(Borders::ALL)

@@ -3,7 +3,6 @@
 
 use std::fs;
 use std::env;
-use toml;
 use crate::models::errors::MyError;                // Custom MyError routines.
 use crate::utils::get_rpc_password_from_keychain;  // Custom utility function.
 use serde::Deserialize;                            // For deserialization.

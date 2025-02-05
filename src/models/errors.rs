@@ -127,18 +127,18 @@ impl From<MyStringError> for MyError {
 #[derive(Debug)]
 #[allow(dead_code)]
 pub enum MyU64Error {
-    InvalidMedianTime(u64),
-    InvalidBlockTime(u64),
-    InvalidBlockHeight(u64),
+    MedianTime(u64),
+    BlockTime(u64),
+    BlockHeight(u64),
 }
 
 // Implement From<MyU64Error> for MyError.
 impl From<MyU64Error> for MyError {
     fn from(err: MyU64Error) -> MyError {
         match err {
-            MyU64Error::InvalidMedianTime(err) => MyError::InvalidMedianTime(err),
-            MyU64Error::InvalidBlockTime(err) => MyError::InvalidBlockTime(err),
-            MyU64Error::InvalidBlockHeight(err) => MyError::InvalidBlockHeight(err),
+            MyU64Error::MedianTime(err) => MyError::InvalidMedianTime(err),
+            MyU64Error::BlockTime(err) => MyError::InvalidBlockTime(err),
+            MyU64Error::BlockHeight(err) => MyError::InvalidBlockHeight(err),
         }
     }
 }

@@ -94,7 +94,7 @@ pub fn display_mempool_info<B: Backend>(
         Spans::from(vec![
             Span::styled("Min Transaction Fee: ", Style::default().fg(Color::Gray)),
             Span::styled(
-                format!("{}", min_relay_fee_vsats.to_formatted_string(&Locale::en)),
+                min_relay_fee_vsats.to_formatted_string(&Locale::en),
                 Style::default().fg(Color::Yellow),
             ),
             Span::styled(" vSats/vByte", Style::default().fg(Color::Gray)),

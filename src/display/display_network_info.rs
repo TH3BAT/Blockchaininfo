@@ -20,7 +20,7 @@ pub fn display_network_info<B: Backend>(
     frame: &mut Frame<B>,
     network_info: &NetworkInfo,
     net_totals: &NetTotals,
-    version_counts: &Vec<(String, usize)>,
+    version_counts: &[(String, usize)],
     avg_block_propagate_time: &i64,
     propagation_times: &VecDeque<i64>,
     area: Rect,
@@ -74,14 +74,14 @@ pub fn display_network_info<B: Backend>(
         Spans::from(vec![
             Span::styled("Total Bytes Received: ", Style::default().fg(Color::Gray)),
             Span::styled(
-                format!("{}", format_size(net_totals.totalbytesrecv)),
+                format_size(net_totals.totalbytesrecv).to_string(),
                 Style::default().fg(Color::Gray),
             ),
         ]),
         Spans::from(vec![
             Span::styled("Total Bytes Sent: ", Style::default().fg(Color::Gray)),
             Span::styled(
-                format!("{}", format_size(net_totals.totalbytessent)),
+                format_size(net_totals.totalbytessent).to_string(),
                 Style::default().fg(Color::Gray),
             ),
         ]),
@@ -138,7 +138,7 @@ pub fn display_network_info<B: Backend>(
     // Sparkline for block propagation times.
     if !propagation_times.is_empty() {
         // Bind the temporary vector to a variable for longer lifetime.
-        let propagation_data: Vec<u64> = propagation_times.iter().map(|&t| t.abs() as u64).collect();
+        let propagation_data: Vec<u64> = propagation_times.iter().map(|&t| t.unsigned_abs()).collect();
 
         let sparkline = Sparkline::default()
             .block(
