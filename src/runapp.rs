@@ -184,7 +184,7 @@ pub async fn run_app<B: tui::backend::Backend>(
                     
                             // ✅ Force UI refresh after fetching the transaction
                             terminal.draw(|frame| {
-                                let popup_area = centered_rect(65, 25, frame.size());  // ✅ Ensure enough height
+                                let popup_area = centered_rect(65, 27, frame.size());  // ✅ Ensure enough height
                                 let popup = Block::default()
                                     .title("Transaction Lookup")
                                     .borders(Borders::ALL)
@@ -279,7 +279,7 @@ pub async fn run_app<B: tui::backend::Backend>(
 
             // ✅ **Render the popup OVER the main dashboard**
             if app.show_popup {
-                let popup_area = centered_rect(65, 25, frame.size());  // Increased height from 15 → 20
+                let popup_area = centered_rect(65, 27, frame.size());  // Increased height from 15 → 20
                 let popup = Block::default()
                     .title("Transaction Lookup")
                     .borders(Borders::ALL)
