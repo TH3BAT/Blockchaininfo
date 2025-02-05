@@ -75,59 +75,59 @@ pub async fn run_app<B: tui::backend::Backend>(
     })?;
 
     loop {
-            // Fetch blockchain info first since `blocks` is needed for the next call.
-            let blockchain_info = fetch_blockchain_info(&config.bitcoin_rpc).await?;
+        // Fetch blockchain info first since `blocks` is needed for the next call.
+        let blockchain_info = fetch_blockchain_info(&config.bitcoin_rpc).await?;
             
-            let distribution_clone = Arc::clone(&distribution);
-            let epoc_start_block = (
-                (blockchain_info.blocks - 1) / DIFFICULTY_ADJUSTMENT_INTERVAL
-            ) * DIFFICULTY_ADJUSTMENT_INTERVAL;
-        
-            // Fetch everything else **only if the popup is NOT open**
-            let ((mempool_info, sample_ids), network_info, block_info, chaintips_info,
-                net_totals, peer_info) = try_join!(
-                fetch_mempool_info(&config.bitcoin_rpc, 5.0),
-                fetch_network_info(&config.bitcoin_rpc),
-                fetch_block_data_by_height(&config.bitcoin_rpc, epoc_start_block),
-                fetch_chain_tips(&config.bitcoin_rpc),
-                fetch_net_totals(&config.bitcoin_rpc),
-                fetch_peer_info(&config.bitcoin_rpc) 
-            )?;
-        
-            let version_counts = PeerInfo::aggregate_and_sort_versions(&peer_info);
-            let avg_block_propagate_time = PeerInfo::calculate_block_propagation_time(&peer_info, blockchain_info.time,
-                blockchain_info.blocks);
-        
-            if blockchain_info.blocks != last_known_block_number {
-                if propagation_times.len() == 20 {
-                    propagation_times.pop_front();
-                }
-                propagation_times.push_back(avg_block_propagate_time);
-                last_known_block_number = blockchain_info.blocks;
+        let distribution_clone = Arc::clone(&distribution);
+        let epoc_start_block = (
+            (blockchain_info.blocks - 1) / DIFFICULTY_ADJUSTMENT_INTERVAL
+        ) * DIFFICULTY_ADJUSTMENT_INTERVAL;
+    
+        // Fetch everything else **only if the popup is NOT open**
+        let ((mempool_info, sample_ids), network_info, block_info, chaintips_info,
+            net_totals, peer_info) = try_join!(
+            fetch_mempool_info(&config.bitcoin_rpc, 5.0),
+            fetch_network_info(&config.bitcoin_rpc),
+            fetch_block_data_by_height(&config.bitcoin_rpc, epoc_start_block),
+            fetch_chain_tips(&config.bitcoin_rpc),
+            fetch_net_totals(&config.bitcoin_rpc),
+            fetch_peer_info(&config.bitcoin_rpc) 
+        )?;
+    
+        let version_counts = PeerInfo::aggregate_and_sort_versions(&peer_info);
+        let avg_block_propagate_time = PeerInfo::calculate_block_propagation_time(&peer_info, blockchain_info.time,
+            blockchain_info.blocks);
+    
+        if blockchain_info.blocks != last_known_block_number {
+            if propagation_times.len() == 20 {
+                propagation_times.pop_front();
             }
-        
-            tokio::spawn({
-                let config_clone = config.bitcoin_rpc.clone();
-                async move {
-                    if let Ok(((small, medium, large), (young, moderate, old), (rbf, non_rbf), 
-                        average_fee, median_fee, average_fee_rate)) =
-                        fetch_mempool_distribution(&config_clone, sample_ids).await
-                    {
-                        let mut dist = distribution_clone.lock().await;
-                        dist.small = small;
-                        dist.medium = medium;
-                        dist.large = large;
-                        dist.young = young;
-                        dist.moderate = moderate;
-                        dist.old = old;
-                        dist.rbf_count = rbf;
-                        dist.non_rbf_count = non_rbf;
-                        dist.average_fee = average_fee;
-                        dist.median_fee = median_fee;
-                        dist.average_fee_rate = average_fee_rate;
-                    }
+            propagation_times.push_back(avg_block_propagate_time);
+            last_known_block_number = blockchain_info.blocks;
+        }
+    
+        tokio::spawn({
+            let config_clone = config.bitcoin_rpc.clone();
+            async move {
+                if let Ok(((small, medium, large), (young, moderate, old), (rbf, non_rbf), 
+                    average_fee, median_fee, average_fee_rate)) =
+                    fetch_mempool_distribution(&config_clone, sample_ids).await
+                {
+                    let mut dist = distribution_clone.lock().await;
+                    dist.small = small;
+                    dist.medium = medium;
+                    dist.large = large;
+                    dist.young = young;
+                    dist.moderate = moderate;
+                    dist.old = old;
+                    dist.rbf_count = rbf;
+                    dist.non_rbf_count = non_rbf;
+                    dist.average_fee = average_fee;
+                    dist.median_fee = median_fee;
+                    dist.average_fee_rate = average_fee_rate;
                 }
-            });       
+            }
+        });       
         
         // Lock the Mutex to access MempoolDistribution.
         let dist = distribution.lock().await;
