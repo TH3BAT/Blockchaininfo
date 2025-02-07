@@ -51,9 +51,10 @@ pub async fn fetch_peer_info(config: &RpcConfig) -> Result<Vec<PeerInfo>, MyErro
 
 pub async fn fetch_mempool_distribution(
     config: &RpcConfig,
-    all_ids: Vec<String>,
+    all_tx_ids: Vec<String>,
+    active_block_number: u64, 
 ) -> Result<((usize, usize, usize), (usize, usize, usize), (usize, usize), f64, f64, f64), MyError> {
-    mempool_distro::fetch_mempool_distribution(config, all_ids).await
+    mempool_distro::fetch_mempool_distribution(config, all_tx_ids, active_block_number).await
 }
 
 pub async fn fetch_transaction(config: &RpcConfig, txid: &str) -> Result<String, MyError> {

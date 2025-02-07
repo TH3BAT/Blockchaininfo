@@ -19,9 +19,13 @@ const MAX_CACHE_SIZE: usize = 10_000; // Rolling cache size
 static DUST_FREE_TX_CACHE: once_cell::sync::Lazy<Arc<Mutex<HashMap<String, MempoolEntry>>>> = 
     once_cell::sync::Lazy::new(|| Arc::new(Mutex::new(HashMap::new())));
 
+static LAST_BLOCK_NUMBER: once_cell::sync::Lazy<Mutex<u64>> = 
+once_cell::sync::Lazy::new(|| Mutex::new(0));
+
 pub async fn fetch_mempool_distribution(
     config: &RpcConfig,
     all_tx_ids: Vec<String>,
+    active_block_number: u64, 
 ) -> Result<((usize, usize, usize), (usize, usize, usize), (usize, usize), f64, f64, f64), MyError> {
     let client = Client::new();
     let mut small = 0;
@@ -38,11 +42,26 @@ pub async fn fetch_mempool_distribution(
     let mut fees: Vec<f64> = Vec::new();
 
     let mut cache = DUST_FREE_TX_CACHE.lock().await;
+
+    // Clone `all_tx_ids` before iterating
+    let all_tx_ids_clone = all_tx_ids.clone();
+    
     let new_tx_ids: Vec<String> = all_tx_ids
-        .into_iter()
+        .into_iter() // Moves `all_tx_ids`
         .filter(|txid| !cache.contains_key(txid))
         .collect();
-
+    
+    // Lock block number tracking
+    let mut last_block = LAST_BLOCK_NUMBER.lock().await;
+    
+    // ✅ **Step 0: Remove Expired TXs if Block Changed**
+    if *last_block != active_block_number {
+        *last_block = active_block_number; // Update last seen block number
+    
+        // Remove TXs that no longer exist in mempool
+        cache.retain(|txid, _| all_tx_ids_clone.contains(txid));
+    }
+    
     // ✅ **Step 1: Update Cache (Only Add Dust-Free TXs)**
     for tx_id in new_tx_ids.iter() {
         let json_rpc_request = json!({

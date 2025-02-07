@@ -112,7 +112,7 @@ pub async fn run_app<B: tui::backend::Backend>(
             async move {
                 if let Ok(((small, medium, large), (young, moderate, old), (rbf, non_rbf), 
                     average_fee, median_fee, average_fee_rate)) =
-                    fetch_mempool_distribution(&config_clone, all_ids).await
+                    fetch_mempool_distribution(&config_clone, all_ids, last_known_block_number).await
                 {
                     let mut dist = distribution_clone.lock().await;
                     dist.small = small;
