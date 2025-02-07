@@ -11,13 +11,17 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::Mutex;
 // use once_cell::sync::Lazy;
 use std::sync::Arc;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 const DUST_THRESHOLD: f64 = 0.00000546; // 546 sats in BTC
 const MAX_CACHE_SIZE: usize = 10_000; // Rolling cache size
 
 static DUST_FREE_TX_CACHE: once_cell::sync::Lazy<Arc<Mutex<HashMap<String, MempoolEntry>>>> = 
     once_cell::sync::Lazy::new(|| Arc::new(Mutex::new(HashMap::new())));
+
+static DUST_CACHE: once_cell::sync::Lazy<Arc<Mutex<HashSet<String>>>> = 
+once_cell::sync::Lazy::new(|| Arc::new(Mutex::new(HashSet::new())));
+
 
 static LAST_BLOCK_NUMBER: once_cell::sync::Lazy<Mutex<u64>> = 
 once_cell::sync::Lazy::new(|| Mutex::new(0));
@@ -42,14 +46,15 @@ pub async fn fetch_mempool_distribution(
     let mut fees: Vec<f64> = Vec::new();
 
     let mut cache = DUST_FREE_TX_CACHE.lock().await;
+    let mut dust_cache = DUST_CACHE.lock().await;
 
     // Clone `all_tx_ids` before iterating
     let all_tx_ids_clone = all_tx_ids.clone();
     
     let new_tx_ids: Vec<String> = all_tx_ids
-        .into_iter() // Moves `all_tx_ids`
-        .filter(|txid| !cache.contains_key(txid))
-        .collect();
+    .into_iter()
+    .filter(|txid| !cache.contains_key(txid) && !dust_cache.contains(txid))
+    .collect();
     
     // Lock block number tracking
     let mut last_block = LAST_BLOCK_NUMBER.lock().await;
@@ -60,6 +65,7 @@ pub async fn fetch_mempool_distribution(
     
         // Remove TXs that no longer exist in mempool
         cache.retain(|txid, _| all_tx_ids_clone.contains(txid));
+        dust_cache.clear(); // ✅ Clean out old dust transactions
     }
     
     // ✅ **Step 1: Update Cache (Only Add Dust-Free TXs)**
@@ -84,8 +90,10 @@ pub async fn fetch_mempool_distribution(
         let mempool_entry = response.result;
 
         if mempool_entry.fees.base < DUST_THRESHOLD {
-            continue;
+            dust_cache.insert(tx_id.clone()); // ✅ Store it for future lookups
+            continue; // Skip processing
         }
+        
 
         cache.insert(tx_id.clone(), mempool_entry);
 
