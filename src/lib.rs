@@ -6,4 +6,3 @@ pub mod utils;
 pub mod config;
 pub mod rpc;
 pub mod display;
-pub mod ui;
