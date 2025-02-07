@@ -3,7 +3,7 @@
 
 use tui::{
     backend::Backend,
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Layout, Rect, Alignment},
     style::{Color, Style},
     text::{Span, Spans},
     widgets::{Block, Borders, Gauge, Paragraph},
@@ -13,6 +13,10 @@ use num_format::{Locale, ToFormattedString};
 use crate::utils::format_size;
 use crate::models::mempool_info::{MempoolInfo, MempoolDistribution};
 use crate::models::errors::MyError;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+static SPINNER_INDEX: AtomicUsize = AtomicUsize::new(0);
+const SPINNER_FRAMES: [&str; 4] = ["|", "/", "-", "\\"];
 
 // Displays the mempool information in a `tui` terminal.
 pub fn display_mempool_info<B: Backend>(
@@ -21,6 +25,21 @@ pub fn display_mempool_info<B: Backend>(
     distribution: &MempoolDistribution,
     area: Rect, 
 ) -> Result<(), MyError> {
+
+    // Check if data is still initializing
+    let is_loading = distribution.small == 0 && distribution.medium == 0 && distribution.large == 0 && distribution.rbf_count == 0;
+
+    if is_loading {
+        let spinner = SPINNER_FRAMES[SPINNER_INDEX.load(Ordering::Relaxed) % SPINNER_FRAMES.len()];
+        SPINNER_INDEX.fetch_add(1, Ordering::Relaxed);
+
+        let loading_text = Paragraph::new(format!("{} Searching through the Dust...", spinner))
+            .style(Style::default().fg(Color::Yellow))
+            .alignment(Alignment::Center);
+        frame.render_widget(loading_text, area);
+        return Ok(());
+    }
+
     // Calculate formatted and colored memory usage.
     let mempool_size_in_memory = format_size(mempool_info.usage);
     let max_mempool_size_in_memory = format_size(mempool_info.maxmempool);
@@ -106,7 +125,7 @@ pub fn display_mempool_info<B: Backend>(
             Span::styled(
                 format!(
                     "{} ({}%)",
-                    (distribution.small * 20).to_formatted_string(&Locale::en),
+                    (distribution.small).to_formatted_string(&Locale::en),
                     if total_size > 0 { distribution.small * 100 / total_size } else { 0 }
                 ),
                 Style::default().fg(Color::Gray),
@@ -117,7 +136,7 @@ pub fn display_mempool_info<B: Backend>(
             Span::styled(
                 format!(
                     "{} ({}%)",
-                    (distribution.medium * 20).to_formatted_string(&Locale::en),
+                    (distribution.medium).to_formatted_string(&Locale::en),
                     if total_size > 0 { distribution.medium * 100 / total_size } else { 0 }
                 ),
                 Style::default().fg(Color::Gray),
@@ -128,7 +147,7 @@ pub fn display_mempool_info<B: Backend>(
             Span::styled(
                 format!(
                     "{} ({}%)",
-                    (distribution.large * 20).to_formatted_string(&Locale::en),
+                    (distribution.large).to_formatted_string(&Locale::en),
                     if total_size > 0 { distribution.large * 100 / total_size } else { 0 }
                 ),
                 Style::default().fg(Color::Gray),
@@ -142,7 +161,7 @@ pub fn display_mempool_info<B: Backend>(
             Span::styled(
                 format!(
                     "{} ({}%)",
-                    (distribution.young * 20).to_formatted_string(&Locale::en),
+                    (distribution.young).to_formatted_string(&Locale::en),
                     if total_age > 0 { distribution.young * 100 / total_age } else { 0 }
                 ),
                 Style::default().fg(Color::Gray),
@@ -153,7 +172,7 @@ pub fn display_mempool_info<B: Backend>(
             Span::styled(
                 format!(
                     "{} ({}%)",
-                    (distribution.moderate * 20).to_formatted_string(&Locale::en),
+                    (distribution.moderate).to_formatted_string(&Locale::en),
                     if total_age > 0 { distribution.moderate * 100 / total_age } else { 0 }
                 ),
                 Style::default().fg(Color::Gray),
@@ -164,7 +183,7 @@ pub fn display_mempool_info<B: Backend>(
             Span::styled(
                 format!(
                     "{} ({}%)",
-                    (distribution.old * 20).to_formatted_string(&Locale::en),
+                    (distribution.old).to_formatted_string(&Locale::en),
                     if total_age > 0 { distribution.old * 100 / total_age } else { 0 }
                 ),
                 Style::default().fg(Color::Gray),
@@ -178,7 +197,7 @@ pub fn display_mempool_info<B: Backend>(
             Span::styled(
                 format!(
                     "{} ({}%)",
-                    (distribution.rbf_count * 20).to_formatted_string(&Locale::en),
+                    (distribution.rbf_count).to_formatted_string(&Locale::en),
                     if total_rbf > 0 { distribution.rbf_count * 100 / total_rbf } else { 0 }
                 ),
                 Style::default().fg(Color::Gray),
@@ -189,7 +208,7 @@ pub fn display_mempool_info<B: Backend>(
             Span::styled(
                 format!(
                     "{} ({}%)",
-                    (distribution.non_rbf_count * 20).to_formatted_string(&Locale::en),
+                    (distribution.non_rbf_count).to_formatted_string(&Locale::en),
                     if total_rbf > 0 { distribution.non_rbf_count * 100 / total_rbf } else { 0 }
                 ),
                 Style::default().fg(Color::Gray),

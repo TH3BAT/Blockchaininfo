@@ -25,8 +25,8 @@ pub async fn fetch_blockchain_info(config: &RpcConfig) -> Result<BlockchainInfo,
     blockchain::fetch_blockchain_info(config).await
 }
 
-pub async fn fetch_mempool_info(config: &RpcConfig, sample_percentage: f64) -> Result<(MempoolInfo, Vec<String>), MyError> {
-    mempool::fetch_mempool_info(config, sample_percentage).await
+pub async fn fetch_mempool_info(config: &RpcConfig) -> Result<(MempoolInfo, Vec<String>), MyError> {
+    mempool::fetch_mempool_info(config).await
 }
 
 pub async fn fetch_network_info(config: &RpcConfig) -> Result<NetworkInfo, MyError> {
@@ -51,9 +51,9 @@ pub async fn fetch_peer_info(config: &RpcConfig) -> Result<Vec<PeerInfo>, MyErro
 
 pub async fn fetch_mempool_distribution(
     config: &RpcConfig,
-    sample_ids: Vec<String>,
+    all_ids: Vec<String>,
 ) -> Result<((usize, usize, usize), (usize, usize, usize), (usize, usize), f64, f64, f64), MyError> {
-    mempool_distro::fetch_mempool_distribution(config, sample_ids).await
+    mempool_distro::fetch_mempool_distribution(config, all_ids).await
 }
 
 pub async fn fetch_transaction(config: &RpcConfig, txid: &str) -> Result<String, MyError> {

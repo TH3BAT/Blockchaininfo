@@ -52,7 +52,6 @@ pub fn display_mempool_info<B: Backend>(
     distribution: &MempoolDistribution,
     area: Rect, // Add the 'area' parameter.
 ) -> Result<(), MyError> {
-    // Now, pass the 'area' parameter when calling the function.
     display_mempool_info::display_mempool_info(frame, mempool_info, distribution, area)
 }
 

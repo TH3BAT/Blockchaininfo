@@ -26,6 +26,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex as AsyncMutex;
 use crate::models::mempool_info::MempoolDistribution;
 use std::collections::VecDeque;
+
 struct App {
     show_popup: bool,
     tx_input: String,
@@ -84,9 +85,9 @@ pub async fn run_app<B: tui::backend::Backend>(
         ) * DIFFICULTY_ADJUSTMENT_INTERVAL;
     
         // Fetch everything else **only if the popup is NOT open**
-        let ((mempool_info, sample_ids), network_info, block_info, chaintips_info,
+        let ((mempool_info, all_ids), network_info, block_info, chaintips_info,
             net_totals, peer_info) = try_join!(
-            fetch_mempool_info(&config.bitcoin_rpc, 5.0),
+            fetch_mempool_info(&config.bitcoin_rpc),
             fetch_network_info(&config.bitcoin_rpc),
             fetch_block_data_by_height(&config.bitcoin_rpc, epoc_start_block),
             fetch_chain_tips(&config.bitcoin_rpc),
@@ -111,7 +112,7 @@ pub async fn run_app<B: tui::backend::Backend>(
             async move {
                 if let Ok(((small, medium, large), (young, moderate, old), (rbf, non_rbf), 
                     average_fee, median_fee, average_fee_rate)) =
-                    fetch_mempool_distribution(&config_clone, sample_ids).await
+                    fetch_mempool_distribution(&config_clone, all_ids).await
                 {
                     let mut dist = distribution_clone.lock().await;
                     dist.small = small;
