@@ -13,7 +13,7 @@ pub async fn fetch_transaction(config: &RpcConfig, txid: &str) -> Result<String,
         "jsonrpc": "1.0",
         "id": "lookup",
         "method": "getrawtransaction",
-        "params": [txid, true]  // ✅ Fetch verbose details
+        "params": [txid, true]  // Fetch verbose details
     });
 
     let client = Client::new();
@@ -37,7 +37,7 @@ pub async fn fetch_transaction(config: &RpcConfig, txid: &str) -> Result<String,
             .map(|v| v["value"].as_f64().unwrap_or(0.0))
             .sum();
 
-        // ✅ If blocktime exists, it's confirmed
+        // If blocktime exists, it's confirmed
         if let Some(timestamp) = tx.get("blocktime").and_then(|t| t.as_i64()) {
             let datetime = DateTime::<Utc>::from_timestamp(timestamp, 0)
                 .map(|dt| dt.format("%Y-%m-%d %H:%M:%S UTC").to_string())
@@ -54,7 +54,7 @@ pub async fn fetch_transaction(config: &RpcConfig, txid: &str) -> Result<String,
         }
     }
 
-    // ❌ No blocktime found -> It's a mempool TX, so we fetch from `getmempoolentry`
+    // No blocktime found -> It's a mempool TX, so we fetch from `getmempoolentry`
     let mempool_request = json!({
         "jsonrpc": "1.0",
         "id": "lookup",
@@ -75,7 +75,7 @@ pub async fn fetch_transaction(config: &RpcConfig, txid: &str) -> Result<String,
     if let Some(mempool_tx) = mempool_response["result"].as_object() {
         let timestamp = mempool_tx.get("time")
             .and_then(|t| t.as_i64())
-            .unwrap_or(0);  // ✅ Ensure fallback
+            .unwrap_or(0);  // Ensure fallback
 
         let datetime = if timestamp > 0 {
             DateTime::<Utc>::from_timestamp(timestamp, 0)

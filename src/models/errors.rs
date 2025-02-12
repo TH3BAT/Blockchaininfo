@@ -45,7 +45,7 @@ impl fmt::Display for MyError {
 
 impl From<String> for MyError {
     fn from(err: String) -> MyError {
-        MyError::CustomError(err)  // ✅ Default to `CustomError`
+        MyError::CustomError(err)  // Default to `CustomError`
     }
 }
 

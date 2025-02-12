@@ -33,26 +33,26 @@ impl BitcoinRpcConfig {
 
 // Determines config path from CLI args, env variable, or default location.
 pub fn get_config_path() -> String {
-    // 1️⃣ **Check CLI Args (`--config` flag)**
+    // 1️Check CLI Args (`--config` flag)
     let args: Vec<String> = env::args().collect();
     if let Some(pos) = args.iter().position(|arg| arg == "--config") {
         if let Some(config_path) = args.get(pos + 1) {
-            return config_path.clone(); // ✅ Use CLI-provided path
+            return config_path.clone(); // Use CLI-provided path
         }
     }
 
-    // 2️⃣ **Check Environment Variable (`BLOCKCHAININFO_CONFIG`)**
+    // Check Environment Variable (`BLOCKCHAININFO_CONFIG`)
     if let Ok(env_path) = env::var("BLOCKCHAININFO_CONFIG") {
         return env_path;
     }
 
-    // 3️⃣ **Fallback to Default**
+    // Fallback to Default
     "./target/release/config.toml".to_string()
 }
 
 // Loads the configuration from a TOML file or environment variables.
 pub fn load_config() -> Result<BitcoinRpcConfig, MyError> {
-    let file_path = get_config_path(); // 🔥 Get config location dynamically
+    let file_path = get_config_path(); // Get config location dynamically
 
     // Attempt to read the config from the TOML file.
     let config: BitcoinRpcConfig = if Path::new(&file_path).exists() {

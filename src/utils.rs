@@ -10,6 +10,9 @@ use tui::style::{Color, Style, Modifier};
 use tui::layout::{Rect, Alignment};
 use tui::Frame;
 use tui::backend::Backend;
+// use std::time::{SystemTime, UNIX_EPOCH};
+// use std::fs::{OpenOptions, metadata, remove_file};
+// use std::io::Write;
 
 // Constants for bytes formatting.
 const KB: u64 = 1024;
@@ -22,7 +25,11 @@ pub const DIFFICULTY_ADJUSTMENT_INTERVAL: u64 = 2016;
 pub const BLOCK_TIME_SECONDS: u64 = 600;
 const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-
+/*
+static START_TIME: once_cell::sync::Lazy<u64> = once_cell::sync::Lazy::new(|| {
+    SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
+});
+*/
 
 // Formats a size in bytes into a more readable format (KB, MB, etc.).
 pub fn format_size(bytes: u64) -> String {
@@ -126,6 +133,31 @@ pub fn render_footer<B: Backend>(f: &mut Frame<B>, area: Rect) {
     f.render_widget(footer, area);
 }
 
+/*
+pub fn log_error(message: &str) {
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+    
+    // Ignore errors in the first 10 seconds of startup
+    if now - *START_TIME < 10 {
+        return;
+    }
 
+    let log_path = "error_log.txt";
+     // Auto-truncate if the file exceeds 500KB
+     if let Ok(meta) = metadata(log_path) {
+        if meta.len() > 500_000 { // 500KB limit
+            let _ = remove_file(log_path); // Delete old log file
+        }
+    }
+
+    let mut file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(log_path)
+        .unwrap();
+    
+    writeln!(file, "{}", message).unwrap();
+}
+*/
 
 

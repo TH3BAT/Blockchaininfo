@@ -8,11 +8,16 @@ use crate::models::mempool_info::{MempoolInfoJsonWrap, MempoolInfo,
     RawMempoolTxsJsonWrap};
 use crate::models::errors::MyError;
 use crate::config::RpcConfig;
+use std::sync::{Arc, RwLock};
+use std::collections::HashSet;
+
+pub static MEMPOOL_CACHE: once_cell::sync::Lazy<Arc<RwLock<HashSet<String>>>> =
+    once_cell::sync::Lazy::new(|| Arc::new(RwLock::new(HashSet::new())));
 
 // Fetches mempool information and samples raw transactions.
 pub async fn fetch_mempool_info(
     config: &RpcConfig,
-) -> Result<(MempoolInfo, Vec<String>), MyError> {
+) -> Result<MempoolInfo, MyError> {
     // Step 1: Fetch mempool information (to get the transaction count).
     let json_rpc_request = json!({
         "jsonrpc": "1.0",
@@ -34,7 +39,7 @@ pub async fn fetch_mempool_info(
 
     let mempool_info = response.result;
 
-    // Step 3: Fetch raw mempool transactions (limited to the sample size).
+    // Step 3: Fetch raw mempool transactions.
     let json_rpc_request = json!({
         "jsonrpc": "1.0",
         "id": "2",
@@ -52,5 +57,9 @@ pub async fn fetch_mempool_info(
         .json::<RawMempoolTxsJsonWrap>() 
         .await?;
 
-    Ok((mempool_info, raw_mempool_response.result))
+    // Store raw mempool TXs in a fast, shared HashSet.
+    let mut cache = MEMPOOL_CACHE.write().unwrap();
+    *cache = raw_mempool_response.result.into_iter().collect();
+
+    Ok(mempool_info)
 }

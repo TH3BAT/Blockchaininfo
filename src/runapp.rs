@@ -67,7 +67,7 @@ pub async fn run_app<B: tui::backend::Backend>(
     let distribution = Arc::new(AsyncMutex::new(MempoolDistribution::default()));
     let mut last_known_block_number: u64 = 0;
     let mut propagation_times: VecDeque<i64> = VecDeque::with_capacity(20);
-    let mut app = App::new();  // ✅ Now `app` is in scope!
+    let mut app = App::new();  
 
     terminal.draw(|frame| {
         let area = frame.size();
@@ -84,8 +84,8 @@ pub async fn run_app<B: tui::backend::Backend>(
             (blockchain_info.blocks - 1) / DIFFICULTY_ADJUSTMENT_INTERVAL
         ) * DIFFICULTY_ADJUSTMENT_INTERVAL;
     
-        // Fetch everything else **only if the popup is NOT open**
-        let ((mempool_info, all_ids), network_info, block_info, chaintips_info,
+        // Fetch everything else only if the popup is NOT open
+        let (mempool_info, network_info, block_info, chaintips_info,
             net_totals, peer_info) = try_join!(
             fetch_mempool_info(&config.bitcoin_rpc),
             fetch_network_info(&config.bitcoin_rpc),
@@ -112,7 +112,7 @@ pub async fn run_app<B: tui::backend::Backend>(
             async move {
                 if let Ok(((small, medium, large), (young, moderate, old), (rbf, non_rbf), 
                     average_fee, median_fee, average_fee_rate)) =
-                    fetch_mempool_distribution(&config_clone, all_ids, last_known_block_number).await
+                    fetch_mempool_distribution(&config_clone, last_known_block_number).await
                 {
                     let mut dist = distribution_clone.lock().await;
                     dist.small = small;
@@ -133,7 +133,7 @@ pub async fn run_app<B: tui::backend::Backend>(
         // Lock the Mutex to access MempoolDistribution.
         let dist = distribution.lock().await;
         
-        // ✅ Reduce `poll()` time when the popup is open for real-time input
+        // Reduce `poll()` time when the popup is open for real-time input
         let poll_time = if app.show_popup {
             std::time::Duration::from_millis(100)  // Faster polling when typing
         } else {
@@ -143,34 +143,34 @@ pub async fn run_app<B: tui::backend::Backend>(
         if event::poll(poll_time)? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
-                    // ✅ Close Popup (if open)
+                    // Close Popup (if open)
                     KeyCode::Esc if app.show_popup => {
                         app.show_popup = false;
                     }
 
-                    // ✅ Quit application (only if popup is NOT open)
+                    // Quit application (only if popup is NOT open)
                     KeyCode::Char('q') | KeyCode::Esc => {
                         break;
                     }
 
-                    // ✅ Open Transaction Lookup Popup
+                    // Open Transaction Lookup Popup
                     KeyCode::Char('t') if !app.show_popup => {
                         app.show_popup = true;
-                        app.tx_input.clear();  // ✅ Clear input field
-                        app.tx_result = None;  // ✅ Clear previous transaction result
+                        app.tx_input.clear();  // Clear input field
+                        app.tx_result = None;  // Clear previous transaction result
                     }
 
-                    // ✅ Capture user input inside the popup
+                    // Capture user input inside the popup
                     KeyCode::Char(c) if app.show_popup => {
                         app.tx_input.push(c);
                     }
 
-                    // ✅ Backspace inside Popup
+                    // Backspace inside Popup
                     KeyCode::Backspace if app.show_popup => {
                         app.tx_input.pop();
                     }
 
-                    // ✅ Fetch Transaction when Enter is pressed inside Popup
+                    // Fetch Transaction when Enter is pressed inside Popup
                     KeyCode::Enter if app.show_popup => {
                         if !app.tx_input.is_empty() {
                             let tx_result = fetch_transaction(&config.bitcoin_rpc, &app.tx_input).await;
@@ -178,12 +178,12 @@ pub async fn run_app<B: tui::backend::Backend>(
                             app.tx_result = match tx_result {
                                 Ok(tx) => Some(tx),
                                 Err(e) => {
-                                    println!("❌ Error fetching transaction: {:?}", e); // ✅ Print the actual error
-                                    Some(format!("Error: {:?}", e)) // ✅ Show the error message in the popup
+                                    println!("❌ Error fetching transaction: {:?}", e); // Print the actual error
+                                    Some(format!("Error: {:?}", e)) // Show the error message in the popup
                                 }
                             };
                     
-                            // ✅ Force UI refresh after fetching the transaction
+                            // Force UI refresh after fetching the transaction
                             terminal.draw(|frame| {
                                 let popup_area = centered_rect(65, 27, frame.size());  // ✅ Ensure enough height
                                 let popup = Block::default()
@@ -210,7 +210,7 @@ pub async fn run_app<B: tui::backend::Backend>(
                     _ => {}
                 }
             }
-            // ✅ Additional check to detect pasting behavior
+            // Additional check to detect pasting behavior
             if event::poll(std::time::Duration::from_millis(10))? {
                 if let Event::Key(key) = event::read()? {
                     if let KeyCode::Char(c) = key.code {
@@ -221,7 +221,7 @@ pub async fn run_app<B: tui::backend::Backend>(
             }
         }
 
-        // ✅ Only ONE `terminal.draw()` call per loop iteration
+        // Only ONE `terminal.draw()` call per loop iteration
         terminal.draw(|frame| {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
@@ -239,7 +239,7 @@ pub async fn run_app<B: tui::backend::Backend>(
                 )
                 .split(frame.size());
 
-            // ✅ Render the main dashboard first
+            // Render the main dashboard first
             let block_1 = Block::default().borders(Borders::NONE);
             frame.render_widget(block_1, chunks[0]);
             let header_widget = render_header();
@@ -278,7 +278,7 @@ pub async fn run_app<B: tui::backend::Backend>(
             frame.render_widget(block_6, chunks[5]);
             render_footer(frame, chunks[5]);
 
-            // ✅ **Render the popup OVER the main dashboard**
+            // Render the popup OVER the main dashboard
             if app.show_popup {
                 let popup_area = centered_rect(65, 27, frame.size());  // Increased height from 15 → 20
                 let popup = Block::default()
@@ -293,7 +293,7 @@ pub async fn run_app<B: tui::backend::Backend>(
                     let result = match &app.tx_result {
                         Some(tx) => Paragraph::new(tx.clone())
                             .style(Style::default().fg(Color::Green))
-                            .wrap(Wrap { trim: true }),  // ✅ Ensures multi-line text fits within the popup
+                            .wrap(Wrap { trim: true }),  // Ensures multi-line text fits within the popup
                         None => Paragraph::new("Enter a TxID and press Enter")
                             .style(Style::default()),
                     };

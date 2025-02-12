@@ -9,9 +9,11 @@ use crate::config::RpcConfig;
 use crate::models::mempool_info::{MempoolEntryJsonWrap, MempoolEntry};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::Mutex;
-// use once_cell::sync::Lazy;
 use std::sync::Arc;
 use std::collections::{HashMap, HashSet};
+// use crate::utils::log_error;
+use crate::rpc::mempool::MEMPOOL_CACHE; 
+
 
 const DUST_THRESHOLD: f64 = 0.00000546; // 546 sats in BTC
 const MAX_CACHE_SIZE: usize = 10_000; // Rolling cache size
@@ -28,7 +30,6 @@ once_cell::sync::Lazy::new(|| Mutex::new(0));
 
 pub async fn fetch_mempool_distribution(
     config: &RpcConfig,
-    all_tx_ids: Vec<String>,
     active_block_number: u64, 
 ) -> Result<((usize, usize, usize), (usize, usize, usize), (usize, usize), f64, f64, f64), MyError> {
     let client = Client::new();
@@ -48,27 +49,29 @@ pub async fn fetch_mempool_distribution(
     let mut cache = DUST_FREE_TX_CACHE.lock().await;
     let mut dust_cache = DUST_CACHE.lock().await;
 
-    // Clone `all_tx_ids` before iterating
-    let all_tx_ids_clone = all_tx_ids.clone();
+    let all_tx_ids = {
+        let read_guard = MEMPOOL_CACHE.read().unwrap(); // Lock read access
+        read_guard.clone() // Clone the HashSet before async move
+    }; // Drops the read lock immediately
     
-    let new_tx_ids: Vec<String> = all_tx_ids
-    .into_iter()
-    .filter(|txid| !cache.contains_key(txid) && !dust_cache.contains(txid))
-    .collect();
-    
+    let new_tx_ids: Vec<String> = all_tx_ids.iter()
+        .filter(|txid| !cache.contains_key(txid.as_str()) && !dust_cache.contains(txid.as_str()))
+        .cloned()
+        .collect();    
+
     // Lock block number tracking
     let mut last_block = LAST_BLOCK_NUMBER.lock().await;
     
-    // ✅ **Step 0: Remove Expired TXs if Block Changed**
+    // Step 0: Remove Expired TXs if Block Changed
     if *last_block != active_block_number {
         *last_block = active_block_number; // Update last seen block number
     
         // Remove TXs that no longer exist in mempool
-        cache.retain(|txid, _| all_tx_ids_clone.contains(txid));
-        dust_cache.clear(); // ✅ Clean out old dust transactions
+        cache.retain(|txid, _| all_tx_ids.contains(txid));
+        dust_cache.clear(); // Clean out old dust transactions
     }
     
-    // ✅ **Step 1: Update Cache (Only Add Dust-Free TXs)**
+    // Step 1: Update Cache (Only Add Dust-Free TXs)
     for tx_id in new_tx_ids.iter() {
         let json_rpc_request = json!({
             "jsonrpc": "1.0",
@@ -90,7 +93,7 @@ pub async fn fetch_mempool_distribution(
         let mempool_entry = response.result;
 
         if mempool_entry.fees.base < DUST_THRESHOLD {
-            dust_cache.insert(tx_id.clone()); // ✅ Store it for future lookups
+            dust_cache.insert(tx_id.clone()); // Store it for future lookups
             continue; // Skip processing
         }
         
@@ -105,7 +108,7 @@ pub async fn fetch_mempool_distribution(
         }
     }
 
-    // ✅ **Step 2: Process Cached Transactions & Calculate Distribution**
+    // Step 2: Process Cached Transactions & Calculate Distribution
     for mempool_entry in cache.values() {
         match mempool_entry.vsize {
             0..=249 => small += 1,
