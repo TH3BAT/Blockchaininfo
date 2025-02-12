@@ -91,19 +91,6 @@ impl From<std::env::VarError> for MyError {
         MyError::Config(format!("Environment variable error: {}", err))
     }
 }
-/*
-impl From<rodio::decoder::DecoderError> for MyError {
-    fn from(err: rodio::decoder::DecoderError) -> MyError {
-        MyError::Audio(format!("Audio decoder error: {}", err))
-    }
-}
-
-impl From<std::sync::PoisonError<std::sync::MutexGuard<'_, rodio::Sink>>> for MyError {
-    fn from(_: std::sync::PoisonError<std::sync::MutexGuard<'_, rodio::Sink>>) -> MyError {
-        MyError::Audio("Mutex poisoned while accessing Sink".to_string())
-    }
-}
-*/
 
 #[derive(Debug)]
 #[allow(dead_code)]
