@@ -96,6 +96,7 @@ pub async fn fetch_mempool_distribution(
             Ok(resp) => match resp.json::<MempoolEntryJsonWrap>().await {
                 Ok(parsed_response) => parsed_response.result, // Success, proceed
                 Err(e) => {
+                    cache.remove(tx_id);
                     if !logged_txs.contains(tx_id) {
                         log_error(&format!(
                         "JSON parse error for TX {}: {:?}",
@@ -107,6 +108,7 @@ pub async fn fetch_mempool_distribution(
                 }
             },
             Err(e) => {
+                cache.remove(tx_id);
                 if !logged_txs.contains(tx_id) {
                     log_error(&format!(
                         "RPC request failed for TX {}: {:?}",
