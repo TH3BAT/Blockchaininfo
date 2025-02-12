@@ -11,6 +11,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::Mutex;
 use std::sync::Arc;
 use std::collections::{HashMap, HashSet};
+use once_cell::sync::Lazy;
 use crate::utils::log_error;
 use crate::rpc::mempool::MEMPOOL_CACHE; 
 
@@ -27,6 +28,9 @@ once_cell::sync::Lazy::new(|| Arc::new(Mutex::new(HashSet::new())));
 
 static LAST_BLOCK_NUMBER: once_cell::sync::Lazy<Mutex<u64>> = 
 once_cell::sync::Lazy::new(|| Mutex::new(0));
+
+// Global tracker for logged TXs (Non-blocking async)
+static LOGGED_TXS: Lazy<Arc<Mutex<HashSet<String>>>> = Lazy::new(|| Arc::new(Mutex::new(HashSet::new())));
 
 pub async fn fetch_mempool_distribution(
     config: &RpcConfig,
@@ -48,6 +52,7 @@ pub async fn fetch_mempool_distribution(
 
     let mut cache = DUST_FREE_TX_CACHE.lock().await;
     let mut dust_cache = DUST_CACHE.lock().await;
+    let mut logged_txs = LOGGED_TXS.lock().await;
 
     let all_tx_ids = {
         let read_guard = MEMPOOL_CACHE.read().unwrap(); // Lock read access
@@ -91,18 +96,24 @@ pub async fn fetch_mempool_distribution(
             Ok(resp) => match resp.json::<MempoolEntryJsonWrap>().await {
                 Ok(parsed_response) => parsed_response.result, // Success, proceed
                 Err(e) => {
-                    log_error(&format!(
+                    if !logged_txs.contains(tx_id) {
+                        log_error(&format!(
                         "JSON parse error for TX {}: {:?}",
                         tx_id, e
-                    ));
+                        ));
+                        logged_txs.insert(tx_id.to_string()); // Mark as logged
+                    }
                     return Err(MyError::JsonParsingError(tx_id.clone(), e.to_string()));  // Return CustomError
                 }
             },
             Err(e) => {
-                log_error(&format!(
-                    "RPC request failed for TX {}: {:?}",
-                    tx_id, e
-                ));
+                if !logged_txs.contains(tx_id) {
+                    log_error(&format!(
+                        "RPC request failed for TX {}: {:?}",
+                        tx_id, e
+                    ));
+                    logged_txs.insert(tx_id.to_string()); // Mark as logged
+                }
                 return Err(MyError::RpcRequestError(tx_id.clone(), e.to_string())); // Return CustomError
             }
         };
