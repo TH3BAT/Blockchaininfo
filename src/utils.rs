@@ -10,9 +10,9 @@ use tui::style::{Color, Style, Modifier};
 use tui::layout::{Rect, Alignment};
 use tui::Frame;
 use tui::backend::Backend;
-// use std::time::{SystemTime, UNIX_EPOCH};
-// use std::fs::{OpenOptions, metadata, remove_file};
-// use std::io::Write;
+use std::time::{SystemTime, UNIX_EPOCH};
+use std::fs::{OpenOptions, metadata, remove_file};
+use std::io::Write;
 
 // Constants for bytes formatting.
 const KB: u64 = 1024;
@@ -25,11 +25,9 @@ pub const DIFFICULTY_ADJUSTMENT_INTERVAL: u64 = 2016;
 pub const BLOCK_TIME_SECONDS: u64 = 600;
 const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/*
 static START_TIME: once_cell::sync::Lazy<u64> = once_cell::sync::Lazy::new(|| {
     SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
 });
-*/
 
 // Formats a size in bytes into a more readable format (KB, MB, etc.).
 pub fn format_size(bytes: u64) -> String {
@@ -133,7 +131,6 @@ pub fn render_footer<B: Backend>(f: &mut Frame<B>, area: Rect) {
     f.render_widget(footer, area);
 }
 
-/*
 pub fn log_error(message: &str) {
     let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
     
@@ -158,6 +155,6 @@ pub fn log_error(message: &str) {
     
     writeln!(file, "{}", message).unwrap();
 }
-*/
+
 
 

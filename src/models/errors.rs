@@ -21,6 +21,8 @@ pub enum MyError {
     InvalidBlockTime(u64),   
     InvalidBlockHeight(u64), 
     CustomError(String),
+    RpcRequestError(String, String), // (TX_ID, Error message)
+    JsonParsingError(String, String), // (TX_ID, Error message)
 }
 
 
@@ -39,6 +41,8 @@ impl fmt::Display for MyError {
             MyError::InvalidBlockTime(time) => write!(f, "Invalid block time: {}", time),
             MyError::InvalidBlockHeight(time) => write!(f, "Invalid block height: {}", time),
             MyError::CustomError(err) => write!(f, "Custom error: {}", err),
+            MyError::RpcRequestError(tx_id, err) => write!(f, "RPC request failed for TX {}: {}", tx_id, err),
+            MyError::JsonParsingError(tx_id, err) => write!(f, "JSON parsing error for TX {}: {}", tx_id, err),
         }
     }
 }
@@ -50,7 +54,6 @@ impl From<String> for MyError {
 }
 
 
-// Automatic conversion between error types.
 impl From<reqwest::Error> for MyError {
     fn from(err: reqwest::Error) -> MyError {
         MyError::Reqwest(err)
@@ -75,21 +78,19 @@ impl From<toml::de::Error> for MyError {
     }
 }
 
-
-// Add a method to convert String into CustomError.
+// Method for converting a string into a `CustomError`
 impl MyError {
     pub fn from_custom_error(err: String) -> MyError {
         MyError::CustomError(err)
     }
 }
 
-
+// Add conversions for environment variable errors
 impl From<std::env::VarError> for MyError {
     fn from(err: std::env::VarError) -> MyError {
         MyError::Config(format!("Environment variable error: {}", err))
     }
 }
-
 /*
 impl From<rodio::decoder::DecoderError> for MyError {
     fn from(err: rodio::decoder::DecoderError) -> MyError {

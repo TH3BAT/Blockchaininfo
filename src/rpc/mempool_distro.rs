@@ -11,7 +11,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::Mutex;
 use std::sync::Arc;
 use std::collections::{HashMap, HashSet};
-// use crate::utils::log_error;
+use crate::utils::log_error;
 use crate::rpc::mempool::MEMPOOL_CACHE; 
 
 
@@ -80,17 +80,35 @@ pub async fn fetch_mempool_distribution(
             "params": [tx_id]
         });
 
-        let response = client
+        let response = match client
             .post(&config.address)
             .basic_auth(&config.username, Some(&config.password))
             .header(CONTENT_TYPE, "application/json")
             .json(&json_rpc_request)
             .send()
-            .await?
-            .json::<MempoolEntryJsonWrap>()
-            .await?;
+            .await
+        {
+            Ok(resp) => match resp.json::<MempoolEntryJsonWrap>().await {
+                Ok(parsed_response) => parsed_response.result, // Success, proceed
+                Err(e) => {
+                    log_error(&format!(
+                        "JSON parse error for TX {}: {:?}",
+                        tx_id, e
+                    ));
+                    return Err(MyError::JsonParsingError(tx_id.clone(), e.to_string()));  // Return CustomError
+                }
+            },
+            Err(e) => {
+                log_error(&format!(
+                    "RPC request failed for TX {}: {:?}",
+                    tx_id, e
+                ));
+                return Err(MyError::RpcRequestError(tx_id.clone(), e.to_string())); // Return CustomError
+            }
+        };
 
-        let mempool_entry = response.result;
+        // Now `mempool_entry` contains a valid response or we’ve logged the failure.
+        let mempool_entry = response;
 
         if mempool_entry.fees.base < DUST_THRESHOLD {
             dust_cache.insert(tx_id.clone()); // Store it for future lookups
