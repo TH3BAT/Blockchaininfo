@@ -58,35 +58,35 @@ pub fn display_network_info<B: Backend>(
     // Network information content.
     let network_content = vec![
         Spans::from(vec![
-            Span::styled("Connections in: ", Style::default().fg(Color::Gray)),
+            Span::styled("🔌 Connections in: ", Style::default().fg(Color::Gray)),
             Span::styled(
                 network_info.connections_in.to_string(),
                 Style::default().fg(Color::Green),
             ),
         ]),
         Spans::from(vec![
-            Span::styled("Connections out: ", Style::default().fg(Color::Gray)),
+            Span::styled("🔗 Connections out: ", Style::default().fg(Color::Gray)),
             Span::styled(
                 network_info.connections_out.to_string(),
                 Style::default().fg(Color::Yellow),
             ),
         ]),
         Spans::from(vec![
-            Span::styled("Total Bytes Received: ", Style::default().fg(Color::Gray)),
+            Span::styled("⬇️ Total Bytes Received: ", Style::default().fg(Color::Gray)),
             Span::styled(
                 format_size(net_totals.totalbytesrecv).to_string(),
                 Style::default().fg(Color::Gray),
             ),
         ]),
         Spans::from(vec![
-            Span::styled("Total Bytes Sent: ", Style::default().fg(Color::Gray)),
+            Span::styled("⬆️ Total Bytes Sent: ", Style::default().fg(Color::Gray)),
             Span::styled(
                 format_size(net_totals.totalbytessent).to_string(),
                 Style::default().fg(Color::Gray),
             ),
         ]),
         Spans::from(vec![
-            Span::styled("Average Block Propagation Time: ", Style::default().fg(Color::Gray)),
+            Span::styled("⏱️ Average Block Propagation Time: ", Style::default().fg(Color::Gray)),
             Span::styled(
                 format!("{:.0} {}", avg_block_propagate_time, abpt_text),
                 Style::default().fg(color),

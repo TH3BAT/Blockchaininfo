@@ -44,12 +44,12 @@ pub fn display_blockchain_info<B: Backend>(
     // Build the blockchain info text before using it.
     let blockchain_info_text = vec![
         Spans::from(vec![
-            Span::styled("Chain: ", Style::default().fg(Color::Gray)),
+            Span::styled("🔗 Chain: ", Style::default().fg(Color::Gray)),
             Span::styled(blockchain_info.chain.clone(), Style::default().fg(Color::Yellow)),
         ]),
 
         Spans::from(vec![
-            Span::styled("Best Block: ", Style::default().fg(Color::Gray)),
+            Span::styled("🏆 Best Block: ", Style::default().fg(Color::Gray)),
             Span::styled(
                 blockchain_info.blocks.to_formatted_string(&Locale::en),
                 Style::default().fg(Color::Green),
@@ -57,17 +57,17 @@ pub fn display_blockchain_info<B: Backend>(
         ]),
 
         Spans::from(vec![
-            Span::styled("  Time since block: ", Style::default().fg(Color::Gray)),
+            Span::styled("  ⏳ Time since block: ", Style::default().fg(Color::Gray)),
             Span::styled(time_since_block, Style::default().fg(Color::Red)),
         ]),
 
         Spans::from(vec![
-            Span::styled("Difficulty: ", Style::default().fg(Color::Gray)),
+            Span::styled("🎯 Difficulty: ", Style::default().fg(Color::Gray)),
             Span::styled(formatted_difficulty, Style::default().fg(Color::LightRed)),
         ]),
 
         Spans::from(vec![
-            Span::styled("  Blocks until adjustment: ", Style::default().fg(Color::Gray)),
+            Span::styled("     Blocks until adjustment: ", Style::default().fg(Color::Gray)),
             match blockchain_info.display_blocks_until_difficulty_adjustment() {
                 Ok((block_text, block_color)) => Span::styled(block_text, Style::default().fg(block_color)),
                 Err(e) => Span::styled(format!("Error: {}", e), Style::default().fg(Color::Red)),
@@ -75,7 +75,7 @@ pub fn display_blockchain_info<B: Backend>(
         ]),
     
         Spans::from(vec![
-            Span::styled("  Estimated change: ", Style::default().fg(Color::Gray)),
+            Span::styled("  📉 Estimated change: ", Style::default().fg(Color::Gray)),
             Span::styled(
                 difficulty_arrow,
                 Style::default().fg(if estimate_difficulty_change > 0.0 {
@@ -91,12 +91,12 @@ pub fn display_blockchain_info<B: Backend>(
         ]),
 
         Spans::from(vec![
-            Span::styled("Chainwork: ", Style::default().fg(Color::Gray)),
+            Span::styled("   Chainwork: ", Style::default().fg(Color::Gray)),
             Span::styled(formatted_chainwork_bits, Style::default().fg(Color::LightYellow)),
         ]),
 
         Spans::from(vec![
-            Span::styled("Verification progress: ", Style::default().fg(Color::Gray)),
+            Span::styled("📡 Verification progress: ", Style::default().fg(Color::Gray)),
             Span::styled(
                 format!("{:.4}%", blockchain_info.verificationprogress * 100.0),
                 Style::default().fg(Color::Yellow),
@@ -104,17 +104,17 @@ pub fn display_blockchain_info<B: Backend>(
         ]),
 
         Spans::from(vec![
-            Span::styled("Size on Disk: ", Style::default().fg(Color::Gray)),
+            Span::styled("💾 Size on Disk: ", Style::default().fg(Color::Gray)),
             Span::styled(formatted_size_on_disk, Style::default().fg(Color::Gray)),
         ]),
 
         Spans::from(vec![
-            Span::styled("Median Time: ", Style::default().fg(Color::Gray)),
+            Span::styled("   Median Time: ", Style::default().fg(Color::Gray)),
             Span::styled(mediantime, Style::default().fg(Color::Gray)),
         ]),
 
         Spans::from(vec![
-            Span::styled("Block Time : ", Style::default().fg(Color::Gray)),
+            Span::styled("⏰ Block Time : ", Style::default().fg(Color::Gray)),
             Span::styled(time, Style::default().fg(Color::Gray)),
         ]),
     ];

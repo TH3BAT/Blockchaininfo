@@ -40,7 +40,7 @@ pub fn display_consensus_security_info<B: tui::backend::Backend>(
     // Add a "Fork Monitoring:" subheading.
     lines.push(Spans::from(vec![
         Span::styled(
-            "Fork Monitoring:",
+            "🌲 Fork Monitoring:",
             Style::default().fg(Color::Gray),
         ),
     ]));
@@ -60,19 +60,19 @@ pub fn display_consensus_security_info<B: tui::backend::Backend>(
     // Generate lines for the TUI display.
     for tip in limited_tips {
         let status = match tip.status.as_str() {
-            "active" => "Active Chain",
-            "valid-fork" => "Stale Fork",
+            "active" => "⚡ Active Chain",
+            "valid-fork" => "❌ Stale Fork",
             "valid-headers" => "Headers Only",
             "unknown" => "Unknown",
             _ => "Other",
         };
 
         let line = Spans::from(vec![
-            Span::styled(format!("Height: {:>7}", tip.height), Style::default().fg(Color::Gray)),
+            Span::styled(format!("🌳 Height: {:>7}", tip.height), Style::default().fg(Color::Gray)),
             Span::raw(" | "),
-            Span::styled(format!("Status: {:<12}", status), Style::default().fg(Color::Yellow)),
+            Span::styled(format!("Status: {:<14}", status), Style::default().fg(Color::Yellow)),
             Span::raw(" | "),
-            Span::styled(format!("Length: {:>2}", tip.branchlen), Style::default().fg(Color::Gray)),
+            Span::styled(format!("📏 Length: {:>2}", tip.branchlen), Style::default().fg(Color::Gray)),
         ]);
         lines.push(line);
     }
