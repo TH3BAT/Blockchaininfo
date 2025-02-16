@@ -71,22 +71,10 @@ pub async fn fetch_mempool_distribution(
     if *last_block != blockchain_info.blocks {
         *last_block = blockchain_info.blocks; // Update last seen block number
     
-        // Retain only relevant TXs (since `dust_cache` is already locked)
+        // Keep only TXs that still exist in mempool
         dust_cache.retain(|txid| all_tx_ids.contains(txid));
-    
-        // If dust cache exceeds 50,000, randomly remove some entries
-        if dust_cache.len() > MAX_DUST_CACHE_SIZE {
-            let mut rng = rand::rngs::SmallRng::seed_from_u64(42); // rand 0.9.0-compatible
-            let mut keys: Vec<String> = dust_cache.iter().cloned().collect();
-            
-            // Shuffle and keep only the first MAX_DUST_CACHE_SIZE
-            keys.shuffle(&mut rng);
-            let keys_to_keep: HashSet<String> = keys.into_iter().take(MAX_DUST_CACHE_SIZE).collect();
-    
-            // Replace the dust cache with only the selected keys
-            dust_cache.retain(|txid| keys_to_keep.contains(txid));
-        }
-    }        
+        cache.retain(|txid, _| all_tx_ids.contains(txid));
+    }            
         
     // Step 1: Update Cache (Only Add Dust-Free TXs)
     for tx_id in new_tx_ids.iter() {
@@ -143,10 +131,21 @@ pub async fn fetch_mempool_distribution(
         let mempool_entry = response;
 
         if mempool_entry.fees.base < DUST_THRESHOLD {
+            if dust_cache.len() == MAX_DUST_CACHE_SIZE {
+                let mut keys: Vec<_> = dust_cache.iter().cloned().collect();
+            
+                // ✅ Shuffle the keys using a seeded RNG (consistent randomness)
+                let mut rng = StdRng::seed_from_u64(42);
+                keys.shuffle(&mut rng);
+            
+                // ✅ Remove the first key after shuffle
+                if let Some(random_key) = keys.first() {
+                    dust_cache.remove(random_key);
+                }
+            }
             dust_cache.insert(tx_id.clone()); // Store it for future lookups
             continue; // Skip processing
         }
-        
 
         // Ensure we don’t exceed the max cache size before inserting.
         if cache.len() == MAX_CACHE_SIZE {
