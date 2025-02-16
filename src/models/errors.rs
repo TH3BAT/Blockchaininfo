@@ -13,7 +13,8 @@ pub enum MyError {
     Reqwest(reqwest::Error),
     SerdeJson(serde_json::Error),
     Io(io::Error),
-    Toml(toml::de::Error),
+    TomlDeserialize(toml::de::Error), // Renamed for clarity
+    TomlSerialize(toml::ser::Error),  // NEW: Handles TOML serialization errors
     Keychain(String),
     Config(String),
     InvalidChainworkHexString(String),
@@ -21,19 +22,18 @@ pub enum MyError {
     InvalidBlockTime(u64),   
     InvalidBlockHeight(u64), 
     CustomError(String),
-    RpcRequestError(String, String), // (TX_ID, Error message)
-    JsonParsingError(String, String), // (TX_ID, Error message)
+    RpcRequestError(String, String),
+    JsonParsingError(String, String),
 }
 
-
-// Implementation of `fmt::Display` for custom error messages.
 impl fmt::Display for MyError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             MyError::Reqwest(err) => write!(f, "Request error: {}", err),
             MyError::SerdeJson(err) => write!(f, "JSON parsing error: {}", err),
             MyError::Io(err) => write!(f, "I/O error: {}", err),
-            MyError::Toml(err) => write!(f, "TOML parsing error: {}", err),
+            MyError::TomlDeserialize(err) => write!(f, "TOML deserialization error: {}", err),
+            MyError::TomlSerialize(err) => write!(f, "TOML serialization error: {}", err), // ✅ NEW
             MyError::Keychain(err) => write!(f, "Keychain error: {}", err),
             MyError::Config(err) => write!(f, "Configuration error: {}", err),
             MyError::InvalidChainworkHexString(err) => write!(f, "Invalid chainwork hex string: {}", err),
@@ -44,6 +44,20 @@ impl fmt::Display for MyError {
             MyError::RpcRequestError(tx_id, err) => write!(f, "RPC request failed for TX {}: {}", tx_id, err),
             MyError::JsonParsingError(tx_id, err) => write!(f, "JSON parsing error for TX {}: {}", tx_id, err),
         }
+    }
+}
+
+// NEW: Handle TOML serialization errors
+impl From<toml::ser::Error> for MyError {
+    fn from(err: toml::ser::Error) -> MyError {
+        MyError::TomlSerialize(err)
+    }
+}
+
+// Rename TOML deserialization error handler for clarity
+impl From<toml::de::Error> for MyError {
+    fn from(err: toml::de::Error) -> MyError {
+        MyError::TomlDeserialize(err)
     }
 }
 
@@ -69,12 +83,6 @@ impl From<serde_json::Error> for MyError {
 impl From<io::Error> for MyError {
     fn from(err: io::Error) -> MyError {
         MyError::Io(err)
-    }
-}
-
-impl From<toml::de::Error> for MyError {
-    fn from(err: toml::de::Error) -> MyError {
-        MyError::Toml(err)
     }
 }
 

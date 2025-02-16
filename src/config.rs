@@ -4,29 +4,29 @@
 use std::fs;
 use std::env;
 use std::path::Path;
-use crate::models::errors::MyError;                // Custom MyError routines.
-use crate::utils::get_rpc_password_from_keychain;  // Custom utility function.
-use serde::Deserialize;                            // For deserialization.
+use crate::models::errors::MyError;
+use crate::utils::get_rpc_password_from_keychain;
+use serde::{Deserialize, Serialize}; // Added `Serialize` for writing config to TOML
 
 // Structure for RPC connection details.
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)] // `Serialize` added for writing to TOML
 #[serde(rename_all = "snake_case")]
 pub struct RpcConfig {
-    pub username: String, // RPC username.
-    pub password: String, // RPC password.
-    pub address: String,  // RPC server address.
+    pub username: String, 
+    pub password: String, 
+    pub address: String,  
 }
 
 impl RpcConfig {
-    // Fetches the RPC password from the keychain (if necessary).
+    /// Fetches the RPC password from the keychain (if necessary).
     pub fn get_rpc_password_from_keychain() -> Result<String, MyError> {
-        get_rpc_password_from_keychain()
+        get_rpc_password_from_keychain() // Ensuring Keychain is used
     }
 }
 
 // Determines config path from CLI args, env variable, or default location.
 pub fn get_config_path() -> String {
-    // 1️Check CLI Args (`--config` flag)
+    // Check CLI Args (`--config` flag)
     let args: Vec<String> = env::args().collect();
     if let Some(pos) = args.iter().position(|arg| arg == "--config") {
         if let Some(config_path) = args.get(pos + 1) {
@@ -39,7 +39,7 @@ pub fn get_config_path() -> String {
         return env_path;
     }
 
-    // Fallback to Default
+    // Fallback to Default Path
     "./target/release/config.toml".to_string()
 }
 
@@ -47,22 +47,46 @@ pub fn get_config_path() -> String {
 pub fn load_config() -> Result<RpcConfig, MyError> {
     let file_path = get_config_path(); // Get config location dynamically
 
-    // Attempt to read the config from the TOML file.
+    // Check if the config file exists
     let config: RpcConfig = if Path::new(&file_path).exists() {
         let config_str = fs::read_to_string(file_path)?;
-        toml::de::from_str(&config_str)?
+        toml::from_str(&config_str)?
     } else {
-        // If the file doesn't exist, fall back to reading from environment variables or Keychain.
-        let password = env::var("RPC_PASSWORD")
-            .or_else(|_| RpcConfig::get_rpc_password_from_keychain())?;
+        // No Config Found? Fall back to ENV or Prompt for User Input
+        let username = env::var("RPC_USER").unwrap_or_else(|_| {
+            print!("Enter RPC Username: ");
+            let mut input = String::new();
+            std::io::stdin().read_line(&mut input).unwrap();
+            input.trim().to_string()
+        });
 
-            RpcConfig {  
-                username: env::var("RPC_USER")?,
-                password,
-                address: env::var("RPC_ADDRESS")?,
-            }
+        let password = env::var("RPC_PASSWORD")
+            .or_else(|_| RpcConfig::get_rpc_password_from_keychain()) // ✅ Keychain now properly accessed
+            .unwrap_or_else(|_| {
+                print!("Enter RPC Password: ");
+                let mut input = String::new();
+                std::io::stdin().read_line(&mut input).unwrap();
+                input.trim().to_string()
+            });
+
+        let address = env::var("RPC_ADDRESS").unwrap_or_else(|_| {
+            print!("Enter RPC Address (e.g., http://127.0.0.1:8332): ");
+            let mut input = String::new();
+            std::io::stdin().read_line(&mut input).unwrap();
+            input.trim().to_string()
+        });
+
+        // Create a valid config
+        let config = RpcConfig { username, password, address };
+
+        // ✨ Auto-generate `config.toml`
+        if let Ok(toml_string) = toml::to_string_pretty(&config) {
+            fs::write(&file_path, toml_string)?;
+            println!("✅ Config saved to `{}`", file_path);
+        }
+
+        config // Return the generated config
     };
 
     Ok(config)
 }
-
