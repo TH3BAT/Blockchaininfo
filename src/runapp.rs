@@ -283,8 +283,34 @@ pub async fn run_app<B: tui::backend::Backend>(
                     KeyCode::Esc if app.show_popup => app.show_popup = false, // Close Popup
                     KeyCode::Char('q') | KeyCode::Esc => {
                         app.is_exiting = true;  // 🚀 Flag shutdown mode
+                    
+                        // Get terminal size to recompute layout manually
+                        let size = terminal.size()?;
+                        let chunks = Layout::default()
+                            .direction(Direction::Vertical)
+                            .margin(1)
+                            .constraints(
+                                [
+                                    Constraint::Length(3),   // Header
+                                    Constraint::Length(14),  // Blockchain
+                                    Constraint::Length(25),  // Mempool
+                                    Constraint::Max(18),     // Network
+                                    Constraint::Length(7),   // Consensus Security
+                                    Constraint::Length(1),   // Footer
+                                ]
+                                .as_ref(),
+                            )
+                            .split(size);
+                    
+                        // Force one last UI update before quitting
+                        terminal.draw(|frame| {
+                            render_footer(frame, chunks[5], "Shutting Down Cleanly...");
+                        })?;
+                    
+                        std::thread::sleep(std::time::Duration::from_millis(500));  // Short delay for visibility
+                    
                         break;  // Quit App
-                        },
+                    },
                     KeyCode::Char('t') if !app.show_popup => {
                         app.show_popup = true;
                         app.tx_input.clear();
@@ -387,7 +413,7 @@ pub async fn run_app<B: tui::backend::Backend>(
             } else {
                 "Press 'q' to quit | 't' for Tx Lookup"
             };
-            
+
             let block_6 = Block::default().borders(Borders::NONE);
             frame.render_widget(block_6, chunks[5]);
             render_footer(frame, chunks[5], footer_msg);
