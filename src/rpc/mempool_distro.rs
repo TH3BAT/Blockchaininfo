@@ -136,7 +136,7 @@ pub async fn fetch_mempool_distribution(
         
 
         // Ensure we don’t exceed the max cache size before inserting.
-        if cache.len() > MAX_CACHE_SIZE {
+        if cache.len() == MAX_CACHE_SIZE {
             let mut keys: Vec<_> = cache.keys().cloned().collect();
         
             // ✅ Shuffle the keys using a seeded RNG (consistent randomness)
