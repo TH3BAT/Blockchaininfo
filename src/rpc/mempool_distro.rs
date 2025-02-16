@@ -11,6 +11,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::Mutex;
 use std::sync::Arc;
 use std::collections::{HashMap, HashSet};
+use rand::seq::SliceRandom;
+use rand::rngs::StdRng;
+use rand::SeedableRng; 
 use crate::utils::{log_error, LOGGED_TXS};
 use crate::rpc::mempool::MEMPOOL_CACHE; 
 use crate::utils::{BLOCKCHAIN_INFO_CACHE, MEMPOOL_DISTRIBUTION_CACHE};
@@ -133,12 +136,18 @@ pub async fn fetch_mempool_distribution(
         
 
         // Ensure we don’t exceed the max cache size before inserting.
-        if cache.len() >= MAX_CACHE_SIZE {
-            if let Some(oldest_key) = cache.keys().next().cloned() {
-                cache.remove(&oldest_key);
+        if cache.len() > MAX_CACHE_SIZE {
+            let mut keys: Vec<_> = cache.keys().cloned().collect();
+        
+            // ✅ Shuffle the keys using a seeded RNG (consistent randomness)
+            let mut rng = StdRng::seed_from_u64(42);
+            keys.shuffle(&mut rng);
+        
+            // ✅ Remove the first key after shuffle
+            if let Some(random_key) = keys.first() {
+                cache.remove(random_key);
             }
         }
-
         // Now insert the new entry after making space
         cache.insert(tx_id.clone(), mempool_entry);
 
