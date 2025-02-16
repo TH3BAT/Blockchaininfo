@@ -85,7 +85,7 @@ impl PeerInfo {
         // Sort: First by count (descending), then by version (numeric comparison)
         sorted_counts.sort_by(|a, b| {
             b.1.cmp(&a.1) // First: Sort by peer count (desc)
-                .then_with(|| Self::compare_versions(&b.0, &a.0)) // Second: Sort by version (desc)
+                .then_with(|| Self::compare_versions(&a.0, &b.0)) // Second: Sort by version (asc)
         });
     
         sorted_counts
