@@ -28,9 +28,8 @@ use blockchaininfo::utils::log_error;
 use crate::models::chaintips_info::ChainTipsResponse;
 use tokio::sync::Mutex;
 use regex::Regex;
-use crate::rpc::mempool_distro::LOGGED_TXS;
 use crate::utils::{BLOCKCHAIN_INFO_CACHE, BLOCK_INFO_CACHE, MEMPOOL_INFO_CACHE, CHAIN_TIP_CACHE,
-PEER_INFO_CACHE, NETWORK_INFO_CACHE, NET_TOTALS_CACHE, MEMPOOL_DISTRIBUTION_CACHE};
+PEER_INFO_CACHE, NETWORK_INFO_CACHE, NET_TOTALS_CACHE, MEMPOOL_DISTRIBUTION_CACHE, LOGGED_TXS};
 
 struct App {
     show_popup: bool,
@@ -275,7 +274,7 @@ pub async fn run_app<B: tui::backend::Backend>(
             Duration::from_millis(250) // More relaxed updates when idle
         };
     
-        // 🎯 **Handle User Input**
+        // Handle User Input
         if event::poll(poll_time)? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
@@ -301,7 +300,7 @@ pub async fn run_app<B: tui::backend::Backend>(
                 }
             }
         }
-        // 🎨 **Step 2: Draw UI Layout First**
+        // Step 2: Draw UI Layout First
         terminal.draw(|frame| {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)

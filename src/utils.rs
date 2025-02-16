@@ -15,6 +15,7 @@ use std::io::Write;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use once_cell::sync::Lazy;
+use std::collections::HashSet;
 use crate::models::blockchain_info::BlockchainInfo;
 use crate::models::block_info::BlockInfo;
 use crate::models::chaintips_info::ChainTipsResponse;
@@ -58,6 +59,8 @@ pub static CHAIN_TIP_CACHE: Lazy<Arc<RwLock<ChainTipsResponse>>> =
 pub static MEMPOOL_DISTRIBUTION_CACHE: Lazy<Arc<RwLock<MempoolDistribution>>> =
     Lazy::new(|| Arc::new(RwLock::new(MempoolDistribution::default())));
 
+pub static LOGGED_TXS: Lazy<Arc<RwLock<HashSet<String>>>> = 
+Lazy::new(|| Arc::new(RwLock::new(HashSet::new())));
 
 // Formats a size in bytes into a more readable format (KB, MB, etc.).
 pub fn format_size(bytes: u64) -> String {

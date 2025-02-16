@@ -8,7 +8,7 @@ mod block;
 mod chain_tips;
 mod network_totals; 
 mod network_peers;
-pub mod mempool_distro;
+mod mempool_distro;
 mod transaction;
 
 use crate::models::blockchain_info::BlockchainInfo;

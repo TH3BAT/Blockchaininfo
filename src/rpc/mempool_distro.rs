@@ -11,9 +11,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::Mutex;
 use std::sync::Arc;
 use std::collections::{HashMap, HashSet};
-use tokio::sync::RwLock;
-use once_cell::sync::Lazy;
-use crate::utils::log_error;
+use crate::utils::{log_error, LOGGED_TXS};
 use crate::rpc::mempool::MEMPOOL_CACHE; 
 use crate::utils::{BLOCKCHAIN_INFO_CACHE, MEMPOOL_DISTRIBUTION_CACHE};
 
@@ -28,10 +26,6 @@ once_cell::sync::Lazy::new(|| Arc::new(Mutex::new(HashSet::new())));
 
 static LAST_BLOCK_NUMBER: once_cell::sync::Lazy<Mutex<u64>> = 
 once_cell::sync::Lazy::new(|| Mutex::new(0));
-
-// Global tracker for logged TXs (Non-blocking async)
-pub static LOGGED_TXS: Lazy<Arc<RwLock<HashSet<String>>>> = 
-Lazy::new(|| Arc::new(RwLock::new(HashSet::new())));
 
 
 pub async fn fetch_mempool_distribution(
@@ -138,14 +132,16 @@ pub async fn fetch_mempool_distribution(
         }
         
 
-        cache.insert(tx_id.clone(), mempool_entry);
-
-        if cache.len() > MAX_CACHE_SIZE {
-            let oldest_key = cache.keys().next().cloned();
-            if let Some(oldest_key) = oldest_key {
+        // Ensure we don’t exceed the max cache size before inserting.
+        if cache.len() >= MAX_CACHE_SIZE {
+            if let Some(oldest_key) = cache.keys().next().cloned() {
                 cache.remove(&oldest_key);
             }
         }
+
+        // Now insert the new entry after making space
+        cache.insert(tx_id.clone(), mempool_entry);
+
     }
 
     // Step 2: Process Cached Transactions & Calculate Distribution
