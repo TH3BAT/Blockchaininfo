@@ -10,8 +10,7 @@ use tui::{
     Frame,
 };
 use num_format::{Locale, ToFormattedString};
-use crate::utils::format_size;
-use crate::models::mempool_info::{MempoolInfo, MempoolDistribution};
+use crate::{models::mempool_info::{MempoolDistribution, MempoolInfo}, utils::format_size};
 use crate::models::errors::MyError;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
@@ -20,9 +19,9 @@ const SPINNER_FRAMES: [&str; 4] = ["|", "/", "-", "\\"];
 
 // Displays the mempool information in a `tui` terminal.
 pub fn display_mempool_info<B: Backend>(
-    frame: &mut Frame<B>,
     mempool_info: &MempoolInfo,
     distribution: &MempoolDistribution,
+    frame: &mut Frame<B>,
     area: Rect, 
 ) -> Result<(), MyError> {
 

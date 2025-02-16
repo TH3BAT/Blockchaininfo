@@ -4,7 +4,7 @@
 use serde::Deserialize;
 
 // Wraps the response for deserialization.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct ChainTipsResponse {
@@ -14,7 +14,7 @@ pub struct ChainTipsResponse {
 }
 
 // Represents a single chain tip.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct ChainTip {

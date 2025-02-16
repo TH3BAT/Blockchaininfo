@@ -11,10 +11,11 @@ use crate::models::chaintips_info::ChainTip;
 use crate::models::errors::MyError;  
 
 pub fn display_consensus_security_info<B: tui::backend::Backend>(
+    chaintips_info: &Vec<ChainTip>,
     frame: &mut tui::Frame<B>,
-    chaintips_info: &[ChainTip],
     area: tui::layout::Rect,
 ) -> Result<(), MyError> {
+
     // Create the layout for this specific chunk (using passed 'area').
     let chunks = Layout::default()
         .direction(Direction::Vertical)

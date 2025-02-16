@@ -13,7 +13,7 @@ pub struct NetTotalsJsonWrap {
     pub result: NetTotals,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct NetTotals {
@@ -23,7 +23,7 @@ pub struct NetTotals {
     pub uploadtarget: UploadTarget, // Upload target information and statistics.
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct UploadTarget {

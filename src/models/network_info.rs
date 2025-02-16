@@ -15,7 +15,7 @@ use serde::Deserialize; // For struct serialization and deserialization.
 }
 
 // This struct encapsulates various details about the Bitcoin node's network status.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct NetworkInfo {

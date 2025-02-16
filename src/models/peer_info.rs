@@ -15,7 +15,7 @@ pub struct PeerInfoResponse {
     pub result: Vec<PeerInfo>, 
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct PeerInfo {
@@ -72,20 +72,39 @@ impl PeerInfo {
     /// Aggregate and sort Node Version Distribution by peer count.
     pub fn aggregate_and_sort_versions(peer_info: &[PeerInfo]) -> Vec<(String, usize)> {
         let mut counts: HashMap<String, usize> = HashMap::new();
-
+    
         // Aggregate peer counts for normalized versions
         for peer in peer_info.iter().filter(|peer| peer.subver.contains("Satoshi")) {
             let normalized_version = PeerInfo::normalize_version(&peer.subver); // Use `normalize_version`.
             *counts.entry(normalized_version).or_insert(0) += 1;
         }
-
-        // Convert HashMap to Vec and sort by peer count in descending order.
+    
+        // Convert HashMap to Vec for sorting
         let mut sorted_counts: Vec<(String, usize)> = counts.into_iter().collect();
-        sorted_counts.sort_by(|a, b| b.1.cmp(&a.1)); // Sort by peer count.
-
+    
+        // Sort: First by count (descending), then by version (numeric comparison)
+        sorted_counts.sort_by(|a, b| {
+            b.1.cmp(&a.1) // First: Sort by peer count (desc)
+                .then_with(|| Self::compare_versions(&b.0, &a.0)) // Second: Sort by version (desc)
+        });
+    
         sorted_counts
     }
-
+    
+    // Version Comparison (parses version numbers correctly)
+    fn compare_versions(a: &str, b: &str) -> std::cmp::Ordering {
+        let parse_version = |s: &str| {
+            s.split('.')
+                .map(|part| part.parse::<u32>().unwrap_or(0)) // Parse safely
+                .collect::<Vec<u32>>()
+        };
+    
+        let ver_a = parse_version(a);
+        let ver_b = parse_version(b);
+    
+        ver_b.cmp(&ver_a) // Descending order
+    }
+    
     /// Calculate block propagation time in minutes.
     pub fn calculate_block_propagation_time(
         peer_info: &[PeerInfo],
@@ -131,19 +150,5 @@ impl PeerInfo {
         average_propagation_time_in_ms / 6000 // Return in seconds.
     }
 
-    /*
-    // Helper function to extract the version number as a tuple.
-    pub fn extract_version(subver: &str) -> (u32, u32, u32) {
-        let version_pattern = regex::Regex::new(r"/Satoshi:(\d+)\.(\d+)\.(\d+)").unwrap();
-        if let Some(captures) = version_pattern.captures(subver) {
-            let major = captures.get(1).map_or(0, |m| m.as_str().parse::<u32>().unwrap_or(0));
-            let minor = captures.get(2).map_or(0, |m| m.as_str().parse::<u32>().unwrap_or(0));
-            let patch = captures.get(3).map_or(0, |m| m.as_str().parse::<u32>().unwrap_or(0));
-            (major, minor, patch)
-        } else {
-            (0, 0, 0) // Default to 0.0.0 if version is not found.
-        }
-    }
-    */
 }
 

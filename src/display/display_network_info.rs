@@ -9,22 +9,21 @@ use tui::{
     widgets::{BarChart, Block, Borders, Paragraph, Sparkline},
     Frame,
 };
-use crate::models::network_info::NetworkInfo;
-use crate::models::network_totals::NetTotals;
-use crate::models::errors::MyError;
+use crate::models::{errors::MyError, network_info::NetworkInfo, network_totals::NetTotals};
 use crate::utils::format_size;
 use std::collections::VecDeque;
 
 // Displays the network information in a `tui` terminal.
 pub fn display_network_info<B: Backend>(
-    frame: &mut Frame<B>,
     network_info: &NetworkInfo,
     net_totals: &NetTotals,
+    frame: &mut Frame<B>,
     version_counts: &[(String, usize)],
     avg_block_propagate_time: &i64,
     propagation_times: &VecDeque<i64>,
     area: Rect,
 ) -> Result<(), MyError> {
+    
     // Determine color based on average block propagation time.
     let color = if avg_block_propagate_time.abs() < 3 {
         Color::Green // Ideal.
@@ -152,7 +151,7 @@ pub fn display_network_info<B: Backend>(
         // Render the Sparkline in the right sub-chunk.
         frame.render_widget(sparkline, sub_chunks[1]);
     } else {
-        println!("Propagation times are empty. Sparkline won't render.");
+        // println!("Propagation times are empty. Sparkline won't render.");
     }
 
     Ok(())

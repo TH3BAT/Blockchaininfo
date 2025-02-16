@@ -10,32 +10,32 @@ use tui::{
     Frame,
 };
 use num_format::{Locale, ToFormattedString};
-use crate::utils::{format_size, estimate_difficulty_change};
-use crate::models::blockchain_info::BlockchainInfo;
-use crate::models::block_info::BlockInfo;
+use crate::{models::{block_info::BlockInfo, blockchain_info::BlockchainInfo}, utils::{estimate_difficulty_change, format_size}};
 use crate::models::errors::MyError;  
 
 // Render the blockchain info into a `tui` terminal UI.
 pub fn display_blockchain_info<B: Backend>(
-    frame: &mut Frame<B>,
     blockchain_info: &BlockchainInfo,
     block_info: &BlockInfo,
+    frame: &mut Frame<B>,
     area: Rect
 ) -> Result<(), MyError> {
+        
     let mediantime = blockchain_info.parse_mediantime()?;
     let time = blockchain_info.parse_time()?;
     let formatted_size_on_disk = format_size(blockchain_info.size_on_disk);
     let time_since_block = blockchain_info.calculate_time_diff()?;
     let formatted_difficulty = blockchain_info.formatted_difficulty()?;
     let formatted_chainwork_bits = blockchain_info.formatted_chainwork_bits()?;
-    let estimate_difficulty_change = estimate_difficulty_change(
+
+    let estimate_difficulty_chng = estimate_difficulty_change(
         blockchain_info.blocks,
         blockchain_info.time,
-        block_info.time,
+        block_info.time,  // 🔥 Use block_info directly, no `.last()`
     );
-
+    
     // Difficulty arrow.
-    let difficulty_arrow = if estimate_difficulty_change > 0.0 {
+    let difficulty_arrow = if estimate_difficulty_chng > 0.0 {
         "↑".to_string()
     } else {
         "↓".to_string()
@@ -78,14 +78,14 @@ pub fn display_blockchain_info<B: Backend>(
             Span::styled("  📉 Estimated change: ", Style::default().fg(Color::Gray)),
             Span::styled(
                 difficulty_arrow,
-                Style::default().fg(if estimate_difficulty_change > 0.0 {
+                Style::default().fg(if estimate_difficulty_chng > 0.0 {
                     Color::Green
                 } else {
                     Color::Red
                 }),
             ),
             Span::styled(
-                format!(" {:.2}%", estimate_difficulty_change.abs()),
+                format!(" {:.2}%", estimate_difficulty_chng.abs()),
                 Style::default().fg(Color::Gray),
             ),
         ]),

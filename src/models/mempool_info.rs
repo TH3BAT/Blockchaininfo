@@ -29,7 +29,7 @@ pub struct MempoolDistribution {
 }
 
 // Represents the mempool information retrieved from the Bitcoin RPC `getmempoolinfo` call.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct MempoolInfo {

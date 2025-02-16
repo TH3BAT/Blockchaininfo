@@ -18,9 +18,9 @@ async fn main() -> Result<(), MyError> {
     // Parse and load RPC configuration or environment variables to connect to node.
     let config = load_config()?;
 
-    if config.bitcoin_rpc.username.is_empty()
-        || config.bitcoin_rpc.password.is_empty()
-        || config.bitcoin_rpc.address.is_empty()
+    if config.username.is_empty()
+        || config.password.is_empty()
+        || config.address.is_empty()
     {
         return Err(MyError::Config("Invalid config data".to_string()));
     }

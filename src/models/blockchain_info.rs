@@ -18,7 +18,7 @@ use crate::utils::DIFFICULTY_ADJUSTMENT_INTERVAL;
 }
 
 // Nested structure containing detailed blockchain information.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
     pub struct BlockchainInfo {

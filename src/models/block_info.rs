@@ -19,7 +19,7 @@ pub struct BlockInfoJsonWrap {
     pub result: BlockInfo,        // Contains the block's details.
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default, Clone)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct BlockInfo {

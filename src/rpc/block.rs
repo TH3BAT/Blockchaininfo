@@ -7,10 +7,18 @@ use serde_json::json;
 use crate::models::errors::MyError;
 use crate::config::RpcConfig;
 use crate::models::block_info::{BlockHash, BlockInfo, BlockInfoJsonWrap};
+use crate::utils::DIFFICULTY_ADJUSTMENT_INTERVAL;
 
 // Fetch block data based on the block height.
-pub async fn fetch_block_data_by_height(config: &RpcConfig, block_height: u64
+pub async fn fetch_block_data_by_height(
+    config: &RpcConfig,
+    blocks: u64,
 ) -> Result<BlockInfo, MyError> {
+    // Lock and read the blockchain info from the cache
+    let block_height = (
+        (blocks - 1) / DIFFICULTY_ADJUSTMENT_INTERVAL
+    ) * DIFFICULTY_ADJUSTMENT_INTERVAL;
+
     let client = Client::new();
 
     // Step 1: Get the block hash by height.

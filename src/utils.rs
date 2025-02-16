@@ -12,6 +12,16 @@ use tui::Frame;
 use tui::backend::Backend;
 use std::fs::{OpenOptions, metadata, remove_file};
 use std::io::Write;
+use std::sync::Arc;
+use tokio::sync::RwLock;
+use once_cell::sync::Lazy;
+use crate::models::blockchain_info::BlockchainInfo;
+use crate::models::block_info::BlockInfo;
+use crate::models::chaintips_info::ChainTipsResponse;
+use crate::models::mempool_info::{MempoolDistribution, MempoolInfo};
+use crate::models::peer_info::PeerInfo;
+use crate::models::network_info::NetworkInfo;
+use crate::models::network_totals::NetTotals;
 
 // Constants for bytes formatting.
 const KB: u64 = 1024;
@@ -23,6 +33,31 @@ const TB: u64 = GB * 1024;
 pub const DIFFICULTY_ADJUSTMENT_INTERVAL: u64 = 2016;
 pub const BLOCK_TIME_SECONDS: u64 = 600;
 const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
+
+pub static BLOCKCHAIN_INFO_CACHE: Lazy<Arc<RwLock<BlockchainInfo>>> = 
+    Lazy::new(|| Arc::new(RwLock::new(BlockchainInfo::default())));
+
+pub static MEMPOOL_INFO_CACHE: Lazy<Arc<RwLock<MempoolInfo>>> = 
+    Lazy::new(|| Arc::new(RwLock::new(MempoolInfo::default())));
+
+pub static NETWORK_INFO_CACHE: Lazy<Arc<RwLock<NetworkInfo>>> = 
+    Lazy::new(|| Arc::new(RwLock::new(NetworkInfo::default())));
+
+pub static PEER_INFO_CACHE: Lazy<Arc<RwLock<Vec<PeerInfo>>>> = 
+    Lazy::new(|| Arc::new(RwLock::new(Vec::new())));
+
+pub static NET_TOTALS_CACHE: Lazy<Arc<RwLock<NetTotals>>> = 
+    Lazy::new(|| Arc::new(RwLock::new(NetTotals::default())));
+
+pub static BLOCK_INFO_CACHE: Lazy<Arc<RwLock<Vec<BlockInfo>>>> = 
+    Lazy::new(|| Arc::new(RwLock::new(Vec::new())));
+
+pub static CHAIN_TIP_CACHE: Lazy<Arc<RwLock<ChainTipsResponse>>> =
+    Lazy::new(|| Arc::new(RwLock::new(ChainTipsResponse::default())));
+
+pub static MEMPOOL_DISTRIBUTION_CACHE: Lazy<Arc<RwLock<MempoolDistribution>>> =
+    Lazy::new(|| Arc::new(RwLock::new(MempoolDistribution::default())));
+
 
 // Formats a size in bytes into a more readable format (KB, MB, etc.).
 pub fn format_size(bytes: u64) -> String {

@@ -8,7 +8,7 @@ mod block;
 mod chain_tips;
 mod network_totals; 
 mod network_peers;
-mod mempool_distro;
+pub mod mempool_distro;
 mod transaction;
 
 use crate::models::blockchain_info::BlockchainInfo;
@@ -33,8 +33,11 @@ pub async fn fetch_network_info(config: &RpcConfig) -> Result<NetworkInfo, MyErr
     network::fetch_network_info(config).await
 }
 
-pub async fn fetch_block_data_by_height(config: &RpcConfig, block_height: u64) -> Result<BlockInfo, MyError> {
-    block::fetch_block_data_by_height(config, block_height).await
+pub async fn fetch_block_data_by_height(
+    config: &RpcConfig,
+    blocks: u64,
+) -> Result<BlockInfo, MyError> {
+    block::fetch_block_data_by_height(config, blocks).await
 }
 
 pub async fn fetch_chain_tips(config: &RpcConfig) -> Result<Vec<ChainTip>, MyError> {
@@ -50,10 +53,9 @@ pub async fn fetch_peer_info(config: &RpcConfig) -> Result<Vec<PeerInfo>, MyErro
 }
 
 pub async fn fetch_mempool_distribution(
-    config: &RpcConfig,
-    active_block_number: u64, 
-) -> Result<((usize, usize, usize), (usize, usize, usize), (usize, usize), f64, f64, f64), MyError> {
-    mempool_distro::fetch_mempool_distribution(config, active_block_number).await
+    config: &RpcConfig, 
+) -> Result<(), MyError> {
+    mempool_distro::fetch_mempool_distribution(config).await
 }
 
 pub async fn fetch_transaction(config: &RpcConfig, txid: &str) -> Result<String, MyError> {

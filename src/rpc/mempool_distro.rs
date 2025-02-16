@@ -11,9 +11,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::Mutex;
 use std::sync::Arc;
 use std::collections::{HashMap, HashSet};
+use tokio::sync::RwLock;
 use once_cell::sync::Lazy;
 use crate::utils::log_error;
 use crate::rpc::mempool::MEMPOOL_CACHE; 
+use crate::utils::{BLOCKCHAIN_INFO_CACHE, MEMPOOL_DISTRIBUTION_CACHE};
 
 const DUST_THRESHOLD: f64 = 0.00000546; // 546 sats in BTC
 const MAX_CACHE_SIZE: usize = 10_000; // Rolling cache size
@@ -28,13 +30,16 @@ static LAST_BLOCK_NUMBER: once_cell::sync::Lazy<Mutex<u64>> =
 once_cell::sync::Lazy::new(|| Mutex::new(0));
 
 // Global tracker for logged TXs (Non-blocking async)
-static LOGGED_TXS: Lazy<Arc<Mutex<HashSet<String>>>> = Lazy::new(|| Arc::new(Mutex::new(HashSet::new())));
+pub static LOGGED_TXS: Lazy<Arc<RwLock<HashSet<String>>>> = 
+Lazy::new(|| Arc::new(RwLock::new(HashSet::new())));
+
 
 pub async fn fetch_mempool_distribution(
     config: &RpcConfig,
-    active_block_number: u64, 
-) -> Result<((usize, usize, usize), (usize, usize, usize), (usize, usize), f64, f64, f64), MyError> {
+) -> Result<(), MyError> {
     let client = Client::new();
+    // Lock and read the blockchain info from the cache
+    let blockchain_info = BLOCKCHAIN_INFO_CACHE.read().await;
     let mut small = 0;
     let mut medium = 0;
     let mut large = 0;
@@ -50,7 +55,6 @@ pub async fn fetch_mempool_distribution(
 
     let mut cache = DUST_FREE_TX_CACHE.lock().await;
     let mut dust_cache = DUST_CACHE.lock().await;
-    let mut logged_txs = LOGGED_TXS.lock().await;
     
     let all_tx_ids = {
         let read_guard = MEMPOOL_CACHE.read().unwrap(); // Lock read access
@@ -62,12 +66,12 @@ pub async fn fetch_mempool_distribution(
         .cloned()
         .collect();    
     
-    // Lock block number tracking
-    let mut last_block = LAST_BLOCK_NUMBER.lock().await;
+     // Lock block number tracking
+     let mut last_block = LAST_BLOCK_NUMBER.lock().await;
     
     // Step 0: Remove Expired TXs if Block Changed
-    if *last_block != active_block_number {
-        *last_block = active_block_number; // Update last seen block number
+    if *last_block != blockchain_info.blocks {
+        *last_block = blockchain_info.blocks; // Update last seen block number
     
         // Remove TXs that no longer exist in mempool
         cache.retain(|txid, _| all_tx_ids.contains(txid));
@@ -95,24 +99,31 @@ pub async fn fetch_mempool_distribution(
                 Ok(parsed_response) => parsed_response.result, // Success, proceed
                 Err(e) => {
                     cache.remove(tx_id);
-                    if !logged_txs.contains(tx_id) {
+                    let logged_txs_read = LOGGED_TXS.read().await;
+                    if !logged_txs_read.contains(tx_id) {
                         log_error(&format!(
                         "JSON parse error for TX {}: {:?}",
                         tx_id, e
                         ));
-                        logged_txs.insert(tx_id.to_string()); // Mark as logged
+                        drop(logged_txs_read);
+                        let mut logged_txs_write = LOGGED_TXS.write().await;
+                        logged_txs_write.insert(tx_id.to_string()); // Mark as logged
                     }
                     return Err(MyError::JsonParsingError(tx_id.clone(), e.to_string()));  // Return CustomError
                 }
             },
             Err(e) => {
                 cache.remove(tx_id);
-                if !logged_txs.contains(tx_id) {
+                let logged_txs_read = LOGGED_TXS.read().await;
+                if !logged_txs_read.contains(tx_id) {
                     log_error(&format!(
                         "RPC request failed for TX {}: {:?}",
                         tx_id, e
                     ));
-                    logged_txs.insert(tx_id.to_string()); // Mark as logged
+                    drop(logged_txs_read);
+                    let mut logged_txs_write = LOGGED_TXS.write().await;
+                    logged_txs_write.insert(tx_id.to_string()); // Mark as logged
+
                 }
                 return Err(MyError::RpcRequestError(tx_id.clone(), e.to_string())); // Return CustomError
             }
@@ -190,12 +201,20 @@ pub async fn fetch_mempool_distribution(
         0.0
     };
 
-    Ok((
-        (small, medium, large),
-        (young, moderate, old),
-        (rbf_count, non_rbf_count),
-        average_fee,
-        median_fee,
-        average_fee_rate,
-    ))
+     // ✅ Write directly to cache
+     let mut dist = MEMPOOL_DISTRIBUTION_CACHE.write().await;
+     dist.small = small;
+     dist.medium = medium;
+     dist.large = large;
+     dist.young = young;
+     dist.moderate = moderate;
+     dist.old = old;
+     dist.rbf_count = rbf_count;
+     dist.non_rbf_count = non_rbf_count;
+     dist.average_fee = average_fee;
+     dist.median_fee = median_fee;
+     dist.average_fee_rate = average_fee_rate;
+ 
+
+    Ok(())
 }
