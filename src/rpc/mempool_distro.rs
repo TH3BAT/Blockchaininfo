@@ -20,6 +20,7 @@ use crate::utils::{BLOCKCHAIN_INFO_CACHE, MEMPOOL_DISTRIBUTION_CACHE};
 
 const DUST_THRESHOLD: f64 = 0.00000546; // 546 sats in BTC
 const MAX_CACHE_SIZE: usize = 10_000; // Rolling cache size
+const MAX_DUST_CACHE_SIZE: usize = 50_000; // Rolling cache size
 
 static DUST_FREE_TX_CACHE: once_cell::sync::Lazy<Arc<Mutex<HashMap<String, MempoolEntry>>>> = 
     once_cell::sync::Lazy::new(|| Arc::new(Mutex::new(HashMap::new())));
@@ -70,11 +71,23 @@ pub async fn fetch_mempool_distribution(
     if *last_block != blockchain_info.blocks {
         *last_block = blockchain_info.blocks; // Update last seen block number
     
-        // Remove TXs that no longer exist in mempool
-        cache.retain(|txid, _| all_tx_ids.contains(txid));
-        dust_cache.clear(); // Clean out old dust transactions
-    }
+        // Retain only relevant TXs (since `dust_cache` is already locked)
+        dust_cache.retain(|txid| all_tx_ids.contains(txid));
     
+        // If dust cache exceeds 50,000, randomly remove some entries
+        if dust_cache.len() > MAX_DUST_CACHE_SIZE {
+            let mut rng = rand::rngs::SmallRng::seed_from_u64(42); // rand 0.9.0-compatible
+            let mut keys: Vec<String> = dust_cache.iter().cloned().collect();
+            
+            // Shuffle and keep only the first MAX_DUST_CACHE_SIZE
+            keys.shuffle(&mut rng);
+            let keys_to_keep: HashSet<String> = keys.into_iter().take(MAX_DUST_CACHE_SIZE).collect();
+    
+            // Replace the dust cache with only the selected keys
+            dust_cache.retain(|txid| keys_to_keep.contains(txid));
+        }
+    }        
+        
     // Step 1: Update Cache (Only Add Dust-Free TXs)
     for tx_id in new_tx_ids.iter() {
         let json_rpc_request = json!({
