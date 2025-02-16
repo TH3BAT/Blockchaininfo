@@ -148,13 +148,11 @@ pub fn render_header() -> Paragraph<'static> {
      .block(Block::default().title("").borders(Borders::NONE))
 }
 
-pub fn render_footer<B: Backend>(f: &mut Frame<B>, area: Rect) {
-    let footer_text = vec![
-        Spans::from(vec![
-            Span::styled("Press 'q' or ESC to quit. ", Style::default().fg(Color::Gray)),
-            Span::styled("'T' to lookup transaction.", Style::default().fg(Color::LightBlue)),
-        ]),
-    ];
+pub fn render_footer<B: Backend>(f: &mut Frame<B>, area: Rect, message: &str) {
+    let footer_text = vec![Spans::from(vec![Span::styled(
+        message,
+        Style::default().fg(Color::Gray),
+    )])];
 
     let footer = Paragraph::new(footer_text)
         .style(Style::default())
@@ -163,6 +161,7 @@ pub fn render_footer<B: Backend>(f: &mut Frame<B>, area: Rect) {
 
     f.render_widget(footer, area);
 }
+
 
 pub fn log_error(message: &str) {
     

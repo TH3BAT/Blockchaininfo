@@ -35,6 +35,7 @@ struct App {
     show_popup: bool,
     tx_input: String,
     tx_result: Option<String>,
+    is_exiting: bool,
 }
 
 impl App {
@@ -43,6 +44,7 @@ impl App {
             show_popup: false,
             tx_input: String::new(),
             tx_result: None,
+            is_exiting: false,
         }
     }
 }
@@ -279,7 +281,10 @@ pub async fn run_app<B: tui::backend::Backend>(
             if let Event::Key(key) = event::read()? {
                 match key.code {
                     KeyCode::Esc if app.show_popup => app.show_popup = false, // Close Popup
-                    KeyCode::Char('q') | KeyCode::Esc => break,               // Quit App
+                    KeyCode::Char('q') | KeyCode::Esc => {
+                        app.is_exiting = true;  // 🚀 Flag shutdown mode
+                        break;  // Quit App
+                        },
                     KeyCode::Char('t') if !app.show_popup => {
                         app.show_popup = true;
                         app.tx_input.clear();
@@ -377,9 +382,15 @@ pub async fn run_app<B: tui::backend::Backend>(
             display_consensus_security_info(&chaintips_result, frame,  chunks[4]);
 
             // Footer Block
+            let footer_msg = if app.is_exiting {
+                "Shutting Down Cleanly..."
+            } else {
+                "Press 'q' to quit | 't' for Tx Lookup"
+            };
+            
             let block_6 = Block::default().borders(Borders::NONE);
             frame.render_widget(block_6, chunks[5]);
-            render_footer(frame, chunks[5]);
+            render_footer(frame, chunks[5], footer_msg);
 
             // Popup for Transaction Lookup
             if app.show_popup {
