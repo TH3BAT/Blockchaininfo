@@ -72,15 +72,33 @@ Here’s the updated **README.md** section with the **new configuration logic** 
 
 ---
 
-### Configuration
+### **Configuration**
 
 The application requires Bitcoin Core RPC credentials to function properly. These credentials can be provided in one of the following ways:
 
 ---
 
-### **1. `config.toml` File (Default & Customizable)**
+### **1. Automatic Failsafe Mode (No Setup Required)** 🚀
 
-By default, `blockchaininfo` looks for a `config.toml` file in:
+If **no configuration is found**, the application will **prompt the user** to enter their Bitcoin Core RPC credentials **interactively** and will **automatically generate** a `config.toml` file. This ensures that first-time users can get started **immediately** without manual setup.
+
+- The generated `config.toml` will be saved at:
+
+  ```plaintext
+  ./target/release/config.toml 
+  ```
+
+- After initial setup, the application will load credentials from this file on future runs.
+
+**You can still override this behavior** using a custom config path (see below).
+
+---
+
+### **2. `config.toml` File (Recommended for Customization)**
+
+If `config.toml` exists, the application will **load credentials from it automatically**.
+
+By default, `blockchaininfo` looks for this file in:
 
 - `./target/release/config.toml` (default location)
 
@@ -102,9 +120,9 @@ Replace the values with your actual Bitcoin Core RPC credentials.
 
 ---
 
-### **2. Environment Variables (Alternative)**
+### **3. Environment Variables (Alternative Method)**
 
-If `config.toml` is not provided, the application will look for the following environment variables:
+If `config.toml` is **not found**, and the user **does not enter credentials manually**, the application will look for the following environment variables:
 
 | Variable         | Description |
 |-----------------|------------|
@@ -122,7 +140,7 @@ export RPC_ADDRESS="http://127.0.0.1:8332"
 
 ---
 
-### **3. macOS Keychain (Preferred for macOS)**
+### **4. macOS Keychain (Recommended for macOS Security)** 🔒
 
 On macOS, you can securely store the RPC password in the system Keychain. This is the most secure and recommended method. To set it up:
 
