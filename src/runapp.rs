@@ -28,7 +28,7 @@ use blockchaininfo::utils::log_error;
 use crate::models::chaintips_info::ChainTipsResponse;
 use tokio::sync::Mutex;
 use regex::Regex;
-use crate::utils::{BLOCKCHAIN_INFO_CACHE, BLOCK_INFO_CACHE, MEMPOOL_INFO_CACHE, CHAIN_TIP_CACHE,
+use crate::utils::{BLOCKCHAIN_INFO_CACHE, BLOCK_INFO_CACHE, MEMPOOL_INFO_CACHE, CHAIN_TIP_CACHE, BLOCK24_INFO_CACHE,
 PEER_INFO_CACHE, NETWORK_INFO_CACHE, NET_TOTALS_CACHE, MEMPOOL_DISTRIBUTION_CACHE, LOGGED_TXS};
 
 struct App {
@@ -99,15 +99,15 @@ pub async fn run_app<B: tui::backend::Backend>(
                     sleep(Duration::from_secs(2)).await;
                     continue;
                 }
-    
+
                 // Step 2: Read Blockchain Info from Cache (Now It Exists)
                 let block_height = {
                     let blockchain_info = BLOCKCHAIN_INFO_CACHE.read().await;
                     blockchain_info.blocks // Extract the latest block height
                 };
-    
-                // Step 3: Fetch Block Data Using the Latest Block Height
-                if let Ok(new_data) = fetch_block_data_by_height(&config_clone, block_height).await {
+
+                // Step 3: Fetch Block Data Using the Latest Block Height (Epoch Start Block)
+                if let Ok(new_data) = fetch_block_data_by_height(&config_clone, block_height, 1).await {
                     let mut cache = BLOCK_INFO_CACHE.write().await;
                 
                     // Maintain last 10 blocks to prevent infinite growth
@@ -118,15 +118,33 @@ pub async fn run_app<B: tui::backend::Backend>(
                     let new_data_clone = new_data.clone();  // Clone it before pushing
                     cache.push(new_data_clone);
                 
-                    // println!("✅ BlockInfo Updated: Height = {}", new_data_clone.height);  
+                    // println!("✅ BlockInfo Updated: Height = {}", new_data_clone.height);
                 } else {
                     // println!("❌ Failed to fetch block data. Retrying...");
                 }
-    
+
+                // **Step 4: Fetch Block Data for 24 Hours Ago**
+                if let Ok(block24_data) = fetch_block_data_by_height(&config_clone, block_height, 2).await {
+                    let mut cache_24 = BLOCK24_INFO_CACHE.write().await;
+                    
+                    // Maintain last 10 blocks to prevent infinite growth
+                    if cache_24.len() >= 10 {
+                        cache_24.remove(0); // Remove the oldest block
+                    }
+                    
+                    let block24_clone = block24_data.clone();  // Clone before pushing
+                    cache_24.push(block24_clone);
+                    
+                    // println!("✅ Block24Info Updated: Height = {}", block24_clone.height);
+                } else {
+                    // println!("❌ Failed to fetch 24-hour block data. Retrying...");
+                }
+
                 sleep(Duration::from_secs(2)).await;
             }
         }
-    });       
+    });
+     
     
     // Mempool info
     tokio::spawn({
@@ -239,6 +257,7 @@ pub async fn run_app<B: tui::backend::Backend>(
         let network_info = NETWORK_INFO_CACHE.read().await;
         let peer_info = PEER_INFO_CACHE.read().await;
         let block_info = BLOCK_INFO_CACHE.read().await;
+        let block24_info = BLOCK24_INFO_CACHE.read().await;
         let net_totals = NET_TOTALS_CACHE.read().await;
         let distribution = MEMPOOL_DISTRIBUTION_CACHE.read().await;
         let chaintips_info = CHAIN_TIP_CACHE.read().await;
@@ -365,12 +384,14 @@ pub async fn run_app<B: tui::backend::Backend>(
             
             // println!("DEBUG: block_info length = {}", block_info.len());
 
-            if !block_info.is_empty() {
+            if !block_info.is_empty() && !block24_info.is_empty() {
                 let latest_block = &block_info[block_info.len() - 1];  // Safe indexing
-                display_blockchain_info(&blockchain_info, latest_block, frame, chunks[1]);
+                let block24 = &block24_info[block24_info.len() - 1];  // Safe indexing
+            
+                display_blockchain_info(&blockchain_info, latest_block, block24, frame, chunks[1]);
             } else {
                 // println!("⚠️ No block info available!");
-            }            
+            }                       
 
             // Mempool Info Block
             let block_3 = Block::default()

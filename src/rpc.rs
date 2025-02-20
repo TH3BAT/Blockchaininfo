@@ -36,8 +36,9 @@ pub async fn fetch_network_info(config: &RpcConfig) -> Result<NetworkInfo, MyErr
 pub async fn fetch_block_data_by_height(
     config: &RpcConfig,
     blocks: u64,
+    mode: u16, // 1 = Epoch Start Block, 2 = 24 Hours Ago Block
 ) -> Result<BlockInfo, MyError> {
-    block::fetch_block_data_by_height(config, blocks).await
+    block::fetch_block_data_by_height(config, blocks, mode).await
 }
 
 pub async fn fetch_chain_tips(config: &RpcConfig) -> Result<Vec<ChainTip>, MyError> {

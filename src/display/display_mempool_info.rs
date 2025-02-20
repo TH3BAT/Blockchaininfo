@@ -57,6 +57,9 @@ pub fn display_mempool_info<B: Backend>(
     let total_size = distribution.small + distribution.medium + distribution.large;
     let total_age = distribution.young + distribution.moderate + distribution.old;
     let total_rbf = distribution.rbf_count + distribution.non_rbf_count;
+    let dust_free_percentage = (total_size as f64 / mempool_info.size as f64) * 100.0;
+    let formatted_dust_free = format!("{:.1}%", dust_free_percentage);
+
 
     // Create the layout for this specific chunk (using passed 'area').
     let chunks = Layout::default()
@@ -89,8 +92,15 @@ pub fn display_mempool_info<B: Backend>(
         Spans::from(vec![
             Span::styled("📊 Transactions: ", Style::default().fg(Color::Gray)),
             Span::styled(
-                mempool_info.size.to_formatted_string(&Locale::en),
+                format!(
+                    "{} ",
+                    mempool_info.size.to_formatted_string(&Locale::en),
+                ),
                 Style::default().fg(Color::Green),
+            ),
+            Span::styled(
+                format!("| {} dust-free", formatted_dust_free),
+                Style::default().fg(Color::Gray), // Dust-free percentage in Gray
             ),
         ]),
         Spans::from(vec![

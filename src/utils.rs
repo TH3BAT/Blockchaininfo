@@ -53,6 +53,9 @@ pub static NET_TOTALS_CACHE: Lazy<Arc<RwLock<NetTotals>>> =
 pub static BLOCK_INFO_CACHE: Lazy<Arc<RwLock<Vec<BlockInfo>>>> = 
     Lazy::new(|| Arc::new(RwLock::new(Vec::new())));
 
+pub static BLOCK24_INFO_CACHE: Lazy<Arc<RwLock<Vec<BlockInfo>>>> = 
+    Lazy::new(|| Arc::new(RwLock::new(Vec::new())));
+
 pub static CHAIN_TIP_CACHE: Lazy<Arc<RwLock<ChainTipsResponse>>> =
     Lazy::new(|| Arc::new(RwLock::new(ChainTipsResponse::default())));
 
@@ -129,6 +132,19 @@ pub fn estimate_difficulty_change(
     let adjustment_factor = expected_duration as f64 / actual_duration as f64;
     (adjustment_factor - 1.0) * 100.0 // Return percentage change
 } 
+
+pub fn estimate_24h_difficulty_change(
+    current_block_time: u64,
+    block24_time: u64,
+) -> f64 {
+    let expected_duration = 144 * BLOCK_TIME_SECONDS; // Fixed 144-block window
+    let actual_duration = current_block_time - block24_time;
+
+    let adjustment_factor = expected_duration as f64 / actual_duration as f64;
+    (adjustment_factor - 1.0) * 100.0 // Return percentage change
+}
+
+
 // Returns a `tui` widget for the blockchain header.
 pub fn render_header() -> Paragraph<'static> {
     // Combine the footer message and app version.

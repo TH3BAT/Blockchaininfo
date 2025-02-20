@@ -39,10 +39,11 @@ use std::collections::VecDeque;
 pub fn display_blockchain_info<B: Backend>(
     blockchain_info: &BlockchainInfo,
     block_info: &BlockInfo,
+    block24_info: &BlockInfo,
     frame: &mut Frame<B>,
     area: Rect
 ) {
-   let _ = display_blockchain_info::display_blockchain_info(blockchain_info, block_info, frame, area);
+   let _ = display_blockchain_info::display_blockchain_info(blockchain_info, block_info, block24_info, frame, area);
 }
 
 // Displays the mempool information.

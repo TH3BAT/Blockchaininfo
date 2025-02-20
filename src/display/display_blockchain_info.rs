@@ -10,13 +10,15 @@ use tui::{
     Frame,
 };
 use num_format::{Locale, ToFormattedString};
-use crate::{models::{block_info::BlockInfo, blockchain_info::BlockchainInfo}, utils::{estimate_difficulty_change, format_size}};
+use crate::{models::{block_info::BlockInfo, blockchain_info::BlockchainInfo}, 
+    utils::{estimate_difficulty_change, estimate_24h_difficulty_change, format_size}};
 use crate::models::errors::MyError;  
 
 // Render the blockchain info into a `tui` terminal UI.
 pub fn display_blockchain_info<B: Backend>(
     blockchain_info: &BlockchainInfo,
     block_info: &BlockInfo,
+    block24_info: &BlockInfo,
     frame: &mut Frame<B>,
     area: Rect
 ) -> Result<(), MyError> {
@@ -31,11 +33,24 @@ pub fn display_blockchain_info<B: Backend>(
     let estimate_difficulty_chng = estimate_difficulty_change(
         blockchain_info.blocks,
         blockchain_info.time,
-        block_info.time,  // 🔥 Use block_info directly, no `.last()`
+        block_info.time,  
+    );
+    
+    // New difficulty change estimate (24-hour window)
+    let estimate_24h_difficulty_chng = estimate_24h_difficulty_change(
+        blockchain_info.time,  // Latest block timestamp
+        block24_info.time,     // Timestamp from 24-hour block
     );
     
     // Difficulty arrow.
     let difficulty_arrow = if estimate_difficulty_chng > 0.0 {
+        "↑".to_string()
+    } else {
+        "↓".to_string()
+    };
+
+    // Difficulty arrow for 24-hour estimate
+    let difficulty_arrow_24h = if estimate_24h_difficulty_chng > 0.0 {
         "↑".to_string()
     } else {
         "↓".to_string()
@@ -76,6 +91,8 @@ pub fn display_blockchain_info<B: Backend>(
     
         Spans::from(vec![
             Span::styled("  📉 Estimated change: ", Style::default().fg(Color::Gray)),
+        
+            // Epoch-based difficulty change
             Span::styled(
                 difficulty_arrow,
                 Style::default().fg(if estimate_difficulty_chng > 0.0 {
@@ -85,10 +102,29 @@ pub fn display_blockchain_info<B: Backend>(
                 }),
             ),
             Span::styled(
-                format!(" {:.2}%", estimate_difficulty_chng.abs()),
+                format!(" {:.2}% ", estimate_difficulty_chng.abs()),
                 Style::default().fg(Color::Gray),
             ),
-        ]),
+            Span::styled("(epoch)", Style::default().fg(Color::DarkGray)),
+        
+            // Separator
+            Span::styled(" | ", Style::default().fg(Color::DarkGray)),
+        
+            // 24-hour difficulty change
+            Span::styled(
+                difficulty_arrow_24h,
+                Style::default().fg(if estimate_24h_difficulty_chng > 0.0 {
+                    Color::Green
+                } else {
+                    Color::Red
+                }),
+            ),
+            Span::styled(
+                format!(" {:.2}% ", estimate_24h_difficulty_chng.abs()),
+                Style::default().fg(Color::Gray),
+            ),
+            Span::styled("(24hrs)", Style::default().fg(Color::DarkGray)),
+        ]),        
 
         Spans::from(vec![
             Span::styled("   Chainwork: ", Style::default().fg(Color::Gray)),
