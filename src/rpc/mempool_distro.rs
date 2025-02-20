@@ -20,7 +20,7 @@ use crate::utils::{BLOCKCHAIN_INFO_CACHE, MEMPOOL_DISTRIBUTION_CACHE};
 
 const DUST_THRESHOLD: f64 = 0.00000546; // 546 sats in BTC
 const MAX_CACHE_SIZE: usize = 50_000; // Rolling cache size
-const MAX_DUST_CACHE_SIZE: usize = 50_000; // Rolling cache size
+const MAX_DUST_CACHE_SIZE: usize = 75_000; // Rolling cache size
 
 static DUST_FREE_TX_CACHE: once_cell::sync::Lazy<Arc<Mutex<HashMap<String, MempoolEntry>>>> = 
     once_cell::sync::Lazy::new(|| Arc::new(Mutex::new(HashMap::new())));
