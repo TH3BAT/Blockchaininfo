@@ -27,10 +27,11 @@ use std::time::Duration;
 use tokio::time::sleep;
 use blockchaininfo::utils::log_error;
 use crate::models::chaintips_info::ChainTipsResponse;
-use tokio::sync::Mutex;
 use regex::Regex;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use dashmap::DashSet;
+use once_cell::sync::Lazy;
 use crate::utils::{BLOCKCHAIN_INFO_CACHE, BLOCK_INFO_CACHE, MEMPOOL_INFO_CACHE, CHAIN_TIP_CACHE, BLOCK24_INFO_CACHE,
 PEER_INFO_CACHE, NETWORK_INFO_CACHE, NET_TOTALS_CACHE, MEMPOOL_DISTRIBUTION_CACHE, LOGGED_TXS};
 
@@ -52,8 +53,7 @@ impl App {
     }
 }
 
-static LAST_BLOCK_NUMBER: once_cell::sync::Lazy<Mutex<u64>> = 
-once_cell::sync::Lazy::new(|| Mutex::new(0));
+static LAST_BLOCK_NUMBER: Lazy<DashSet<u64>> = Lazy::new(|| DashSet::new());
 
 // Sets up the terminal in TUI mode.
 pub fn setup_terminal() -> Result<Terminal<CrosstermBackend<Stdout>>, io::Error> {
@@ -79,7 +79,7 @@ pub async fn run_app<B: tui::backend::Backend>(
     
     // let distribution = Arc::new(AsyncMutex::new(MempoolDistribution::default()));
      // Lock block number tracking
-    let mut last_known_block_number = LAST_BLOCK_NUMBER.lock().await;
+    // let mut last_known_block_number = LAST_BLOCK_NUMBER.lock().await;
     let mut propagation_times: VecDeque<i64> = VecDeque::with_capacity(20);
     let mut app = App::new();  
     
@@ -307,12 +307,12 @@ pub async fn run_app<B: tui::backend::Backend>(
         );
 
        // Track Propagation Time
-        if blockchain_info.blocks != *last_known_block_number {
+       if !LAST_BLOCK_NUMBER.contains(&blockchain_info.blocks) {
             if propagation_times.len() == 20 {
                 propagation_times.pop_front();
             }
             propagation_times.push_back(avg_block_propagate_time);
-            *last_known_block_number = blockchain_info.blocks;
+            LAST_BLOCK_NUMBER.insert(blockchain_info.blocks); // Insert the new block number
         } else {
             // If the block number hasn't changed but propagation time differs, update the last entry
             if let Some(last_value) = propagation_times.back_mut() {
