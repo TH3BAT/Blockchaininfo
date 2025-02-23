@@ -57,11 +57,17 @@ pub fn display_blockchain_info<B: Backend>(
     );
     
     // Difficulty arrow.
-    let difficulty_arrow = if estimate_difficulty_chng > 0.0 {
+    let difficulty_arrow = if block_info.confirmations < 6 {
+        // No arrow in N/A mode
+        " ".to_string()
+    } else if estimate_difficulty_chng > 0.0 {
+        // Up arrow for positive change
         "↑".to_string()
     } else {
+        // Down arrow for negative change
         "↓".to_string()
     };
+
 
     // Difficulty arrow for 24-hour estimate
     let difficulty_arrow_24h = if estimate_24h_difficulty_chng > 0.0 {
