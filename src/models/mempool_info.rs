@@ -2,7 +2,8 @@
 // models/mempool_info.rs
 
 use serde::Deserialize; // For serializing and deserializing structures.
-use std::collections::HashMap;
+// use std::collections::HashMap;
+use dashmap::DashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Default)]
@@ -21,7 +22,7 @@ pub struct MempoolDistribution {
 }
 
 impl MempoolDistribution {
-    pub fn update_metrics(&mut self, cache: &HashMap<String, MempoolEntry>) {
+    pub fn update_metrics(&mut self, cache: &DashMap<String, MempoolEntry>) {
         let mut small = 0;
         let mut medium = 0;
         let mut large = 0;
@@ -35,7 +36,8 @@ impl MempoolDistribution {
         let mut count = 0;
         let mut fees: Vec<f64> = Vec::new();
 
-        for mempool_entry in cache.values() {
+        for entry in cache.iter() {
+            let mempool_entry = entry.value(); // Access the MempoolEntry
             match mempool_entry.vsize {
                 0..=249 => small += 1,
                 250..=1000 => medium += 1,

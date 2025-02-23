@@ -9,10 +9,9 @@ use reqwest::Client;
 	use crate::models::mempool_info::MempoolEntryJsonWrap;
 	use tokio::sync::Mutex;
 	use std::sync::Arc;
-	// use std::collections::{HashMap, HashSet};
-	use rand::seq::SliceRandom;
 	use rand::rngs::StdRng;
 	use rand::SeedableRng; 
+    use rand::prelude::SliceRandom;
 	use crate::utils::{log_error, LOGGED_TXS};
 	use crate::rpc::mempool::MEMPOOL_CACHE; 
 	use crate::utils::{BLOCKCHAIN_INFO_CACHE, MEMPOOL_DISTRIBUTION_CACHE};
@@ -42,18 +41,13 @@ use reqwest::Client;
 	    // Lock and read the blockchain info from the cache
 	    let blockchain_info = BLOCKCHAIN_INFO_CACHE.read().await;
         
-        let mut cache = DUST_FREE_TX_CACHE.lock().await;
-	    let mut dust_cache = DUST_CACHE.lock().await;
+        let cache = &DUST_FREE_TX_CACHE;
+	    let dust_cache = &DUST_CACHE;
 
-        let all_tx_ids = {
-            let read_guard = MEMPOOL_CACHE.read().unwrap(); // Lock read access
-            read_guard.clone() // Clone the HashSet before async move
-        }; // Drops the read lock immediately
-        
-        let new_tx_ids: Vec<String> = all_tx_ids.iter()
+        let new_tx_ids: Vec<String> = MEMPOOL_CACHE.iter()
             .filter(|txid| !cache.contains_key(txid.as_str()) && !dust_cache.contains(txid.as_str()))
-            .cloned()
-            .collect();    
+            .map(|txid| txid.clone())
+            .collect(); 
         
         // Lock block number tracking
         let mut last_block = LAST_BLOCK_NUMBER.lock().await;
@@ -63,8 +57,8 @@ use reqwest::Client;
             *last_block = blockchain_info.blocks; // Update last seen block number
         
             // Keep only TXs that still exist in mempool
-            dust_cache.retain(|txid| all_tx_ids.contains(txid));
-            cache.retain(|txid, _| all_tx_ids.contains(txid));
+            dust_cache.retain(|txid| MEMPOOL_CACHE.contains(txid));
+            cache.retain(|txid, _| MEMPOOL_CACHE.contains(txid));
         }            
             
         // Step 1: Update Cache (Only Add Dust-Free TXs)
@@ -123,12 +117,13 @@ use reqwest::Client;
     
             if mempool_entry.fees.base < DUST_THRESHOLD {
                 if dust_cache.len() == MAX_DUST_CACHE_SIZE {
-                    let mut keys: Vec<_> = dust_cache.iter().cloned().collect();
-                
+                    // Collect keys into a Vec
+                    let mut keys: Vec<_> = dust_cache.iter().map(|key| key.clone()).collect();
+            
                     // Shuffle the keys using a seeded RNG (consistent randomness)
                     let mut rng = StdRng::seed_from_u64(42);
                     keys.shuffle(&mut rng);
-                
+            
                     // Remove the first key after shuffle
                     if let Some(random_key) = keys.first() {
                         dust_cache.remove(random_key);
@@ -137,10 +132,11 @@ use reqwest::Client;
                 dust_cache.insert(tx_id.clone()); // Store it for future lookups
                 continue; // Skip processing
             }
-    
-        // Ensure we don’t exceed the max cache size before inserting.
+            
+            // Ensure we don’t exceed the max cache size before inserting.
             if cache.len() == MAX_CACHE_SIZE {
-                let mut keys: Vec<_> = cache.keys().cloned().collect();
+                // Collect keys into a Vec
+                let mut keys: Vec<_> = cache.iter().map(|entry| entry.key().clone()).collect();
             
                 // Shuffle the keys using a seeded RNG (consistent randomness)
                 let mut rng = StdRng::seed_from_u64(42);

@@ -8,11 +8,12 @@ use crate::models::mempool_info::{MempoolInfoJsonWrap, MempoolInfo,
     RawMempoolTxsJsonWrap};
 use crate::models::errors::MyError;
 use crate::config::RpcConfig;
-use std::sync::{Arc, RwLock};
-use std::collections::HashSet;
+use std::sync::Arc;
+use dashmap::DashSet;
+use once_cell::sync::Lazy;
 
-pub static MEMPOOL_CACHE: once_cell::sync::Lazy<Arc<RwLock<HashSet<String>>>> =
-    once_cell::sync::Lazy::new(|| Arc::new(RwLock::new(HashSet::new())));
+pub static MEMPOOL_CACHE: Lazy<Arc<DashSet<String>>> =
+    Lazy::new(|| Arc::new(DashSet::new()));
 
 // Fetches mempool information and samples raw transactions.
 pub async fn fetch_mempool_info(
@@ -57,9 +58,13 @@ pub async fn fetch_mempool_info(
         .json::<RawMempoolTxsJsonWrap>() 
         .await?;
 
-    // Store raw mempool TXs in a fast, shared HashSet.
-    let mut cache = MEMPOOL_CACHE.write().unwrap();
-    *cache = raw_mempool_response.result.into_iter().collect();
+    // Clear the existing cache
+    MEMPOOL_CACHE.clear();
+
+    // Insert new transaction IDs into the cache
+    for txid in raw_mempool_response.result {
+        MEMPOOL_CACHE.insert(txid);
+    }
 
     Ok(mempool_info)
 }
