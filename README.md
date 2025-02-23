@@ -52,6 +52,7 @@ Whether you're a developer, node operator, or Bitcoin enthusiast, Blockchaininfo
     ├── rpc/                   # RPC modules for interacting with the Bitcoin node.
     │   ├── block.rs           # Block data fetching.
     │   ├── blockchain.rs      # Blockchain data fetching.
+    │   ├── initial_mempool_distro.rs    # Handles initial batch RPC loading.
     │   ├── mempool.rs         # Mempool data fetching.
     │   ├── network.rs         # Network data fetching.
     │   ├── network_peers.rs   # Peers data model.
