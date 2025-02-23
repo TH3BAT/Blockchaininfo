@@ -2,7 +2,6 @@
 // models/mempool_info.rs
 
 use serde::Deserialize; // For serializing and deserializing structures.
-// use std::collections::HashMap;
 use dashmap::DashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 

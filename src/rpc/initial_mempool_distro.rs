@@ -6,9 +6,6 @@ use serde_json::json;
 use crate::models::errors::MyError;
 use crate::config::RpcConfig;
 use crate::models::mempool_info::{MempoolEntryJsonWrap, MempoolEntry, MempoolDistribution};
-// use tokio::sync::Mutex;
-// use std::sync::Arc;
-// use std::collections::{HashMap, HashSet};
 use crate::rpc::mempool::MEMPOOL_CACHE; 
 use crate::utils::MEMPOOL_DISTRIBUTION_CACHE;
 use dashmap::{DashMap, DashSet};
@@ -26,9 +23,6 @@ pub static DUST_CACHE: Lazy<Arc<DashSet<String>>> =
 
 pub async fn initial_mempool_load(config: &RpcConfig) -> Result<(), MyError> {
     let client = Client::new();
-    
-    // Step 1: Fetch all transaction IDs from the mempool
-    // let all_tx_ids = MEMPOOL_CACHE.iter();
 
     // Step 2: Prepare Batch RPC Requests
     let batch_requests: Vec<serde_json::Value> = MEMPOOL_CACHE.iter()
