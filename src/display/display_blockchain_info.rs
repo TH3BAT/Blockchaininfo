@@ -35,6 +35,20 @@ pub fn display_blockchain_info<B: Backend>(
         blockchain_info.time,
         block_info.time,  
     );
+
+    let difficulty_change_display = if block_info.confirmations < 6 {
+        // Display "N/A" for the first 6 blocks
+        Span::styled(
+            " N/A ",
+            Style::default().fg(Color::Gray),
+        )
+    } else {
+        // Display the formatted percentage
+        Span::styled(
+            format!(" {:.2}% ", estimate_difficulty_chng.abs()),
+            Style::default().fg(Color::Gray),
+        )
+    };
     
     // New difficulty change estimate (24-hour window)
     let estimate_24h_difficulty_chng = estimate_24h_difficulty_change(
@@ -101,10 +115,13 @@ pub fn display_blockchain_info<B: Backend>(
                     Color::Red
                 }),
             ),
+            difficulty_change_display,
+            /*
             Span::styled(
                 format!(" {:.2}% ", estimate_difficulty_chng.abs()),
                 Style::default().fg(Color::Gray),
-            ),
+            ), 
+            */
             Span::styled("(epoch)", Style::default().fg(Color::DarkGray)),
         
             // Separator
