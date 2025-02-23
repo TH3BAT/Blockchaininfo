@@ -312,6 +312,7 @@ pub async fn run_app<B: tui::backend::Backend>(
                 propagation_times.pop_front();
             }
             propagation_times.push_back(avg_block_propagate_time);
+            LAST_BLOCK_NUMBER.clear(); // Clear the set
             LAST_BLOCK_NUMBER.insert(blockchain_info.blocks); // Insert the new block number
         } else {
             // If the block number hasn't changed but propagation time differs, update the last entry
