@@ -35,8 +35,6 @@ static DUST_CACHE: Lazy<Arc<DashSet<String>>> =
 
 
 pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyError> {
-    let cache = &DUST_FREE_TX_CACHE;
-    let dust_cache = &DUST_CACHE;
     let client = Client::new();
     let blockchain_info = BLOCKCHAIN_INFO_CACHE.read().await;
 
@@ -47,17 +45,15 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyErro
         LAST_BLOCK_NUMBER.insert(blockchain_info.blocks);
 
         // Remove expired TXs from DUST_CACHE
-        let dust_cache = &DUST_CACHE;
-        dust_cache.retain(|tx_id| MEMPOOL_CACHE.contains(tx_id));
+        DUST_CACHE.retain(|tx_id| MEMPOOL_CACHE.contains(tx_id));
 
         // Remove expired TXs from DUST_FREE_TX_CACHE
-        let cache = &DUST_FREE_TX_CACHE;
-        cache.retain(|tx_id, _| MEMPOOL_CACHE.contains(tx_id));
+        DUST_FREE_TX_CACHE.retain(|tx_id, _| MEMPOOL_CACHE.contains(tx_id));
     }
 
     // Collect new transaction IDs that are not in either cache
     let new_tx_ids: Vec<String> = MEMPOOL_CACHE.iter()
-        .filter(|txid| !cache.contains_key(txid.as_str()) && !dust_cache.contains(txid.as_str()))
+        .filter(|txid| !DUST_FREE_TX_CACHE.contains_key(txid.as_str()) && !DUST_CACHE.contains(txid.as_str()))
         .map(|txid| txid.clone())
         .collect();
 
@@ -69,8 +65,6 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyErro
         let permit = semaphore.clone().acquire_owned().await?;
         let client = client.clone();
         let config = config.clone();
-        // let cache = cache;
-        // let dust_cache = dust_cache.clone();
 
         tasks.push(task::spawn(async move {
             let _permit = permit; // Hold the permit until the task completes
@@ -98,31 +92,31 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyErro
                 Ok((tx_id, mempool_entry)) => {
                     if mempool_entry.fees.base < DUST_THRESHOLD {
                         // Insert into DUST_CACHE, evict if necessary
-                        if dust_cache.len() == MAX_DUST_CACHE_SIZE {
-                            let mut keys: Vec<_> = dust_cache.iter().map(|key| key.clone()).collect();
+                        if DUST_CACHE.len() == MAX_DUST_CACHE_SIZE {
+                            let mut keys: Vec<_> = DUST_CACHE.iter().map(|key| key.clone()).collect();
                             let mut rng = StdRng::seed_from_u64(42);
                             keys.shuffle(&mut rng);
                             if let Some(random_key) = keys.first() {
-                                dust_cache.remove(random_key);
+                                DUST_CACHE.remove(random_key);
                             }
                         }
-                        dust_cache.insert(tx_id.clone());
+                        DUST_CACHE.insert(tx_id.clone());
                     } else {
                         // Insert into DUST_FREE_TX_CACHE, evict if necessary
-                        if cache.len() == MAX_CACHE_SIZE {
-                            let mut keys: Vec<_> = cache.iter().map(|entry| entry.key().clone()).collect();
+                        if DUST_FREE_TX_CACHE.len() == MAX_CACHE_SIZE {
+                            let mut keys: Vec<_> = DUST_FREE_TX_CACHE.iter().map(|entry| entry.key().clone()).collect();
                             let mut rng = StdRng::seed_from_u64(42);
                             keys.shuffle(&mut rng);
                             if let Some(random_key) = keys.first() {
-                                cache.remove(random_key);
+                                DUST_FREE_TX_CACHE.remove(random_key);
                             }
                         }
-                        cache.insert(tx_id.clone(), mempool_entry);
+                        DUST_FREE_TX_CACHE.insert(tx_id.clone(), mempool_entry);
                     }
                     Ok(()) // Return Ok(()) to satisfy the Result type
                 }
                 Err(e) => {
-                    cache.remove(&tx_id);
+                    DUST_FREE_TX_CACHE.remove(&tx_id);
                     let logged_txs_read = LOGGED_TXS.read().await;
                     if !logged_txs_read.contains(&tx_id) {
                         // Log the error using your custom log_error function
@@ -146,8 +140,26 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyErro
         match task.await {
             Ok(result) => {
                 if let Err(e) = result {
-                    // Log the error using your custom log_error function
-                    log_error(&format!("Task failed: {:?}", e));
+                    // Convert the error to a string
+                    let error_string = format!("{:?}", e);
+    
+                    // Extract the Tx ID from the error string
+                    if let Some(tx_id) = extract_tx_id_from_error_string(&error_string) {
+                        // Check if the Tx ID is already logged
+                        let logged_txs_read = LOGGED_TXS.read().await;
+                        if !logged_txs_read.contains(&tx_id) {
+                            // Log the error using your custom log_error function
+                            log_error(&format!("Task failed: {}", error_string));
+    
+                            // Mark the Tx ID as logged
+                            drop(logged_txs_read);
+                            let mut logged_txs_write = LOGGED_TXS.write().await;
+                            logged_txs_write.insert(tx_id);
+                        }
+                    } else {
+                        // If no Tx ID is found, log the error as-is
+                        log_error(&format!("Task failed: {}", error_string));
+                    }
                 }
             }
             Err(e) => {
@@ -159,7 +171,24 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyErro
 
     // Step 2: Calculate Metrics
     let mut dist = MEMPOOL_DISTRIBUTION_CACHE.write().await;
-    dist.update_metrics(&cache);
+    dist.update_metrics(&DUST_FREE_TX_CACHE);
 
     Ok(())
+}
+
+
+fn extract_tx_id_from_error_string(error_string: &str) -> Option<String> {
+    // Look for the Tx ID pattern in the error string
+    let tx_id_pattern = r#"RpcRequestError\("([a-f0-9]{64})"#;
+    let re = regex::Regex::new(tx_id_pattern).unwrap();
+
+    // Try to capture the Tx ID
+    if let Some(captures) = re.captures(error_string) {
+        if let Some(tx_id) = captures.get(1) {
+            return Some(tx_id.as_str().to_string());
+        }
+    }
+
+    // If no Tx ID is found, return None
+    None
 }
