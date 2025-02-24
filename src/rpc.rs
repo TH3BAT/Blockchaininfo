@@ -10,7 +10,6 @@ mod network_totals;
 mod network_peers;
 mod mempool_distro;
 mod transaction;
-// pub mod initial_mempool_distro;
 
 use crate::models::blockchain_info::BlockchainInfo;
 use crate::models::block_info::BlockInfo;
@@ -59,14 +58,6 @@ pub async fn fetch_mempool_distribution(
 ) -> Result<(), MyError> {
     mempool_distro::fetch_mempool_distribution(config).await
 }
-
-/*
-pub async fn initial_mempool_load(
-    config: &RpcConfig, 
-) -> Result<(), MyError> {
-    initial_mempool_distro::initial_mempool_load(config).await
-}
-*/
 
 pub async fn fetch_transaction(config: &RpcConfig, txid: &str) -> Result<String, MyError> {
     transaction::fetch_transaction(config, txid).await
