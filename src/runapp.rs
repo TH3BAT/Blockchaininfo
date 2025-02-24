@@ -3,8 +3,7 @@
 
 use crate::config::RpcConfig;
 use crate::rpc::{fetch_blockchain_info, fetch_mempool_info, fetch_network_info, fetch_block_data_by_height
-    , fetch_chain_tips, fetch_net_totals, fetch_peer_info, fetch_mempool_distribution, fetch_transaction,
-    initial_mempool_load};
+    , fetch_chain_tips, fetch_net_totals, fetch_peer_info, fetch_mempool_distribution, fetch_transaction};
 use crate::models::errors::MyError;
 use crate::display::{display_blockchain_info, display_mempool_info, display_network_info
     , display_consensus_security_info};
@@ -25,14 +24,11 @@ use std::io::{self, Stdout};
 use std::collections::VecDeque;
 use std::time::Duration; 
 use tokio::time::sleep;
-use blockchaininfo::utils::log_error;
+// use blockchaininfo::utils::log_error;
 use crate::models::chaintips_info::ChainTipsResponse;
 use regex::Regex;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
 use dashmap::DashSet;
 use once_cell::sync::Lazy;
-use tokio::sync::mpsc;
 use crate::utils::{BLOCKCHAIN_INFO_CACHE, BLOCK_INFO_CACHE, MEMPOOL_INFO_CACHE, CHAIN_TIP_CACHE, BLOCK24_INFO_CACHE,
 PEER_INFO_CACHE, NETWORK_INFO_CACHE, NET_TOTALS_CACHE, MEMPOOL_DISTRIBUTION_CACHE, LOGGED_TXS};
 
@@ -77,14 +73,12 @@ pub async fn run_app<B: tui::backend::Backend>(
     terminal: &mut Terminal<B>,
     config: &RpcConfig,
 ) -> Result<(), MyError> {
-
-    #[allow(unused_mut)]
-    let (tx, mut _rx) = mpsc::channel(32); // Adjust buffer size as needed
+    
+    // let distribution = Arc::new(AsyncMutex::new(MempoolDistribution::default()));
+     // Lock block number tracking
+    // let mut last_known_block_number = LAST_BLOCK_NUMBER.lock().await;
     let mut propagation_times: VecDeque<i64> = VecDeque::with_capacity(20);
     let mut app = App::new();  
-    
-    // Create a flag to track initial load completion
-    let initial_load_complete = Arc::new(AtomicBool::new(false));
 
     terminal.draw(|frame| {
         let area = frame.size();
@@ -155,10 +149,9 @@ pub async fn run_app<B: tui::backend::Backend>(
     // Mempool info
     tokio::spawn({
         let config_clone = config.clone();
-        let tx = tx.clone(); // Clone the sender
         async move {
             loop {
-                if let Ok(new_data) = fetch_mempool_info(&config_clone, tx.clone()).await {
+                if let Ok(new_data) = fetch_mempool_info(&config_clone).await {
                     *MEMPOOL_INFO_CACHE.write().await = new_data;
                 }
                 sleep(Duration::from_secs(3)).await;
@@ -226,39 +219,13 @@ pub async fn run_app<B: tui::backend::Backend>(
     // Mempool Distribution
     tokio::spawn({
         let config_clone = config.clone();
-        let initial_load_complete = Arc::clone(&initial_load_complete);
         async move {
             let txid_regex = Regex::new(r#""([a-fA-F0-9]{64})""#).unwrap(); // Matches 64-char TxID
-
-            // Step 1: Initial Load (Batch RPC)
-            if let Err(e) = initial_mempool_load(&config_clone).await {
-                let error_str = e.to_string();
-
-                // Extract TxID using regex
-                if let Some(captures) = txid_regex.captures(&error_str) {
-                    if let Some(txid) = captures.get(1) {
-                        let txid_str = txid.as_str().to_string();
-
-                        // Check if we've logged this TxID already
-                        let logged_txs_read = LOGGED_TXS.read().await;
-                        if !logged_txs_read.contains(&txid_str) {
-                            log_error(&format!("Initial Mempool Load failed for TxID: {}", txid_str));
-                            drop(logged_txs_read);
-                            let mut logged_txs_write = LOGGED_TXS.write().await;
-                            logged_txs_write.insert(txid_str); // Mark as logged
-                        }
-                    }
-                }
-            }
-
-            // Mark initial load as complete
-            initial_load_complete.store(true, Ordering::Relaxed);
 
             // Step 2: Main Loop (Incremental Updates)
             loop {
                 // Clone the Arc for each iteration
-                let initial_load_complete_clone = Arc::clone(&initial_load_complete);
-                if let Err(e) = fetch_mempool_distribution(&config_clone, initial_load_complete_clone).await {
+                if let Err(e) = fetch_mempool_distribution(&config_clone).await {
                     let error_str = e.to_string();
 
                     // Extract TxID using regex
@@ -269,7 +236,7 @@ pub async fn run_app<B: tui::backend::Backend>(
                             // Check if we've logged this TxID already
                             let logged_txs_read = LOGGED_TXS.read().await;
                             if !logged_txs_read.contains(&txid_str) {
-                                log_error(&format!("Mempool Distribution failed for TxID: {}", txid_str));
+                                // log_error(&format!("Mempool Distribution failed for TxID: {}", txid_str));
                                 drop(logged_txs_read);
                                 let mut logged_txs_write = LOGGED_TXS.write().await;
                                 logged_txs_write.insert(txid_str); // Mark as logged
@@ -277,7 +244,7 @@ pub async fn run_app<B: tui::backend::Backend>(
                         }
                     }
                 }
-                sleep(Duration::from_secs(2)).await;
+                sleep(Duration::from_secs(1)).await;
             }
         }
     });

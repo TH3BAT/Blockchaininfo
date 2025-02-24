@@ -10,7 +10,7 @@ mod network_totals;
 mod network_peers;
 mod mempool_distro;
 mod transaction;
-mod initial_mempool_distro;
+// pub mod initial_mempool_distro;
 
 use crate::models::blockchain_info::BlockchainInfo;
 use crate::models::block_info::BlockInfo;
@@ -21,16 +21,13 @@ use crate::models::network_totals::NetTotals;
 use crate::models::peer_info::PeerInfo;
 use crate::models::errors::MyError;
 use crate::config::RpcConfig;
-use std::sync::atomic::AtomicBool;
-use std::sync::Arc;
-use tokio::sync::mpsc;
 
 pub async fn fetch_blockchain_info(config: &RpcConfig) -> Result<BlockchainInfo, MyError> {
     blockchain::fetch_blockchain_info(config).await
 }
 
-pub async fn fetch_mempool_info(config: &RpcConfig,  tx: mpsc::Sender<Vec<String>>,) -> Result<MempoolInfo, MyError> {
-    mempool::fetch_mempool_info(config, tx).await
+pub async fn fetch_mempool_info(config: &RpcConfig) -> Result<MempoolInfo, MyError> {
+    mempool::fetch_mempool_info(config).await
 }
 
 pub async fn fetch_network_info(config: &RpcConfig) -> Result<NetworkInfo, MyError> {
@@ -59,16 +56,17 @@ pub async fn fetch_peer_info(config: &RpcConfig) -> Result<Vec<PeerInfo>, MyErro
 
 pub async fn fetch_mempool_distribution(
     config: &RpcConfig, 
-    initial_load_complete: Arc<AtomicBool>,
 ) -> Result<(), MyError> {
-    mempool_distro::fetch_mempool_distribution(config, initial_load_complete).await
+    mempool_distro::fetch_mempool_distribution(config).await
 }
 
+/*
 pub async fn initial_mempool_load(
     config: &RpcConfig, 
 ) -> Result<(), MyError> {
     initial_mempool_distro::initial_mempool_load(config).await
 }
+*/
 
 pub async fn fetch_transaction(config: &RpcConfig, txid: &str) -> Result<String, MyError> {
     transaction::fetch_transaction(config, txid).await

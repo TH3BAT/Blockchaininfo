@@ -22,8 +22,8 @@ pub enum MyError {
     InvalidBlockTime(u64),   
     InvalidBlockHeight(u64), 
     CustomError(String),
-    RpcRequestError(String, String),
-    JsonParsingError(String, String),
+   // RpcRequestError(String, String),
+   // JsonParsingError(String, String),
     Join(tokio::task::JoinError),
 }
 
@@ -48,8 +48,8 @@ impl fmt::Display for MyError {
             MyError::InvalidBlockTime(time) => write!(f, "Invalid block time: {}", time),
             MyError::InvalidBlockHeight(time) => write!(f, "Invalid block height: {}", time),
             MyError::CustomError(err) => write!(f, "Custom error: {}", err),
-            MyError::RpcRequestError(tx_id, err) => write!(f, "RPC request failed for TX {}: {}", tx_id, err),
-            MyError::JsonParsingError(tx_id, err) => write!(f, "JSON parsing error for TX {}: {}", tx_id, err),
+     //       MyError::RpcRequestError(tx_id, err) => write!(f, "RPC request failed for TX {}: {}", tx_id, err),
+     //       MyError::JsonParsingError(tx_id, err) => write!(f, "JSON parsing error for TX {}: {}", tx_id, err),
             MyError::Join(err) => write!(f, "Task join error: {}", err),
         }
     }

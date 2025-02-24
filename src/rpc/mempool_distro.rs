@@ -6,37 +6,37 @@ use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
 use crate::models::errors::MyError;
 use crate::config::RpcConfig;
-use crate::models::mempool_info::MempoolEntryJsonWrap;
-use std::sync::Arc;
-use rand::rngs::StdRng;
-use rand::SeedableRng; 
-use rand::prelude::SliceRandom;
-use crate::utils::{log_error, LOGGED_TXS};
+use crate::models::mempool_info::{MempoolEntryJsonWrap, MempoolEntry};
+// use rand::rngs::StdRng;
+// use rand::SeedableRng; 
+// use rand::prelude::SliceRandom;
+// use crate::utils::{log_error, LOGGED_TXS};
 use crate::rpc::mempool::MEMPOOL_CACHE; 
 use crate::utils::{BLOCKCHAIN_INFO_CACHE, MEMPOOL_DISTRIBUTION_CACHE};
-use tokio::time::sleep;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::time::Duration; 
-use crate::rpc::initial_mempool_distro::{DUST_CACHE, DUST_FREE_TX_CACHE};
+// use crate::rpc::initial_mempool_distro::{DUST_CACHE, DUST_FREE_TX_CACHE};
 use dashmap::DashSet;
 use once_cell::sync::Lazy;
-
+use dashmap::DashMap;
+use std::sync::Arc;
+use futures::future::join_all;
+use tokio::task;
 
 const DUST_THRESHOLD: f64 = 0.00000546; // 546 sats in BTC
-const MAX_CACHE_SIZE: usize = 100_000; // Rolling cache size
-const MAX_DUST_CACHE_SIZE: usize = 150_000; // Rolling cache size
+// const MAX_CACHE_SIZE: usize = 100_000; // Rolling cache size
+// const MAX_DUST_CACHE_SIZE: usize = 150_000; // Rolling cache size
 
 static LAST_BLOCK_NUMBER: Lazy<DashSet<u64>> = Lazy::new(|| DashSet::new());
+
+static DUST_FREE_TX_CACHE: Lazy<Arc<DashMap<String, MempoolEntry>>> =
+    Lazy::new(|| Arc::new(DashMap::with_capacity(100_000)));
+
+static DUST_CACHE: Lazy<Arc<DashSet<String>>> =
+    Lazy::new(|| Arc::new(DashSet::with_capacity(150_000)));
 
 
 pub async fn fetch_mempool_distribution(
     config: &RpcConfig,
-    initial_load_complete: Arc<AtomicBool>,
 ) -> Result<(), MyError> {
-    // Wait for initial load to complete
-    while !initial_load_complete.load(Ordering::Relaxed) {
-        sleep(Duration::from_millis(10)).await;
-    }
 
     let client = Client::new();
     // Lock and read the blockchain info from the cache
@@ -45,6 +45,7 @@ pub async fn fetch_mempool_distribution(
     let cache = &DUST_FREE_TX_CACHE;
     let dust_cache = &DUST_CACHE;
 
+    
     let new_tx_ids: Vec<String> = MEMPOOL_CACHE.iter()
         .filter(|txid| !cache.contains_key(txid.as_str()) && !dust_cache.contains(txid.as_str()))
         .map(|txid| txid.clone())
@@ -55,96 +56,29 @@ pub async fn fetch_mempool_distribution(
         LAST_BLOCK_NUMBER.clear(); // Clear the set
         LAST_BLOCK_NUMBER.insert(blockchain_info.blocks); // Insert the new block number
     }
-        
-    // Step 1: Update Cache (Only Add Dust-Free TXs)
-    for tx_id in new_tx_ids.iter() {
-        let json_rpc_request = json!({
-            "jsonrpc": "1.0",
-            "id": "1",
-            "method": "getmempoolentry",
-            "params": [tx_id]
-        });
+    
 
-        let response = match client
-            .post(&config.address)
-            .basic_auth(&config.username, Some(&config.password))
-            .header(CONTENT_TYPE, "application/json")
-            .json(&json_rpc_request)
-            .send()
-            .await
-        {
-            Ok(resp) => match resp.json::<MempoolEntryJsonWrap>().await {
-                Ok(parsed_response) => parsed_response.result, // Success, proceed
-                Err(e) => {
-                    cache.remove(tx_id);
-                    let logged_txs_read = LOGGED_TXS.read().await;
-                    if !logged_txs_read.contains(tx_id) {
-                        log_error(&format!(
-                        "JSON parse error for TX {}: {:?}",
-                        tx_id, e
-                        ));
-                        drop(logged_txs_read);
-                        let mut logged_txs_write = LOGGED_TXS.write().await;
-                        logged_txs_write.insert(tx_id.to_string()); // Mark as logged
-                    }
-                    return Err(MyError::JsonParsingError(tx_id.clone(), e.to_string()));  // Return CustomError
-                }
-            },
-            Err(e) => {
-                cache.remove(tx_id);
-                let logged_txs_read = LOGGED_TXS.read().await;
-                if !logged_txs_read.contains(tx_id) {
-                    log_error(&format!(
-                        "RPC request failed for TX {}: {:?}",
-                        tx_id, e
-                    ));
-                    drop(logged_txs_read);
-                    let mut logged_txs_write = LOGGED_TXS.write().await;
-                    logged_txs_write.insert(tx_id.to_string()); // Mark as logged
+    // Step 1: Split transaction IDs into chunks
+    let chunk_size = 1_500; // Adjust based on your needs
+    let tx_ids: Vec<String> =new_tx_ids.iter().map(|tx_id| tx_id.clone()).collect();
+    let chunks: Vec<Vec<String>> = tx_ids.chunks(chunk_size).map(|chunk| chunk.to_vec()).collect();
 
-                }
-                return Err(MyError::RpcRequestError(tx_id.clone(), e.to_string())); // Return CustomError
-            }
-        };
+    // Step 2: Fetch and process chunks in parallel
+    let fetch_tasks: Vec<_> = chunks
+        .into_iter()
+        .map(|chunk| {
+            let client = client.clone();
+            let config = config.clone();
+            task::spawn(async move { fetch_mempool_entries(&client, &config, chunk).await })
+        })
+        .collect();
+    
+    let results = join_all(fetch_tasks).await;
 
-    // Now `mempool_entry` contains a valid response or we’ve logged the failure.
-        let mempool_entry = response;
 
-        if mempool_entry.fees.base < DUST_THRESHOLD {
-            if dust_cache.len() == MAX_DUST_CACHE_SIZE {
-                // Collect keys into a Vec
-                let mut keys: Vec<_> = dust_cache.iter().map(|key| key.clone()).collect();
-        
-                // Shuffle the keys using a seeded RNG (consistent randomness)
-                let mut rng = StdRng::seed_from_u64(42);
-                keys.shuffle(&mut rng);
-        
-                // Remove the first key after shuffle
-                if let Some(random_key) = keys.first() {
-                    dust_cache.remove(random_key);
-                }
-            }
-            dust_cache.insert(tx_id.clone()); // Store it for future lookups
-            continue; // Skip processing
-        }
-        
-        // Ensure we don’t exceed the max cache size before inserting.
-        if cache.len() == MAX_CACHE_SIZE {
-            // Collect keys into a Vec
-            let mut keys: Vec<_> = cache.iter().map(|entry| entry.key().clone()).collect();
-        
-            // Shuffle the keys using a seeded RNG (consistent randomness)
-            let mut rng = StdRng::seed_from_u64(42);
-            keys.shuffle(&mut rng);
-        
-            // Remove the first key after shuffle
-            if let Some(random_key) = keys.first() {
-                cache.remove(random_key);
-            }
-        }
-        // Now insert the new entry after making space
-        cache.insert(tx_id.clone(), mempool_entry);
-
+    for result in results {
+        let entries = result??; // Handle task and result errors
+        process_mempool_entries(entries, cache, dust_cache);
     }
          
     // Step 3: Calculate Metrics
@@ -152,4 +86,46 @@ pub async fn fetch_mempool_distribution(
     dist.update_metrics(&cache);
 
     Ok(())
+}
+
+
+async fn fetch_mempool_entries(
+    client: &Client,
+    config: &RpcConfig,
+    tx_ids: Vec<String>,
+) -> Result<Vec<MempoolEntry>, MyError> {
+    let batch_requests: Vec<serde_json::Value> = tx_ids
+        .iter()
+        .map(|tx_id| {
+            json!({
+                "jsonrpc": "1.0",
+                "id": tx_id,
+                "method": "getmempoolentry",
+                "params": [tx_id]
+            })
+        })
+        .collect();
+
+    let batch_response = client
+        .post(&config.address)
+        .basic_auth(&config.username, Some(&config.password))
+        .header(CONTENT_TYPE, "application/json")
+        .json(&batch_requests)
+        .send()
+        .await?
+        .json::<Vec<MempoolEntryJsonWrap>>()
+        .await?;
+
+    Ok(batch_response.into_iter().map(|entry| entry.result).collect())
+}
+
+
+fn process_mempool_entries(entries: Vec<MempoolEntry>, cache: &DashMap<String, MempoolEntry>, dust_cache: &DashSet<String>) {
+    for entry in entries {
+        if entry.fees.base < DUST_THRESHOLD {
+            dust_cache.insert(entry.wtxid.clone());
+        } else {
+            cache.insert(entry.wtxid.clone(), entry);
+        }
+    }
 }
