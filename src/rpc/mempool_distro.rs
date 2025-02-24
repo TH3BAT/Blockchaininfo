@@ -42,8 +42,17 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyErro
 
     // Step 0: Remove Expired TXs if Block Changed
     if !LAST_BLOCK_NUMBER.contains(&blockchain_info.blocks) {
-        LAST_BLOCK_NUMBER.clear(); // Clear the set
-        LAST_BLOCK_NUMBER.insert(blockchain_info.blocks); // Insert the new block number
+        // Clear the last block number and update it
+        LAST_BLOCK_NUMBER.clear();
+        LAST_BLOCK_NUMBER.insert(blockchain_info.blocks);
+
+        // Remove expired TXs from DUST_CACHE
+        let dust_cache = &DUST_CACHE;
+        dust_cache.retain(|tx_id| MEMPOOL_CACHE.contains(tx_id));
+
+        // Remove expired TXs from DUST_FREE_TX_CACHE
+        let cache = &DUST_FREE_TX_CACHE;
+        cache.retain(|tx_id, _| MEMPOOL_CACHE.contains(tx_id));
     }
 
     // Collect new transaction IDs that are not in either cache
