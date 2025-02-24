@@ -244,7 +244,7 @@ pub async fn run_app<B: tui::backend::Backend>(
                         }
                     }
                 }
-                sleep(Duration::from_secs(1)).await;
+                sleep(Duration::from_secs(2)).await;
             }
         }
     });

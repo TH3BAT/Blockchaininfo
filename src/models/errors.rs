@@ -6,6 +6,7 @@ use serde_json;             // For JSON error handling.
 use toml;                   // For TOML parsing errors.
 use std::io;                // For I/O errors.
 use std::fmt;               // For Display trait.
+use tokio::sync::AcquireError;
 
 // Custom error enum for handling various types of errors.
 #[derive(Debug)]
@@ -22,14 +23,21 @@ pub enum MyError {
     InvalidBlockTime(u64),   
     InvalidBlockHeight(u64), 
     CustomError(String),
-   // RpcRequestError(String, String),
-   // JsonParsingError(String, String),
+    RpcRequestError(String, String),
+    JsonParsingError(String, String),
     Join(tokio::task::JoinError),
+    SemaphoreError(String),
 }
 
 impl From<tokio::task::JoinError> for MyError {
     fn from(err: tokio::task::JoinError) -> Self {
         MyError::Join(err)
+    }
+}
+
+impl From<AcquireError> for MyError {
+    fn from(err: AcquireError) -> Self {
+        MyError::SemaphoreError(format!("Semaphore acquisition failed: {:?}", err))
     }
 }
 
@@ -48,9 +56,10 @@ impl fmt::Display for MyError {
             MyError::InvalidBlockTime(time) => write!(f, "Invalid block time: {}", time),
             MyError::InvalidBlockHeight(time) => write!(f, "Invalid block height: {}", time),
             MyError::CustomError(err) => write!(f, "Custom error: {}", err),
-     //       MyError::RpcRequestError(tx_id, err) => write!(f, "RPC request failed for TX {}: {}", tx_id, err),
-     //       MyError::JsonParsingError(tx_id, err) => write!(f, "JSON parsing error for TX {}: {}", tx_id, err),
+            MyError::RpcRequestError(tx_id, err) => write!(f, "RPC request failed for TX {}: {}", tx_id, err),
+            MyError::JsonParsingError(tx_id, err) => write!(f, "JSON parsing error for TX {}: {}", tx_id, err),
             MyError::Join(err) => write!(f, "Task join error: {}", err),
+            MyError::SemaphoreError(err) => write!(f, "Semaphore error: {}", err), 
         }
     }
 }

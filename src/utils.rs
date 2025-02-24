@@ -10,8 +10,8 @@ use tui::style::{Color, Style, Modifier};
 use tui::layout::{Rect, Alignment};
 use tui::Frame;
 use tui::backend::Backend;
-// use std::fs::{OpenOptions, metadata, remove_file};
-// use std::io::Write;
+use std::fs::{OpenOptions, metadata, remove_file};
+use std::io::Write;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use once_cell::sync::Lazy;
@@ -178,7 +178,7 @@ pub fn render_footer<B: Backend>(f: &mut Frame<B>, area: Rect, message: &str) {
     f.render_widget(footer, area);
 }
 
-/*
+
 pub fn log_error(message: &str) {
     
     let log_path = "error_log.txt";
@@ -197,6 +197,6 @@ pub fn log_error(message: &str) {
     
     writeln!(file, "{}", message).unwrap();
 }
-*/
+
 
 
