@@ -23,13 +23,14 @@ use crate::models::errors::MyError;
 use crate::config::RpcConfig;
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
+use tokio::sync::mpsc;
 
 pub async fn fetch_blockchain_info(config: &RpcConfig) -> Result<BlockchainInfo, MyError> {
     blockchain::fetch_blockchain_info(config).await
 }
 
-pub async fn fetch_mempool_info(config: &RpcConfig) -> Result<MempoolInfo, MyError> {
-    mempool::fetch_mempool_info(config).await
+pub async fn fetch_mempool_info(config: &RpcConfig,  tx: mpsc::Sender<Vec<String>>,) -> Result<MempoolInfo, MyError> {
+    mempool::fetch_mempool_info(config, tx).await
 }
 
 pub async fn fetch_network_info(config: &RpcConfig) -> Result<NetworkInfo, MyError> {

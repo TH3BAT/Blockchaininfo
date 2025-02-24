@@ -32,6 +32,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use dashmap::DashSet;
 use once_cell::sync::Lazy;
+use tokio::sync::mpsc;
 use crate::utils::{BLOCKCHAIN_INFO_CACHE, BLOCK_INFO_CACHE, MEMPOOL_INFO_CACHE, CHAIN_TIP_CACHE, BLOCK24_INFO_CACHE,
 PEER_INFO_CACHE, NETWORK_INFO_CACHE, NET_TOTALS_CACHE, MEMPOOL_DISTRIBUTION_CACHE, LOGGED_TXS};
 
@@ -76,10 +77,9 @@ pub async fn run_app<B: tui::backend::Backend>(
     terminal: &mut Terminal<B>,
     config: &RpcConfig,
 ) -> Result<(), MyError> {
-    
-    // let distribution = Arc::new(AsyncMutex::new(MempoolDistribution::default()));
-     // Lock block number tracking
-    // let mut last_known_block_number = LAST_BLOCK_NUMBER.lock().await;
+
+    #[allow(unused_mut)]
+    let (tx, mut _rx) = mpsc::channel(32); // Adjust buffer size as needed
     let mut propagation_times: VecDeque<i64> = VecDeque::with_capacity(20);
     let mut app = App::new();  
     
@@ -155,9 +155,10 @@ pub async fn run_app<B: tui::backend::Backend>(
     // Mempool info
     tokio::spawn({
         let config_clone = config.clone();
+        let tx = tx.clone(); // Clone the sender
         async move {
             loop {
-                if let Ok(new_data) = fetch_mempool_info(&config_clone).await {
+                if let Ok(new_data) = fetch_mempool_info(&config_clone, tx.clone()).await {
                     *MEMPOOL_INFO_CACHE.write().await = new_data;
                 }
                 sleep(Duration::from_secs(3)).await;
