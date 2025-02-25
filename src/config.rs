@@ -49,6 +49,7 @@ pub fn load_config() -> Result<RpcConfig, MyError> {
 
     // Check if the config file exists
     let config: RpcConfig = if Path::new(&file_path).exists() {
+        // Load config from file
         let config_str = fs::read_to_string(file_path)?;
         toml::from_str(&config_str)?
     } else {
@@ -61,7 +62,7 @@ pub fn load_config() -> Result<RpcConfig, MyError> {
         });
 
         let password = env::var("RPC_PASSWORD")
-            .or_else(|_| RpcConfig::get_rpc_password_from_keychain()) // ✅ Keychain now properly accessed
+            .or_else(|_| RpcConfig::get_rpc_password_from_keychain()) 
             .unwrap_or_else(|_| {
                 print!("Enter RPC Password: ");
                 let mut input = String::new();
@@ -79,10 +80,15 @@ pub fn load_config() -> Result<RpcConfig, MyError> {
         // Create a valid config
         let config = RpcConfig { username, password, address };
 
-        // ✨ Auto-generate `config.toml`
-        if let Ok(toml_string) = toml::to_string_pretty(&config) {
-            fs::write(&file_path, toml_string)?;
-            println!("✅ Config saved to `{}`", file_path);
+        // ✨ Auto-generate `config.toml` ONLY if no environment variables are set
+        if env::var("RPC_USER").is_err()
+            && env::var("RPC_PASSWORD").is_err()
+            && env::var("RPC_ADDRESS").is_err()
+        {
+            if let Ok(toml_string) = toml::to_string_pretty(&config) {
+                fs::write(&file_path, toml_string)?;
+                println!("✅ Config saved to `{}`", file_path);
+            }
         }
 
         config // Return the generated config
