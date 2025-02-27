@@ -9,4 +9,6 @@ pub mod block_info;
 pub mod chaintips_info;
 pub mod network_totals;
 pub mod peer_info;
+pub mod transaction_info;
+pub mod flashing_text;
 

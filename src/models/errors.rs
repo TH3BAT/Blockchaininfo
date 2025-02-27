@@ -10,6 +10,7 @@ use tokio::sync::AcquireError;
 
 // Custom error enum for handling various types of errors.
 #[derive(Debug)]
+#[allow(dead_code)]
 pub enum MyError {
     Reqwest(reqwest::Error),
     SerdeJson(serde_json::Error),
@@ -55,7 +56,7 @@ impl fmt::Display for MyError {
             MyError::InvalidMedianTime(time) => write!(f, "Invalid median time: {}", time),
             MyError::InvalidBlockTime(time) => write!(f, "Invalid block time: {}", time),
             MyError::InvalidBlockHeight(time) => write!(f, "Invalid block height: {}", time),
-            MyError::CustomError(err) => write!(f, "Custom error: {}", err),
+            MyError::CustomError(msg) => write!(f, "Error: {}", msg),
             MyError::RpcRequestError(tx_id, err) => write!(f, "RPC request failed for TX {}: {}", tx_id, err),
             MyError::JsonParsingError(tx_id, err) => write!(f, "JSON parsing error for TX {}: {}", tx_id, err),
             MyError::Join(err) => write!(f, "Task join error: {}", err),

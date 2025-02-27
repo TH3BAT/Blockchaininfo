@@ -24,7 +24,7 @@ use std::io::{self, Stdout};
 use std::collections::VecDeque;
 use std::time::Duration; 
 use tokio::time::sleep;
-// use blockchaininfo::utils::log_error;
+use blockchaininfo::utils::log_error;
 use crate::models::chaintips_info::ChainTipsResponse;
 use regex::Regex;
 use dashmap::DashSet;
@@ -73,10 +73,6 @@ pub async fn run_app<B: tui::backend::Backend>(
     terminal: &mut Terminal<B>,
     config: &RpcConfig,
 ) -> Result<(), MyError> {
-    
-    // let distribution = Arc::new(AsyncMutex::new(MempoolDistribution::default()));
-     // Lock block number tracking
-    // let mut last_known_block_number = LAST_BLOCK_NUMBER.lock().await;
     let mut propagation_times: VecDeque<i64> = VecDeque::with_capacity(20);
     let mut app = App::new();  
 
@@ -236,7 +232,13 @@ pub async fn run_app<B: tui::backend::Backend>(
                             // Check if we've logged this TxID already
                             let logged_txs_read = LOGGED_TXS.read().await;
                             if !logged_txs_read.contains(&txid_str) {
-                                // log_error(&format!("Mempool Distribution failed for TxID: {}", txid_str));
+                                if let Err(log_err) = log_error(&format!(
+                                    "Mempool Distribution failed for TxID: {}: {:?}", 
+                                    txid_str, e
+                                ))
+                                {
+                                    eprintln!("Failed to log error: {}", log_err);
+                                }
                                 drop(logged_txs_read);
                                 let mut logged_txs_write = LOGGED_TXS.write().await;
                                 logged_txs_write.insert(txid_str); // Mark as logged
@@ -303,7 +305,7 @@ pub async fn run_app<B: tui::backend::Backend>(
             if let Event::Key(key) = event::read()? {
                 match key.code {
                     KeyCode::Esc if app.show_popup => app.show_popup = false, // Close Popup
-                    KeyCode::Char('q') | KeyCode::Esc => {
+                    KeyCode::Char('q') => {  // | KeyCode::Esc => {
                         app.is_exiting = true;  // 🚀 Flag shutdown mode
                     
                         // Get terminal size to recompute layout manually
@@ -444,7 +446,7 @@ pub async fn run_app<B: tui::backend::Backend>(
 
             // Popup for Transaction Lookup
             if app.show_popup {
-                let popup_area = centered_rect(75, 27, frame.size());  
+                let popup_area = centered_rect(80, 28, frame.size());  
 
                 // Clear the area to avoid text overlapping
                 frame.render_widget(Clear, popup_area);

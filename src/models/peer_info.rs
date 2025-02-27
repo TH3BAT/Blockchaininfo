@@ -60,7 +60,7 @@ pub struct PeerInfo {
 
 impl PeerInfo {
     /// Normalize the version from the `subver` field to `major.minor.patch`.
-    pub fn normalize_version(subver: &str) -> String {
+    fn normalize_version(subver: &str) -> String {
         let version_pattern = regex::Regex::new(r"/Satoshi:(\d+\.\d+\.\d+)").unwrap();
         if let Some(captures) = version_pattern.captures(subver) {
             captures.get(1).map_or_else(|| "Unknown".to_string(), |m| m.as_str().to_string())

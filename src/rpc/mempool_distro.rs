@@ -119,11 +119,13 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyErro
                     DUST_FREE_TX_CACHE.remove(&tx_id);
                     let logged_txs_read = LOGGED_TXS.read().await;
                     if !logged_txs_read.contains(&tx_id) {
-                        // Log the error using your custom log_error function
-                        log_error(&format!(
+                        // Log the error
+                        if let Err(log_err) = log_error(&format!(
                             "RPC request failed for TX {}: {:?}",
                             tx_id, e
-                        ));
+                        )) {
+                            eprintln!("Failed to log error: {}", log_err);
+                        }
                 
                         drop(logged_txs_read);
                         let mut logged_txs_write = LOGGED_TXS.write().await;
@@ -148,8 +150,11 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyErro
                         // Check if the Tx ID is already logged
                         let logged_txs_read = LOGGED_TXS.read().await;
                         if !logged_txs_read.contains(&tx_id) {
-                            // Log the error using your custom log_error function
-                            log_error(&format!("Task failed: {}", error_string));
+                            if let Err(log_err) = log_error(&format!(
+                                "Task failed: {}", error_string
+                            )) {
+                                eprintln!("Task reported Tx failure: {}", log_err);
+                            }
     
                             // Mark the Tx ID as logged
                             drop(logged_txs_read);
@@ -158,13 +163,21 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyErro
                         }
                     } else {
                         // If no Tx ID is found, log the error as-is
-                        log_error(&format!("Task failed: {}", error_string));
+                        if let Err(log_err) = log_error(&format!(
+                                "Task failed: {}", error_string
+                            )) {
+                                eprintln!("Task reported Tx failure: {}", log_err);
+                            }
                     }
                 }
             }
             Err(e) => {
                 // Log the join error using your custom log_error function
-                log_error(&format!("Task join failed: {:?}", e));
+                if let Err(log_err) = log_error(&format!(
+                    "Task joined failed: {}", e
+                )) {
+                    eprintln!("Task join failure: {}", log_err);
+                }
             }
         }
     }

@@ -10,8 +10,11 @@ use tui::style::{Color, Style, Modifier};
 use tui::layout::{Rect, Alignment};
 use tui::Frame;
 use tui::backend::Backend;
-use std::fs::{OpenOptions, metadata, remove_file};
-use std::io::Write;
+use std::fs::{OpenOptions, metadata, rename};
+use std::io::{self, Write};
+use std::sync::Mutex;
+use lazy_static::lazy_static;
+use chrono::Local;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use once_cell::sync::Lazy;
@@ -64,6 +67,11 @@ pub static MEMPOOL_DISTRIBUTION_CACHE: Lazy<Arc<RwLock<MempoolDistribution>>> =
 
 pub static LOGGED_TXS: Lazy<Arc<RwLock<HashSet<String>>>> = 
 Lazy::new(|| Arc::new(RwLock::new(HashSet::new())));
+
+// Use a Mutex to ensure thread-safe access to the log file
+lazy_static! {
+    static ref LOG_FILE: Mutex<()> = Mutex::new(()); // Global Mutex for thread-safe logging
+}
 
 // Formats a size in bytes into a more readable format (KB, MB, etc.).
 pub fn format_size(bytes: u64) -> String {
@@ -178,25 +186,35 @@ pub fn render_footer<B: Backend>(f: &mut Frame<B>, area: Rect, message: &str) {
     f.render_widget(footer, area);
 }
 
-
-pub fn log_error(message: &str) {
-    
+pub fn log_error(message: &str) -> io::Result<()> {
     let log_path = "error_log.txt";
-     // Auto-truncate if the file exceeds 500KB
-     if let Ok(meta) = metadata(log_path) {
-        if meta.len() > 500_000 { // 500KB limit
-            let _ = remove_file(log_path); // Delete old log file
+
+    // Auto-truncate if the file exceeds 500KB
+    if let Ok(meta) = metadata(log_path) {
+        if meta.len() > 500_000 {
+            let timestamp = Local::now().format("%Y%m%d_%H%M%S").to_string();
+            let rotated_log_path = format!("error_log_{}.txt", timestamp);
+            rename(log_path, rotated_log_path)?;
         }
     }
 
+    // Open the log file in append mode (create it if it doesn't exist)
     let mut file = OpenOptions::new()
         .create(true)
         .append(true)
-        .open(log_path)
-        .unwrap();
-    
-    writeln!(file, "{}", message).unwrap();
+        .open(log_path)?;
+
+    // Write the log message with a timestamp
+    let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
+    let log_entry = format!("[{}] {}\n", timestamp, message);
+
+    // Lock the global Mutex to ensure thread-safe writes
+    let _lock = LOG_FILE.lock().unwrap();
+    file.write_all(log_entry.as_bytes())?;
+
+    Ok(())
 }
+
 
 
 

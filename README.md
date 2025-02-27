@@ -40,14 +40,16 @@ Whether you're a developer, node operator, or Bitcoin enthusiast, Blockchaininfo
     ├── lib.rs                 # For testing.
     ├── main.rs                # Application entry point.
     ├── models/                # Data and error handling modules.
-    │   ├── block_info.rs           # Block data model.
-    │   ├── blockchain_info.rs      # Blockchain data model and implementations.
-    │   ├── mempool_info.rs         # Mempool data model and implementations.
-    │   ├── network_info.rs         # Network data model.
-    │   ├── network_totals.rs       # Network data model (bytes reveived & sent).
-    │   ├── peer_info.rs            # Peers data model.
-    │   ├── consensus_security.rs   # Consensus security data model.
-    │   └── errors.rs               # Error handling.
+    │   ├── block_info.rs           # Block data structures.
+    │   ├── blockchain_info.rs      # Blockchain data structures and implementations.
+    │   ├── mempool_info.rs         # Mempool data structures and implementations.
+    │   ├── network_info.rs         # Network data structures.
+    │   ├── network_totals.rs       # Network data structures (bytes reveived & sent).
+    │   ├── peer_info.rs            # Peers data structures and implementations.
+    │   ├── consensus_security.rs   # Consensus security data structures.
+    │   ├── flashing_text.rs        # Data structure and implementation to flash a metric.
+    │   ├── transaction_info.rs     # Raw transaction data structures and implementations.
+    │   └── errors.rs               # Error handling sata structures and implementations.
     ├── models.rs              # Aggregates Data and Error modules.
     ├── rpc/                   # RPC modules for interacting with the Bitcoin node.
     │   ├── block.rs           # Block data fetching.

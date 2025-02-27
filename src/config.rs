@@ -19,13 +19,13 @@ pub struct RpcConfig {
 
 impl RpcConfig {
     /// Fetches the RPC password from the keychain (if necessary).
-    pub fn get_rpc_password_from_keychain() -> Result<String, MyError> {
+    fn get_rpc_password_from_keychain() -> Result<String, MyError> {
         get_rpc_password_from_keychain() // Ensuring Keychain is used
     }
 }
 
 // Determines config path from CLI args, env variable, or default location.
-pub fn get_config_path() -> String {
+fn get_config_path() -> String {
     // Check CLI Args (`--config` flag)
     let args: Vec<String> = env::args().collect();
     if let Some(pos) = args.iter().position(|arg| arg == "--config") {
@@ -86,7 +86,10 @@ pub fn load_config() -> Result<RpcConfig, MyError> {
             && env::var("RPC_ADDRESS").is_err()
         {
             if let Ok(toml_string) = toml::to_string_pretty(&config) {
-                fs::write(&file_path, toml_string)?;
+                // Prepend the section header `[bitcoin_rpc]` to the TOML string
+                let full_toml_string = format!("[bitcoin_rpc]\n{}", toml_string);
+
+                fs::write(&file_path, full_toml_string)?;
                 println!("✅ Config saved to `{}`", file_path);
             }
         }

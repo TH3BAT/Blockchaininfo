@@ -4,7 +4,7 @@
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
+    style::{Color, Style, Modifier},
     text::{Span, Spans},
     widgets::{Block, Borders, Paragraph},
     Frame,
@@ -13,6 +13,7 @@ use num_format::{Locale, ToFormattedString};
 use crate::{models::{block_info::BlockInfo, blockchain_info::BlockchainInfo}, 
     utils::{estimate_difficulty_change, estimate_24h_difficulty_change, format_size}};
 use crate::models::errors::MyError;  
+use crate::models::flashing_text::BEST_BLOCK_TEXT;
 
 // Render the blockchain info into a `tui` terminal UI.
 pub fn display_blockchain_info<B: Backend>(
@@ -76,6 +77,24 @@ pub fn display_blockchain_info<B: Backend>(
         "↓".to_string()
     };
 
+    // Update the FlashingText variable
+    BEST_BLOCK_TEXT.lock().unwrap().update(blockchain_info.blocks);
+
+    // Get the style for the FlashingText
+    let best_block_style = BEST_BLOCK_TEXT.lock().unwrap().style();
+
+    // Create the Spans with the updated style
+    let best_block_spans = Spans::from(vec![
+        Span::styled(
+            "🏆 Best Block: ",
+            Style::default().fg(Color::Gray), // Static style for the label
+        ),
+        Span::styled(
+            blockchain_info.blocks.to_formatted_string(&Locale::en),
+            best_block_style, // Dynamic style for the value
+        ),
+    ]);
+
     // Build the blockchain info text before using it.
     let blockchain_info_text = vec![
         Spans::from(vec![
@@ -83,6 +102,9 @@ pub fn display_blockchain_info<B: Backend>(
             Span::styled(blockchain_info.chain.clone(), Style::default().fg(Color::Yellow)),
         ]),
 
+        best_block_spans, // Flash yellow when best block changes.
+        
+        /* Keeping previous TUI code   
         Spans::from(vec![
             Span::styled("🏆 Best Block: ", Style::default().fg(Color::Gray)),
             Span::styled(
@@ -90,6 +112,7 @@ pub fn display_blockchain_info<B: Backend>(
                 Style::default().fg(Color::Green),
             ),
         ]),
+        */
 
         Spans::from(vec![
             Span::styled("  ⏳ Time since block: ", Style::default().fg(Color::Gray)),
@@ -122,13 +145,9 @@ pub fn display_blockchain_info<B: Backend>(
                 }),
             ),
             difficulty_change_display,
-            /*
-            Span::styled(
-                format!(" {:.2}% ", estimate_difficulty_chng.abs()),
-                Style::default().fg(Color::Gray),
-            ), 
-            */
-            Span::styled("(epoch)", Style::default().fg(Color::DarkGray)),
+            
+            Span::styled("(epoch)", Style::default().fg(Color::DarkGray)
+                .add_modifier(Modifier::ITALIC)),
         
             // Separator
             Span::styled(" | ", Style::default().fg(Color::DarkGray)),
@@ -146,7 +165,8 @@ pub fn display_blockchain_info<B: Backend>(
                 format!(" {:.2}% ", estimate_24h_difficulty_chng.abs()),
                 Style::default().fg(Color::Gray),
             ),
-            Span::styled("(24hrs)", Style::default().fg(Color::DarkGray)),
+            Span::styled("(24hrs)", Style::default().fg(Color::DarkGray)
+                .add_modifier(Modifier::ITALIC)),
         ]),        
 
         Spans::from(vec![

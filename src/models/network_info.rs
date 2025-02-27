@@ -8,10 +8,10 @@ use serde::Deserialize; // For struct serialization and deserialization.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
-      pub struct NetworkInfoJsonWrap {
-            pub error: Option<String>,    // Optional for any error message.
-            pub id: Option<String>,       // Optional Request ID.
-            pub result: NetworkInfo,   // The actual result field which contains the data we need.
+pub struct NetworkInfoJsonWrap {
+      pub error: Option<String>,    // Optional for any error message.
+      pub id: Option<String>,       // Optional Request ID.
+      pub result: NetworkInfo,   // The actual result field which contains the data we need.
 }
 
 // This struct encapsulates various details about the Bitcoin node's network status.
