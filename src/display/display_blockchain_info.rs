@@ -101,9 +101,7 @@ pub fn display_blockchain_info<B: Backend>(
             Span::styled("🔗 Chain: ", Style::default().fg(Color::Gray)),
             Span::styled(blockchain_info.chain.clone(), Style::default().fg(Color::Yellow)),
         ]),
-
-        best_block_spans, // Flash yellow when best block changes.
-        
+        best_block_spans, 
         /* Keeping previous TUI code   
         Spans::from(vec![
             Span::styled("🏆 Best Block: ", Style::default().fg(Color::Gray)),
@@ -113,7 +111,6 @@ pub fn display_blockchain_info<B: Backend>(
             ),
         ]),
         */
-
         Spans::from(vec![
             Span::styled("  ⏳ Time since block: ", Style::default().fg(Color::Gray)),
             Span::styled(time_since_block, Style::default().fg(Color::Red)),

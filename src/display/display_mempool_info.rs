@@ -13,6 +13,7 @@ use num_format::{Locale, ToFormattedString};
 use crate::{models::mempool_info::{MempoolDistribution, MempoolInfo}, utils::format_size};
 use crate::models::errors::MyError;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use crate::models::flashing_text::TRANSACTION_TEXT;
 
 static SPINNER_INDEX: AtomicUsize = AtomicUsize::new(0);
 const SPINNER_FRAMES: [&str; 4] = ["|", "/", "-", "\\"];
@@ -71,6 +72,27 @@ pub fn display_mempool_info<B: Backend>(
     let rbf_prog_bar = create_progress_bar(rbf_pct, 10);
     let non_rbf_prog_bar = create_progress_bar(non_rbf_pct, 10);
 
+     // Update the FlashingText variable
+     TRANSACTION_TEXT.lock().unwrap().update(mempool_info.size);
+
+     // Get the style for the FlashingText
+     let transaction_style = TRANSACTION_TEXT.lock().unwrap().style();
+
+     let transaction_spans = Spans::from(vec![
+        Span::styled("📊 Transactions: ", Style::default().fg(Color::Gray)),
+        Span::styled(
+            mempool_info.size.to_formatted_string(&Locale::en),
+            transaction_style,
+        ),
+        Span::styled(" | ", Style::default().fg(Color::DarkGray)),
+        Span::styled(
+            format!("{} ", formatted_dust_free),
+            Style::default().fg(Color::Gray), // Dust-free percentage in Gray
+        ),
+        Span::styled("dᵤₛₜ₋fᵣₑₑ", Style::default().fg(Color::DarkGray)
+            .add_modifier(Modifier::ITALIC)),
+    ]);
+
     // Create the layout for this specific chunk (using passed 'area').
     let chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -99,7 +121,8 @@ pub fn display_mempool_info<B: Backend>(
     frame.render_widget(mempool_gauge, chunks[1]);
 
     let mempool_content = vec![
-        Spans::from(vec![
+        transaction_spans
+        /* Spans::from(vec![
             Span::styled("📊 Transactions: ", Style::default().fg(Color::Gray)),
             Span::styled(
                 format!(
@@ -115,7 +138,7 @@ pub fn display_mempool_info<B: Backend>(
             ),
             Span::styled("dᵤₛₜ₋fᵣₑₑ", Style::default().fg(Color::DarkGray)
                 .add_modifier(Modifier::ITALIC)),
-        ]),
+        ]) */,
         Spans::from(vec![
             Span::styled("💾 Memory: ", Style::default().fg(Color::Gray)),
             Span::styled(

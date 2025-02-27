@@ -12,6 +12,7 @@ use tui::{
 use crate::models::{errors::MyError, network_info::NetworkInfo, network_totals::NetTotals};
 use crate::utils::format_size;
 use std::collections::VecDeque;
+use crate::models::flashing_text::CONNECTIONS_IN_TEXT;
 
 // Displays the network information in a `tui` terminal.
 pub fn display_network_info<B: Backend>(
@@ -33,6 +34,20 @@ pub fn display_network_info<B: Backend>(
         Color::Red // Critical.
     };
     let abpt_text = "seconds";
+
+    // Update the FlashingText variable
+    CONNECTIONS_IN_TEXT.lock().unwrap().update(network_info.connections_in as u64);
+
+    // Get the style for the FlashingText
+    let connections_in_style = CONNECTIONS_IN_TEXT.lock().unwrap().style();
+
+    let connections_in_spans =Spans::from(vec![
+        Span::styled("🔌 Connections in: ", Style::default().fg(Color::Gray)),
+        Span::styled(
+            network_info.connections_in.to_string(),
+            connections_in_style,
+        ),
+    ]);
 
     // Define layout with space for Node Version Distribution bar chart and sparkline.
     let chunks = Layout::default()
@@ -56,13 +71,14 @@ pub fn display_network_info<B: Backend>(
 
     // Network information content.
     let network_content = vec![
-        Spans::from(vec![
+        connections_in_spans,
+        /* Spans::from(vec![
             Span::styled("🔌 Connections in: ", Style::default().fg(Color::Gray)),
             Span::styled(
                 network_info.connections_in.to_string(),
                 Style::default().fg(Color::Green),
             ),
-        ]),
+        ]), */
         Spans::from(vec![
             Span::styled("🔗 Connections out: ", Style::default().fg(Color::Gray)),
             Span::styled(

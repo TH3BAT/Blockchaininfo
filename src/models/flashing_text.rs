@@ -11,6 +11,15 @@ lazy_static! {
     pub static ref BEST_BLOCK_TEXT: Mutex<FlashingText> = Mutex::new(FlashingText::new());
 }
 
+lazy_static! {
+    pub static ref TRANSACTION_TEXT: Mutex<FlashingText> = Mutex::new(FlashingText::new());
+}
+
+
+lazy_static! {
+    pub static ref CONNECTIONS_IN_TEXT: Mutex<FlashingText> = Mutex::new(FlashingText::new());
+}
+
 pub struct FlashingText {
     pub last_value: u64,          // The last value that was displayed
     pub flash_until: Option<Instant>, // When the flashing effect should end
@@ -27,7 +36,7 @@ impl FlashingText {
     pub fn update(&mut self, new_value: u64) {
         if new_value != self.last_value {
             self.last_value = new_value;
-            self.flash_until = Some(Instant::now() + Duration::from_millis(500)); // Flash for 200ms
+            self.flash_until = Some(Instant::now() + Duration::from_millis(200)); // Flash for 200ms
         }
     }
 
