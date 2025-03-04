@@ -8,6 +8,7 @@ use crate::models::errors::MyError;
 use crate::config::RpcConfig;
 use crate::models::block_info::{BlockHash, BlockInfo, BlockInfoJsonWrap};
 use crate::utils::DIFFICULTY_ADJUSTMENT_INTERVAL;
+use std::time::Duration;
 
 // Fetch block data based on the block height.
 pub async fn fetch_block_data_by_height(
@@ -32,7 +33,10 @@ pub async fn fetch_block_data_by_height(
         }
     };
 
-    let client = Client::new();
+    let client = Client::builder()
+        .timeout(Duration::from_secs(10))
+        .connect_timeout(Duration::from_secs(5))
+        .build()?;
 
     // Step 1: Get the block hash by height.
     let getblockhash_request = json!({
@@ -48,9 +52,22 @@ pub async fn fetch_block_data_by_height(
         .header(CONTENT_TYPE, "application/json")
         .json(&getblockhash_request)
         .send()
-        .await?
+        .await
+        .map_err(|e| {
+            if e.is_timeout() {
+                MyError::TimeoutError(format!(
+                    "Request to {} timed out for method 'getblockhash'",
+                    config.address
+                ))
+            } else {
+                MyError::Reqwest(e)
+            }
+        })? 
         .json::<BlockHash>()
-        .await?;
+        .await
+        .map_err(|_e| {
+            MyError::CustomError("JSON Parsing error for getblockhash.".to_string())
+        })?;
 
     // Extract the block hash.
     let blockhash = block_hash_response.result;
@@ -69,9 +86,22 @@ pub async fn fetch_block_data_by_height(
         .header(CONTENT_TYPE, "application/json")
         .json(&getblock_request)
         .send()
-        .await?
+        .await
+        .map_err(|e| {
+            if e.is_timeout() {
+                MyError::TimeoutError(format!(
+                    "Request to {} timed out for method 'getblock'",
+                    config.address
+                ))
+            } else {
+                MyError::Reqwest(e)
+            }
+        })?
         .json::<BlockInfoJsonWrap>()
-        .await?;
+        .await
+        .map_err(|_e| {
+            MyError::CustomError("JSON Parsing error for getblock.".to_string())
+        })?;
 
     Ok(block_response.result)
 }

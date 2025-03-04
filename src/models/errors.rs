@@ -15,8 +15,8 @@ pub enum MyError {
     Reqwest(reqwest::Error),
     SerdeJson(serde_json::Error),
     Io(io::Error),
-    TomlDeserialize(toml::de::Error), // Renamed for clarity
-    TomlSerialize(toml::ser::Error),  // NEW: Handles TOML serialization errors
+    TomlDeserialize(toml::de::Error), 
+    TomlSerialize(toml::ser::Error),  
     Keychain(String),
     Config(String),
     InvalidChainworkHexString(String),
@@ -28,6 +28,7 @@ pub enum MyError {
     JsonParsingError(String, String),
     Join(tokio::task::JoinError),
     SemaphoreError(String),
+    TimeoutError(String),
 }
 
 impl From<tokio::task::JoinError> for MyError {
@@ -49,7 +50,7 @@ impl fmt::Display for MyError {
             MyError::SerdeJson(err) => write!(f, "JSON parsing error: {}", err),
             MyError::Io(err) => write!(f, "I/O error: {}", err),
             MyError::TomlDeserialize(err) => write!(f, "TOML deserialization error: {}", err),
-            MyError::TomlSerialize(err) => write!(f, "TOML serialization error: {}", err), // ✅ NEW
+            MyError::TomlSerialize(err) => write!(f, "TOML serialization error: {}", err), 
             MyError::Keychain(err) => write!(f, "Keychain error: {}", err),
             MyError::Config(err) => write!(f, "Configuration error: {}", err),
             MyError::InvalidChainworkHexString(err) => write!(f, "Invalid chainwork hex string: {}", err),
@@ -58,9 +59,10 @@ impl fmt::Display for MyError {
             MyError::InvalidBlockHeight(time) => write!(f, "Invalid block height: {}", time),
             MyError::CustomError(msg) => write!(f, "Error: {}", msg),
             MyError::RpcRequestError(tx_id, err) => write!(f, "RPC request failed for TX {}: {}", tx_id, err),
-            MyError::JsonParsingError(tx_id, err) => write!(f, "JSON parsing error for TX {}: {}", tx_id, err),
+            MyError::JsonParsingError(tx_id, err) => write!(f, "TX {}: JSON parsing error: {}", tx_id, err),
             MyError::Join(err) => write!(f, "Task join error: {}", err),
             MyError::SemaphoreError(err) => write!(f, "Semaphore error: {}", err), 
+            MyError::TimeoutError(msg) => write!(f, "Error: {}", msg),
         }
     }
 }
@@ -87,8 +89,12 @@ impl From<String> for MyError {
 
 
 impl From<reqwest::Error> for MyError {
-    fn from(err: reqwest::Error) -> MyError {
-        MyError::Reqwest(err)
+    fn from(err: reqwest::Error) -> Self {
+        if err.is_timeout() {
+            MyError::TimeoutError("Request timed out".to_string())
+        } else {
+            MyError::Reqwest(err)
+        }
     }
 }
 

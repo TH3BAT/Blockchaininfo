@@ -19,6 +19,7 @@ use dashmap::DashMap;
 use std::sync::Arc;
 use tokio::sync::Semaphore;
 use tokio::task;             // For spawning tasks
+use std::time::Duration;
 
 
 const DUST_THRESHOLD: f64 = 0.00000546; // 546 sats in BTC
@@ -35,7 +36,11 @@ static DUST_CACHE: Lazy<Arc<DashSet<String>>> =
 
 
 pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyError> {
-    let client = Client::new();
+    let client = Client::builder()
+        .timeout(Duration::from_secs(10))
+        .connect_timeout(Duration::from_secs(5))
+        .build()?;
+
     let blockchain_info = BLOCKCHAIN_INFO_CACHE.read().await;
 
     // Step 0: Remove Expired TXs if Block Changed
@@ -82,7 +87,16 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyErro
                 .json(&json_rpc_request)
                 .send()
                 .await
-                .map_err(|e| MyError::RpcRequestError(tx_id.clone(), e.to_string()))?
+                .map_err(|e| {
+                    if e.is_timeout() {
+                        MyError::TimeoutError(format!(
+                            "Request to {} timed out for method 'getmempoolentry'",
+                            config.address
+                        ))
+                    } else {
+                        MyError::RpcRequestError(tx_id.clone(), e.to_string())
+                    }
+                })?
                 .json::<MempoolEntryJsonWrap>()
                 .await
                 .map_err(|e| MyError::JsonParsingError(tx_id.clone(), e.to_string()))
@@ -121,8 +135,8 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyErro
                     if !logged_txs_read.contains(&tx_id) {
                         // Log the error
                         if let Err(log_err) = log_error(&format!(
-                            "RPC request failed for TX {}: {:?}",
-                            tx_id, e
+                            "getmempoolentry failed: {}",
+                            e
                         )) {
                             eprintln!("Failed to log error: {}", log_err);
                         }

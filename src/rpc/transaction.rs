@@ -9,6 +9,7 @@ use crate::models::errors::MyError;
 use chrono::{DateTime, Utc};
 use crate::models::transaction_info::GetRawTransactionResponse;
 use crate::models::mempool_info::MempoolEntry;
+use std::time::Duration;
 
 pub async fn fetch_transaction(config: &RpcConfig, txid: &str) -> Result<String, MyError> {
     let json_rpc_request = json!({
@@ -18,14 +19,28 @@ pub async fn fetch_transaction(config: &RpcConfig, txid: &str) -> Result<String,
         "params": [txid, true]  // Fetch verbose details
     });
 
-    let client = Client::new();
+    let client = Client::builder()
+        .timeout(Duration::from_secs(10))
+        .connect_timeout(Duration::from_secs(5))
+        .build()?;
+
     let response = client
         .post(&config.address)
         .basic_auth(&config.username, Some(&config.password))
         .header(CONTENT_TYPE, "application/json")
         .json(&json_rpc_request)
         .send()
-        .await?
+        .await
+        .map_err(|e| {
+            if e.is_timeout() {
+                MyError::TimeoutError(format!(
+                    "Request to {} timed out for method 'getrawtransaction'",
+                    config.address
+                ))
+            } else {
+                MyError::Reqwest(e)
+            }
+        })?
         .json::<serde_json::Value>()
         .await?;
 
@@ -71,7 +86,17 @@ pub async fn fetch_transaction(config: &RpcConfig, txid: &str) -> Result<String,
         .header(CONTENT_TYPE, "application/json")
         .json(&mempool_request)
         .send()
-        .await?
+        .await
+        .map_err(|e| {
+            if e.is_timeout() {
+                MyError::TimeoutError(format!(
+                    "Request to {} timed out for method 'getmempoolentry'",
+                    config.address
+                ))
+            } else {
+                MyError::Reqwest(e)
+            }
+        })?
         .json::<serde_json::Value>()
         .await?;
 

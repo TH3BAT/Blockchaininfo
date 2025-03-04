@@ -26,6 +26,7 @@ use crate::models::mempool_info::{MempoolDistribution, MempoolInfo};
 use crate::models::peer_info::PeerInfo;
 use crate::models::network_info::NetworkInfo;
 use crate::models::network_totals::NetTotals;
+use std::io::Read;
 
 // Constants for bytes formatting.
 const KB: u64 = 1024;
@@ -188,6 +189,23 @@ pub fn render_footer<B: Backend>(f: &mut Frame<B>, area: Rect, message: &str) {
 
 pub fn log_error(message: &str) -> io::Result<()> {
     let log_path = "error_log.txt";
+
+    // Check if the file exists and is in the old format
+    if let Ok(meta) = metadata(log_path) {
+        if meta.len() > 0 {
+            let mut file = OpenOptions::new().read(true).open(log_path)?;
+            let mut buffer = String::new();
+            file.read_to_string(&mut buffer)?;
+
+            // Check if the file contains the old format
+            if buffer.contains("JsonParsingError(") {
+                // Rotate the log file to archive
+                let timestamp = Local::now().format("%Y%m%d_%H%M%S").to_string();
+                let rotated_log_path = format!("error_log_{}.txt", timestamp);
+                rename(log_path, rotated_log_path)?;
+            }
+        }
+    }
 
     // Auto-truncate if the file exceeds 500KB
     if let Ok(meta) = metadata(log_path) {

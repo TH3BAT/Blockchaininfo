@@ -7,6 +7,7 @@ use serde_json::json;
 use crate::models::network_info::{NetworkInfoJsonWrap, NetworkInfo};
 use crate::models::errors::MyError;
 use crate::config::RpcConfig;
+use std::time::Duration;
 
 // Makes an RPC request to fetch network information.
 pub async fn fetch_network_info(config: &RpcConfig) -> Result<NetworkInfo, MyError> {
@@ -17,16 +18,33 @@ pub async fn fetch_network_info(config: &RpcConfig) -> Result<NetworkInfo, MyErr
         "params": []
     });
 
-    let client = Client::new();
+    let client = Client::builder()
+        .timeout(Duration::from_secs(10))
+        .connect_timeout(Duration::from_secs(5))
+        .build()?;
+
     let response = client
         .post(&config.address)
         .basic_auth(&config.username, Some(&config.password))
         .header(CONTENT_TYPE, "application/json")
         .json(&json_rpc_request)
         .send()
-        .await?
+        .await
+        .map_err(|e| {
+            if e.is_timeout() {
+                MyError::TimeoutError(format!(
+                    "Request to {} timed out for method 'getnetworkinfo'",
+                    config.address
+                ))
+            } else {
+                MyError::Reqwest(e)
+            }
+        })?
         .json::<NetworkInfoJsonWrap>()
-        .await?;
+        .await
+        .map_err(|_e| {
+            MyError::CustomError("JSON Parsing error for getnetworkinfo.".to_string())
+        })?;
 
     Ok(response.result)
 }

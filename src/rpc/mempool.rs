@@ -11,6 +11,7 @@ use crate::config::RpcConfig;
 use std::sync::Arc;
 use dashmap::DashSet;
 use once_cell::sync::Lazy;
+use std::time::Duration;
 
 pub static MEMPOOL_CACHE: Lazy<Arc<DashSet<String>>> =
     Lazy::new(|| Arc::new(DashSet::new()));
@@ -27,16 +28,33 @@ pub async fn fetch_mempool_info(
         "params": []
     });
 
-    let client = Client::new();
+    let client = Client::builder()
+        .timeout(Duration::from_secs(10))
+        .connect_timeout(Duration::from_secs(5))
+        .build()?;
+
     let response = client
         .post(&config.address)
         .basic_auth(&config.username, Some(&config.password))
         .header(CONTENT_TYPE, "application/json")
         .json(&json_rpc_request)
         .send()
-        .await?
+        .await
+        .map_err(|e| {
+            if e.is_timeout() {
+                MyError::TimeoutError(format!(
+                    "Request to {} timed out for method 'getmempoolinfo'",
+                    config.address
+                ))
+            } else {
+                MyError::Reqwest(e)
+            }
+        })?
         .json::<MempoolInfoJsonWrap>()
-        .await?;
+        .await
+        .map_err(|_e| {
+            MyError::CustomError("JSON Parsing error for getmempoolinfo.".to_string())
+        })?;
 
     let mempool_info = response.result;
 
@@ -54,9 +72,22 @@ pub async fn fetch_mempool_info(
         .header(CONTENT_TYPE, "application/json")
         .json(&json_rpc_request)
         .send()
-        .await?
+        .await
+        .map_err(|e| {
+            if e.is_timeout() {
+                MyError::TimeoutError(format!(
+                    "Request to {} timed out for method 'getrawmempool'",
+                    config.address
+                ))
+            } else {
+                MyError::Reqwest(e)
+            }
+        })?
         .json::<RawMempoolTxsJsonWrap>() 
-        .await?;
+        .await
+        .map_err(|_e| {
+            MyError::CustomError("JSON Parsing error for getrawmempool.".to_string())
+        })?;
 
     // Clear the existing cache
     MEMPOOL_CACHE.clear();
