@@ -2,6 +2,19 @@
 name = "blockchaininfo"
 version = "0.2.10"
 edition = "2021"
+readme = "README.md"
+repository = "https://github.com/TH3BAT/Blockchaininfo"
+license = "MIT"
+authors = ["B. Farley <bfarley68@gmail.com>"]
+description = "Live terminal dashboard tracking critical Bitcoin metrics."
+keywords = [
+  "terminal",
+  "dashboard",
+  "RPC",
+  "bitcoin",
+  "full-node",
+  "RPC",
+]
 
 [[bench]]
 name = "benchmark"
@@ -14,6 +27,10 @@ criterion = "0.5.1"
 [lib]
 name = "blockchaininfo"
 path = "src/lib.rs"
+
+[[bin]]
+name = "blockchaininfo"
+path = "src/main.rs"
 
 [dependencies]
 tokio = { version = "1.43.0", features = ["full"] }
