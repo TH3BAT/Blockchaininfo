@@ -12,7 +12,7 @@ use rand::SeedableRng;
 use rand::prelude::SliceRandom;
 use crate::utils::{log_error, LOGGED_TXS};
 use crate::rpc::mempool::MEMPOOL_CACHE; 
-use crate::utils::{BLOCKCHAIN_INFO_CACHE, MEMPOOL_DISTRIBUTION_CACHE};
+use crate::utils::MEMPOOL_DISTRIBUTION_CACHE;
 use dashmap::DashSet;
 use once_cell::sync::Lazy;
 use dashmap::DashMap;
@@ -25,8 +25,6 @@ use std::time::Duration;
 const DUST_THRESHOLD: f64 = 0.00000546; // 546 sats in BTC
 const MAX_CACHE_SIZE: usize = 100_000; // Rolling cache size
 const MAX_DUST_CACHE_SIZE: usize = 150_000; // Rolling cache size
-
-static LAST_BLOCK_NUMBER: Lazy<DashSet<u64>> = Lazy::new(|| DashSet::new());
 
 static DUST_FREE_TX_CACHE: Lazy<Arc<DashMap<String, MempoolEntry>>> =
     Lazy::new(|| Arc::new(DashMap::with_capacity(100_000)));
@@ -41,20 +39,11 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyErro
         .connect_timeout(Duration::from_secs(5))
         .build()?;
 
-    let blockchain_info = BLOCKCHAIN_INFO_CACHE.read().await;
+    // Remove expired TXs from DUST_CACHE
+    DUST_CACHE.retain(|tx_id| MEMPOOL_CACHE.contains(tx_id));
 
-    // Step 0: Remove Expired TXs if Block Changed
-    if !LAST_BLOCK_NUMBER.contains(&blockchain_info.blocks) {
-        // Clear the last block number and update it
-        LAST_BLOCK_NUMBER.clear();
-        LAST_BLOCK_NUMBER.insert(blockchain_info.blocks);
-
-        // Remove expired TXs from DUST_CACHE
-        DUST_CACHE.retain(|tx_id| MEMPOOL_CACHE.contains(tx_id));
-
-        // Remove expired TXs from DUST_FREE_TX_CACHE
-        DUST_FREE_TX_CACHE.retain(|tx_id, _| MEMPOOL_CACHE.contains(tx_id));
-    }
+    // Remove expired TXs from DUST_FREE_TX_CACHE
+    DUST_FREE_TX_CACHE.retain(|tx_id, _| MEMPOOL_CACHE.contains(tx_id));
 
     // Collect new transaction IDs that are not in either cache
     let new_tx_ids: Vec<String> = MEMPOOL_CACHE.iter()
@@ -130,7 +119,6 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyErro
                     Ok(()) // Return Ok(()) to satisfy the Result type
                 }
                 Err(e) => {
-                    DUST_FREE_TX_CACHE.remove(&tx_id);
                     let logged_txs_read = LOGGED_TXS.read().await;
                     if !logged_txs_read.contains(&tx_id) {
                         // Log the error
