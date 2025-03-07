@@ -18,7 +18,7 @@ use chrono::Local;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use once_cell::sync::Lazy;
-use std::collections::HashSet;
+use std::collections::{HashSet, VecDeque};
 use crate::models::blockchain_info::BlockchainInfo;
 use crate::models::block_info::BlockInfo;
 use crate::models::chaintips_info::ChainTipsResponse;
@@ -66,8 +66,10 @@ pub static CHAIN_TIP_CACHE: Lazy<Arc<RwLock<ChainTipsResponse>>> =
 pub static MEMPOOL_DISTRIBUTION_CACHE: Lazy<Arc<RwLock<MempoolDistribution>>> =
     Lazy::new(|| Arc::new(RwLock::new(MempoolDistribution::default())));
 
-pub static LOGGED_TXS: Lazy<Arc<RwLock<HashSet<String>>>> = 
-Lazy::new(|| Arc::new(RwLock::new(HashSet::new())));
+lazy_static! {
+    pub static ref LOGGED_TXS: Lazy<Arc<RwLock<(HashSet<String>, VecDeque<String>)>>> =
+        Lazy::new(|| Arc::new(RwLock::new((HashSet::with_capacity(500), VecDeque::with_capacity(500)))));
+}
 
 // Use a Mutex to ensure thread-safe access to the log file
 lazy_static! {

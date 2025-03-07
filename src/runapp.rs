@@ -305,7 +305,7 @@ pub async fn run_app<B: tui::backend::Backend>(
 
                             // Check if we've logged this TxID already
                             let logged_txs_read = LOGGED_TXS.read().await;
-                            if !logged_txs_read.contains(&txid_str) {
+                            if !logged_txs_read.0.contains(&txid_str) {
                                 if let Err(log_err) = log_error(&format!(
                                     "Mempool Distribution failed: {}", 
                                     e
@@ -315,7 +315,19 @@ pub async fn run_app<B: tui::backend::Backend>(
                                 }
                                 drop(logged_txs_read);
                                 let mut logged_txs_write = LOGGED_TXS.write().await;
-                                logged_txs_write.insert(txid_str); // Mark as logged
+                                let (set, queue) = &mut *logged_txs_write;
+                                if set.len() >= 500 {
+                                    if let Some(oldest_tx) = queue.pop_front() {
+                                        set.remove(&oldest_tx);
+                                    }
+                                }
+                                // Clone `tx_id` for the HashSet
+                                let tx_id_for_set = txid_str.clone();
+                                set.insert(tx_id_for_set);
+
+                                // Clone `tx_id` again for the VecDeque
+                                let tx_id_for_queue = txid_str.clone();
+                                queue.push_back(tx_id_for_queue);
                             }
                         }
                     }

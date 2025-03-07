@@ -120,7 +120,7 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyErro
                 }
                 Err(e) => {
                     let logged_txs_read = LOGGED_TXS.read().await;
-                    if !logged_txs_read.contains(&tx_id) {
+                    if !logged_txs_read.0.contains(&tx_id) {
                         // Log the error
                         if let Err(log_err) = log_error(&format!(
                             "getmempoolentry failed: {}",
@@ -131,7 +131,19 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyErro
                 
                         drop(logged_txs_read);
                         let mut logged_txs_write = LOGGED_TXS.write().await;
-                        logged_txs_write.insert(tx_id.to_string()); // Mark as logged
+                        let (set, queue) = &mut *logged_txs_write;
+                        if set.len() >= 500 {
+                            if let Some(oldest_tx) = queue.pop_front() {
+                                set.remove(&oldest_tx);
+                            }
+                        }
+                        // Clone `tx_id` for the HashSet
+                        let tx_id_for_set = tx_id.clone();
+                        set.insert(tx_id_for_set);
+
+                        // Clone `tx_id` again for the VecDeque
+                        let tx_id_for_queue = tx_id.clone();
+                        queue.push_back(tx_id_for_queue);
                     }
                     return Err(MyError::RpcRequestError(tx_id.clone(), e.to_string())); // Return CustomError
                 }
@@ -151,7 +163,7 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyErro
                     if let Some(tx_id) = extract_tx_id_from_error_string(&error_string) {
                         // Check if the Tx ID is already logged
                         let logged_txs_read = LOGGED_TXS.read().await;
-                        if !logged_txs_read.contains(&tx_id) {
+                        if !logged_txs_read.0.contains(&tx_id) {
                             if let Err(log_err) = log_error(&format!(
                                 "Task failed: {}", error_string
                             )) {
@@ -161,7 +173,14 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyErro
                             // Mark the Tx ID as logged
                             drop(logged_txs_read);
                             let mut logged_txs_write = LOGGED_TXS.write().await;
-                            logged_txs_write.insert(tx_id);
+                            let (set, queue) = &mut *logged_txs_write;
+                            if set.len() >= 500 {
+                                if let Some(oldest_tx) = queue.pop_front() {
+                                    set.remove(&oldest_tx);
+                                }
+                            }
+                            set.insert(tx_id.clone());
+                            queue.push_back(tx_id);
                         }
                     } else {
                         // If no Tx ID is found, log the error as-is
