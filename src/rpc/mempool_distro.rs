@@ -137,13 +137,10 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyErro
                                 set.remove(&oldest_tx);
                             }
                         }
-                        // Clone `tx_id` for the HashSet
-                        let tx_id_for_set = tx_id.clone();
-                        set.insert(tx_id_for_set);
-
-                        // Clone `tx_id` again for the VecDeque
-                        let tx_id_for_queue = tx_id.clone();
-                        queue.push_back(tx_id_for_queue);
+                         // Wrap `tx_id` in an `Arc` for shared ownership
+                        let tx_id_arc = Arc::new(tx_id.clone());
+                        set.insert(tx_id_arc.clone());
+                        queue.push_back(tx_id_arc);
                     }
                     return Err(MyError::RpcRequestError(tx_id.clone(), e.to_string())); // Return CustomError
                 }
@@ -179,8 +176,10 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyErro
                                     set.remove(&oldest_tx);
                                 }
                             }
-                            set.insert(tx_id.clone());
-                            queue.push_back(tx_id);
+                             // Wrap `tx_id` in an `Arc` for shared ownership
+                            let tx_id_arc = Arc::new(tx_id.clone());
+                            set.insert(tx_id_arc.clone());
+                            queue.push_back(tx_id_arc);
                         }
                     } else {
                         // If no Tx ID is found, log the error as-is

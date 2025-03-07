@@ -67,7 +67,7 @@ pub static MEMPOOL_DISTRIBUTION_CACHE: Lazy<Arc<RwLock<MempoolDistribution>>> =
     Lazy::new(|| Arc::new(RwLock::new(MempoolDistribution::default())));
 
 lazy_static! {
-    pub static ref LOGGED_TXS: Lazy<Arc<RwLock<(HashSet<String>, VecDeque<String>)>>> =
+    pub static ref LOGGED_TXS: Lazy<Arc<RwLock<(HashSet<Arc<String>>, VecDeque<Arc<String>>)>>> =
         Lazy::new(|| Arc::new(RwLock::new((HashSet::with_capacity(500), VecDeque::with_capacity(500)))));
 }
 

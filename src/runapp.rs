@@ -31,6 +31,7 @@ use dashmap::DashSet;
 use once_cell::sync::Lazy;
 use crate::utils::{BLOCKCHAIN_INFO_CACHE, BLOCK_INFO_CACHE, MEMPOOL_INFO_CACHE, CHAIN_TIP_CACHE, BLOCK24_INFO_CACHE,
 PEER_INFO_CACHE, NETWORK_INFO_CACHE, NET_TOTALS_CACHE, MEMPOOL_DISTRIBUTION_CACHE, LOGGED_TXS};
+use std::sync::Arc;
 
 struct App {
     show_popup: bool,
@@ -321,13 +322,10 @@ pub async fn run_app<B: tui::backend::Backend>(
                                         set.remove(&oldest_tx);
                                     }
                                 }
-                                // Clone `tx_id` for the HashSet
-                                let tx_id_for_set = txid_str.clone();
-                                set.insert(tx_id_for_set);
-
-                                // Clone `tx_id` again for the VecDeque
-                                let tx_id_for_queue = txid_str.clone();
-                                queue.push_back(tx_id_for_queue);
+                                 // Wrap `tx_id` in an `Arc` for shared ownership
+                                let tx_id_arc = Arc::new(txid_str.clone());
+                                set.insert(tx_id_arc.clone());
+                                queue.push_back(tx_id_arc);
                             }
                         }
                     }
