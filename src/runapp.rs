@@ -38,6 +38,7 @@ struct App {
     tx_input: String,
     tx_result: Option<String>,
     is_exiting: bool,
+    is_pasting: bool, // New flag to track paste state
 }
 
 impl App {
@@ -47,6 +48,7 @@ impl App {
             tx_input: String::new(),
             tx_result: None,
             is_exiting: false,
+            is_pasting: false,
         }
     }
 }
@@ -388,10 +390,13 @@ pub async fn run_app<B: tui::backend::Backend>(
         if event::poll(poll_time)? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
-                    KeyCode::Esc if app.show_popup => app.show_popup = false, // Close Popup
-                    KeyCode::Char('q') => {  // | KeyCode::Esc => {
-                        app.is_exiting = true;  // 🚀 Flag shutdown mode
-                    
+                    KeyCode::Esc if app.show_popup => {
+                        app.show_popup = false; // Close Popup
+                        app.is_pasting = false; // Reset paste flag
+                    }
+                    KeyCode::Char('q') if !app.is_pasting => { // Ignore 'q' during paste
+                        app.is_exiting = true; // 🚀 Flag shutdown mode
+
                         // Get terminal size to recompute layout manually
                         let size = terminal.size()?;
                         let chunks = Layout::default()
@@ -409,33 +414,62 @@ pub async fn run_app<B: tui::backend::Backend>(
                                 .as_ref(),
                             )
                             .split(size);
-                    
+
                         // Force one last UI update before quitting
                         terminal.draw(|frame| {
                             render_footer(frame, chunks[5], "Shutting Down Cleanly...");
                         })?;
-                    
-                        std::thread::sleep(std::time::Duration::from_millis(500));  // Short delay for visibility
-                    
-                        break;  // Quit App
-                    },
+
+                        std::thread::sleep(std::time::Duration::from_millis(500)); // Short delay for visibility
+
+                        break; // Quit App
+                    }
                     KeyCode::Char('t') if !app.show_popup => {
                         app.show_popup = true;
                         app.tx_input.clear();
                         app.tx_result = None;
+                        app.is_pasting = false; // Reset paste flag
                     }
-                    KeyCode::Char(c) if app.show_popup => app.tx_input.push(c),  // Typing input
-                    KeyCode::Backspace if app.show_popup => { app.tx_input.pop(); } // Delete input
-                    KeyCode::Enter if app.show_popup => {
-                        if !app.tx_input.is_empty() {
-                            let tx_result = fetch_transaction(&config, &app.tx_input).await;
-                            app.tx_result = tx_result.map_or_else(
-                                |e| Some(format!("{}", e)),
-                                Some
-                            );
+                    KeyCode::Char(c) if app.show_popup => {
+                        if app.is_pasting {
+                            // Ignore special characters during paste
+                            if c != 'q' && c != '\n' {
+                                app.tx_input.push(c);
+                            }
+                        } else {
+                            // Normal character input
+                            app.tx_input.push(c);
+                        }
+
+                        // Detect paste start
+                        if !app.is_pasting && app.tx_input.len() > 10 {
+                            app.is_pasting = true;
                         }
                     }
-                    _ => {}
+                    KeyCode::Backspace if app.show_popup => {
+                        app.tx_input.pop();
+                        app.is_pasting = false; // Reset paste flag on backspace
+                    }
+                    KeyCode::Enter if app.show_popup => {
+                        if !app.tx_input.is_empty() {
+                            if is_valid_txid(&app.tx_input.trim()) {
+                                let tx_result = fetch_transaction(&config, &app.tx_input).await;
+                                app.tx_result = tx_result.map_or_else(
+                                    |e| Some(format!("{}", e)),
+                                    Some
+                                );
+                            } else {
+                                app.tx_result = Some("Invalid TxID. Please enter a 64-character hex string.".to_string());
+                            }
+                            app.is_pasting = false; // Reset paste flag
+                        }
+                    }
+                    _ => {
+                        // Assume paste is complete when a non-char key is pressed
+                        if app.is_pasting {
+                            app.is_pasting = false;
+                        }
+                    }
                 }
             }
         }
@@ -530,7 +564,7 @@ pub async fn run_app<B: tui::backend::Backend>(
 
             // Popup for Transaction Lookup
             if app.show_popup {
-                let popup_area = centered_rect(80, 28, frame.size());  
+                let popup_area = centered_rect(80, 28, frame.size());
 
                 // Clear the area to avoid text overlapping
                 frame.render_widget(Clear, popup_area);
@@ -550,9 +584,17 @@ pub async fn run_app<B: tui::backend::Backend>(
                 let result = match &app.tx_result {
                     Some(tx) => Paragraph::new(tx.clone())
                         .style(Style::default().fg(Color::Green))
-                        .wrap(Wrap { trim: true }),  // Ensures multi-line text fits within the popup
-                    None => Paragraph::new("Enter a TxID and press Enter")
-                        .style(Style::default()),
+                        .wrap(Wrap { trim: true }), // Ensures multi-line text fits within the popup
+                    None => {
+                        // Only show invalid TxID message after Enter is pressed (not while typing or pasting)
+                        if app.tx_input.trim().is_empty() {
+                            Paragraph::new("Enter a TxID and press Enter")
+                                .style(Style::default())
+                        } else {
+                            Paragraph::new("Press Enter to validate TxID")
+                                .style(Style::default().fg(Color::Yellow))
+                        }
+                    }
                 };
 
                 frame.render_widget(popup, popup_area);
@@ -586,3 +628,8 @@ fn centered_rect(percent_x: u16, percent_y: u16, size: Rect) -> Rect {
         .split(popup_layout[1])[1]
 }
 
+
+// Function to validate TxID
+fn is_valid_txid(tx_id: &str) -> bool {
+    tx_id.len() == 64 && tx_id.chars().all(|c| c.is_ascii_hexdigit())
+}

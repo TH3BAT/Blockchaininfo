@@ -155,30 +155,30 @@ pub struct MempoolEntryJsonWrap {
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct MempoolEntry {
-    pub vsize: u64,
-    pub weight: u64,
-    pub time: u64,
-    pub height: u64,
-    pub descendantcount: u64,
-    pub descendantsize: u64,
-    pub ancestorcount: u64,
-    pub ancestorsize: u64,
-    pub wtxid: String,
-    pub fees: Fees,
-    pub depends: Option<Vec<String>>,
-    pub spentby: Option<Vec<String>>,
+    pub vsize: u64,                   // Virtual size of the transaction (in vbytes)
+    pub weight: u64,                  // Transaction weight (used for block size calculation)
+    pub time: u64,                    // Unix timestamp when the transaction entered the mempool
+    pub height: u64,                  // Block height when the transaction was first seen
+    pub descendantcount: u64,         // Number of in-mempool descendant transactions
+    pub descendantsize: u64,          // Total size of in-mempool descendant transactions (in vbytes)
+    pub ancestorcount: u64,           // Number of in-mempool ancestor transactions
+    pub ancestorsize: u64,            // Total size of in-mempool ancestor transactions (in vbytes)
+    pub wtxid: String,                // Transaction ID with witness data (Witness TXID)
+    pub fees: Fees,                   // Fee details (base, modified, ancestor, descendant)
+    pub depends: Option<Vec<String>>, // List of unconfirmed parent transaction IDs
+    pub spentby: Option<Vec<String>>, // List of unconfirmed child transaction IDs
     #[serde(rename = "bip125-replaceable")]
-    pub bip125_replaceable: bool,
-    pub unbroadcast: Option<bool>,
+    pub bip125_replaceable: bool,     // Whether the transaction is replaceable (BIP 125)
+    pub unbroadcast: Option<bool>,    // Whether the transaction is unbroadcast (not yet relayed)
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct Fees {
-    pub base: f64,
-    pub modified: f64,
-    pub ancestor: f64,
-    pub descendant: f64,
+    pub base: f64,        // Base fee of the transaction (in BTC)
+    pub modified: f64,    // Modified fee (e.g., after fee bumping) (in BTC)
+    pub ancestor: f64,    // Total fees of all ancestor transactions (in BTC)
+    pub descendant: f64,  // Total fees of all descendant transactions (in BTC)
 }
 

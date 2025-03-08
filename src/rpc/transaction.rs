@@ -12,11 +12,6 @@ use crate::models::mempool_info::MempoolEntry;
 use std::time::Duration;
 
 pub async fn fetch_transaction(config: &RpcConfig, txid: &str) -> Result<String, MyError> {
-    // Validate the input
-    if !is_valid_txid(&txid) {
-        return Err(MyError::CustomError("Invalid transaction ID".to_string()));
-    }
-
     let json_rpc_request = json!({
         "jsonrpc": "1.0",
         "id": "lookup",
@@ -130,8 +125,3 @@ pub async fn fetch_transaction(config: &RpcConfig, txid: &str) -> Result<String,
 
 }
 
-
-fn is_valid_txid(tx_id: &str) -> bool {
-    // Check if the input is a 64-character hexadecimal string
-    tx_id.len() == 64 && tx_id.chars().all(|c| c.is_ascii_hexdigit())
-}
