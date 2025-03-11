@@ -28,7 +28,8 @@ Whether you're a developer, node operator, or Bitcoin enthusiast, Blockchaininfo
 .
 ├── benches/
 │   └── benchmark.rs          # For bench testing.
-├── cargo.toml
+├── cargo.toml                # Package information and dependencies
+├── miners.json               # Miners and known coinbase wallet(s) for hash distribution and best block Miner.
 └── src/
     ├── config.rs             # Configuration loading and validation.
     ├── display/
@@ -207,7 +208,17 @@ The application loads configuration in the following order:
 
 ## Example Output
 
+### Dashboard Overview
+
 ![Sample Output](assets/Output.png)
+
+### Hashrate Distribution
+
+![Hashrate Distribution](assets/Output2.png)
+
+### Transaction Lookup
+
+![Network Metrics](assets/Output3.png)
 
 ---
 

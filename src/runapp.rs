@@ -3,11 +3,12 @@
 
 use crate::config::RpcConfig;
 use crate::rpc::{fetch_blockchain_info, fetch_mempool_info, fetch_network_info, fetch_block_data_by_height
-    , fetch_chain_tips, fetch_net_totals, fetch_peer_info, fetch_mempool_distribution, fetch_transaction};
+    , fetch_chain_tips, fetch_net_totals, fetch_peer_info, fetch_mempool_distribution, fetch_transaction,
+    fetch_miner};
 use crate::models::errors::MyError;
 use crate::display::{display_blockchain_info, display_mempool_info, display_network_info
-    , display_consensus_security_info};
-use crate::utils::{render_header, render_footer};
+    , display_consensus_security_info, render_hashrate_distribution_chart};
+use crate::utils::{render_header, render_footer, load_miners_data, BLOCK_HISTORY};
 use crate::models::peer_info::PeerInfo;
 use tui::backend::CrosstermBackend;
 use tui::layout::{Layout, Constraint, Direction, Margin, Rect};
@@ -38,7 +39,8 @@ struct App {
     tx_input: String,
     tx_result: Option<String>,
     is_exiting: bool,
-    is_pasting: bool, // New flag to track paste state
+    is_pasting: bool, 
+    show_hash_distribution: bool, 
 }
 
 impl App {
@@ -49,6 +51,7 @@ impl App {
             tx_result: None,
             is_exiting: false,
             is_pasting: false,
+            show_hash_distribution: false,
         }
     }
 }
@@ -78,6 +81,10 @@ pub async fn run_app<B: tui::backend::Backend>(
 ) -> Result<(), MyError> {
     let mut propagation_times: VecDeque<i64> = VecDeque::with_capacity(20);
     let mut app = App::new();  
+    // Load our new miners json file with wallet addresses.
+    let miners_data = load_miners_data()?;
+    // Create a longer-lived default value
+    let default_miner = "Unknown".to_string();
 
     terminal.draw(|frame| {
         let area = frame.size();
@@ -158,7 +165,7 @@ pub async fn run_app<B: tui::backend::Backend>(
                         continue;
                     }
                 }
-
+                
                 sleep(Duration::from_secs(2)).await;
             }
         }
@@ -352,7 +359,6 @@ pub async fn run_app<B: tui::backend::Backend>(
         let distribution = MEMPOOL_DISTRIBUTION_CACHE.read().await;
         let chaintips_info = CHAIN_TIP_CACHE.read().await;
         let chaintips_result = &chaintips_info.result;
-        
         let version_counts = PeerInfo::aggregate_and_sort_versions(&peer_info);
         let version_counts_ref: &[(String, usize)] = &version_counts;
        
@@ -368,6 +374,12 @@ pub async fn run_app<B: tui::backend::Backend>(
                 propagation_times.pop_front();
             }
             propagation_times.push_back(avg_block_propagate_time);
+
+             // Fetch and update the latest block
+            if let Err(e) = fetch_miner(&config, &miners_data, &blockchain_info.blocks).await {
+                eprintln!("Error in fetch_miner: {}", e);
+            }
+
             LAST_BLOCK_NUMBER.clear(); // Clear the set
             LAST_BLOCK_NUMBER.insert(blockchain_info.blocks); // Insert the new block number
         } else {
@@ -378,6 +390,22 @@ pub async fn run_app<B: tui::backend::Backend>(
                 }
             }
         }
+        // Read the last miner inserted
+        let last_miner = BLOCK_HISTORY.read().await.last_miner();
+        let last_miner_ref = last_miner.as_ref().unwrap_or(&default_miner);
+        
+        // Convert Vec<(String, u64)> to &[(&str, u64)]
+        let hash_distribution: Vec<(&str, u64)> = BLOCK_HISTORY
+            .read()
+            .await
+            .get_miner_distribution()
+            .into_iter()
+            .map(|(miner, hashrate)| {
+                let miner_str: &'static str = Box::leak(miner.into_boxed_str()); // Convert String to &'static str
+                (miner_str, hashrate) // Use the immutable reference
+            })
+            .collect::<Vec<_>>();
+
     
         // Dynamic Polling for Smooth Input & CPU Optimization
         let poll_time = if app.show_popup {
@@ -394,9 +422,9 @@ pub async fn run_app<B: tui::backend::Backend>(
                         app.show_popup = false; // Close Popup
                         app.is_pasting = false; // Reset paste flag
                     }
-                    KeyCode::Char('q') if !app.is_pasting => { // Ignore 'q' during paste
+                    KeyCode::Char('q') if !app.is_pasting => {
                         app.is_exiting = true; // 🚀 Flag shutdown mode
-
+        
                         // Get terminal size to recompute layout manually
                         let size = terminal.size()?;
                         let chunks = Layout::default()
@@ -414,14 +442,14 @@ pub async fn run_app<B: tui::backend::Backend>(
                                 .as_ref(),
                             )
                             .split(size);
-
+        
                         // Force one last UI update before quitting
                         terminal.draw(|frame| {
                             render_footer(frame, chunks[5], "Shutting Down Cleanly...");
                         })?;
-
+        
                         std::thread::sleep(std::time::Duration::from_millis(500)); // Short delay for visibility
-
+        
                         break; // Quit App
                     }
                     KeyCode::Char('t') if !app.show_popup => {
@@ -429,6 +457,10 @@ pub async fn run_app<B: tui::backend::Backend>(
                         app.tx_input.clear();
                         app.tx_result = None;
                         app.is_pasting = false; // Reset paste flag
+                    }
+                    KeyCode::Char('h') if !app.show_popup => {
+                        // Toggle the hash distribution flag
+                        app.show_hash_distribution = !app.show_hash_distribution;
                     }
                     KeyCode::Char(c) if app.show_popup => {
                         if app.is_pasting {
@@ -440,7 +472,7 @@ pub async fn run_app<B: tui::backend::Backend>(
                             // Normal character input
                             app.tx_input.push(c);
                         }
-
+        
                         // Detect paste start
                         if !app.is_pasting && app.tx_input.len() > 10 {
                             app.is_pasting = true;
@@ -502,20 +534,22 @@ pub async fn run_app<B: tui::backend::Backend>(
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(Color::DarkGray))
                 .border_type(BorderType::Rounded)
-                .title(Span::styled("[₿lockChain]", Style::default().fg(Color::DarkGray).add_modifier(Modifier::BOLD)));
+                .title(Span::styled("[₿lockChain ('h' toggles HRD.)]", Style::default().fg(Color::DarkGray).add_modifier(Modifier::BOLD)));
             frame.render_widget(block_2, chunks[1]);
             
             // println!("DEBUG: block_info length = {}", block_info.len());
-
-            if !block_info.is_empty() && !block24_info.is_empty() {
-                let latest_block = &block_info[block_info.len() - 1];  // Safe indexing
-                let block24 = &block24_info[block24_info.len() - 1];  // Safe indexing
-            
-                display_blockchain_info(&blockchain_info, latest_block, block24, frame, chunks[1]);
+            if app.show_hash_distribution {
+                render_hashrate_distribution_chart(&hash_distribution, frame, chunks[1]);
             } else {
-                // println!("⚠️ No block info available!");
-            }                       
-
+                if !block_info.is_empty() && !block24_info.is_empty() {
+                    let latest_block = &block_info[block_info.len() - 1];  // Safe indexing
+                    let block24 = &block24_info[block24_info.len() - 1];  // Safe indexing
+                
+                    display_blockchain_info(&blockchain_info, latest_block, block24, last_miner_ref, frame, chunks[1]);
+                } else {
+                    // println!("⚠️ No block info available!");
+                }                       
+            }
             // Mempool Info Block
             let block_3 = Block::default()
                 .borders(Borders::ALL)

@@ -11,6 +11,7 @@ use tui::layout::{Rect, Alignment};
 use tui::Frame;
 use tui::backend::Backend;
 use std::fs::{OpenOptions, metadata, rename};
+use std::fs;
 use std::io::{self, Write};
 use std::sync::Mutex;
 use lazy_static::lazy_static;
@@ -26,6 +27,7 @@ use crate::models::mempool_info::{MempoolDistribution, MempoolInfo};
 use crate::models::peer_info::PeerInfo;
 use crate::models::network_info::NetworkInfo;
 use crate::models::network_totals::NetTotals;
+use crate::models::block_info::{BlockHistory, MinersData};
 use std::io::Read;
 
 // Constants for bytes formatting.
@@ -74,6 +76,11 @@ lazy_static! {
 // Use a Mutex to ensure thread-safe access to the log file
 lazy_static! {
     static ref LOG_FILE: Mutex<()> = Mutex::new(()); // Global Mutex for thread-safe logging
+}
+
+// For hash distribution (past 24 hours or 144 blocks).
+lazy_static! {
+    pub static ref BLOCK_HISTORY: Arc<RwLock<BlockHistory>> = Arc::new(RwLock::new(BlockHistory::new()));
 }
 
 // Formats a size in bytes into a more readable format (KB, MB, etc.).
@@ -235,6 +242,10 @@ pub fn log_error(message: &str) -> io::Result<()> {
     Ok(())
 }
 
-
+pub fn load_miners_data() -> Result<MinersData, MyError> {
+    let data = fs::read_to_string("miners.json")?;
+    let miners_data: MinersData = serde_json::from_str(&data)?;
+    Ok(miners_data)
+}
 
 

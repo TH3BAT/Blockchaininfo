@@ -1,0 +1,108 @@
+{
+  "miners": [
+    {
+      "name": "ViaBTC",
+      "wallet": "1PuJjnF476W3zXfVYmJfGnouzFDAXakkL4"
+    },
+    {
+      "name": "SECPOOL",
+      "wallet": "3Awm3FNpmwrbvAFVThRUFqgpbVuqWisni9"
+    },
+    {
+      "name": "AntPool",
+      "wallet": "39C7fxSzEACPjM78Z7xdPxhf7mKxJwvfMJ"
+    },
+    {
+      "name": "WhitePool",
+      "wallet": "15bt5C8PXEq9WJAC4ZZpsxkL8yb47Mh7rg"
+    },
+    {
+      "name": "Foundry USA",
+      "wallet": "bc1qwzrryqr3ja8w7hnja2spmkgfdcgvqwp5swz4af4ngsjecfz0w0pqud7k38"
+    },
+	{
+	  "name": "Foundry USA",
+	  "wallet": "bc1qxhmdufsvnuaaaer4ynz88fspdsxq2h9e9cetdj"	
+	},
+    {
+      "name": "Luxor",
+      "wallet": "32BfKjhByDSxx3BM5vUkQ3NQq9csZR6nt6"
+    },
+    {
+      "name": "MARA Pool",
+      "wallet": "15MdAHnkxt9TMC2Rj595hsg8Hnv693pPBB"
+    },
+    {
+      "name": "Braiins Pool",
+      "wallet": "34XC8GbijKCCvppNvhw4Ra8QZdWsg8tC11"
+    },
+    {
+      "name": "F2Pool",
+      "wallet": "1KGG9kvV5zXiqyQAMfY32sGt9eFLMmgpgX"
+    },
+	{
+	  "name": "F2Pool",
+	  "wallet": "1AfCc4F9c4VTYSE31PUe2kUEKs6ZxiDjxm"
+	},
+    {
+      "name": "SpiderPool",
+      "wallet": "1BM1sAcrfV6d4zPKytzziu4McLQDsFC2Qc"
+    },
+    {
+      "name": "Carbon Negative",
+      "wallet": "3KZDwmJHB6QJ13QPXHaW7SS3yTESFPZoxb"
+    },
+    {
+      "name": "BTC.com",
+      "wallet": "36cWgjEtxQSFgbHTJDw5AB96ZX7fJk1URd"
+    },
+    {
+      "name": "OCEAN",
+      "wallet": "35eS5Lsqw8NCjFJ8zhp9JaEmyvLDwg6XtS"
+    },
+    {
+      "name": "Poolin",
+      "wallet": "33TbzA5AMiTKUCmeVEdsnTj3GiVXuavCAH"
+    },
+    {
+      "name": "ULTIMUSPOOL",
+      "wallet": "3C9sAKXrBVpJVe3b738yik4LPHpPmceBgd"
+    },
+    {
+      "name": "SBI Crypto",
+      "wallet": "bc1qrpp7g75sx3ejclvsfdw2uahzchtyu7vumkuadu"
+    },
+    {
+      "name": "Binance Pool",
+      "wallet": "3G7jcEELKh38L6kaSV8K35pTqsh5bgZW2D"
+    },
+	{
+	  "name": "Solo CK",
+	  "wallet": "bc1qaxccz85rx6ywy2xw6ugtm6u37mvew6qqn7lgtd"
+	},
+	{
+	  "name": "NiceHash",
+	  "wallet": "bc1qlltnwqnx4esnkux675k7j5ffx97ue9lkyxvhw0"
+	},
+	{
+	  "name": "Mining-Dutch",
+	  "wallet": "1AfPSq5ZbqBaxU5QAayLQJMcXV8HZt92eq"
+	},
+	{
+	  "name": "KuCoinPool",
+	  "wallet": "32AiiExkMB4ta2mCHTrbEESNnUJpZv8X3J"
+	},
+	{
+	  "name": "PEGA Pool",
+	  "wallet": "3GRKUVRe91ariqquFWTsAhxA9D21S9aRat"
+	},
+	{
+	  "name": "EMCDPool",
+	  "wallet": "3LwoXDToPiq2rBaQzoe2ZnaUvhGykFp2LM"
+	},
+	{
+	  "name": "CKPoolXMI",
+	  "wallet": "1BnPfCyvgq7PD2Np6mTTLfdHatApiiRfsV"
+	}
+  ]
+}

@@ -29,6 +29,7 @@ pub enum MyError {
     Join(tokio::task::JoinError),
     SemaphoreError(String),
     TimeoutError(String),
+    FileError(String),
 }
 
 impl From<tokio::task::JoinError> for MyError {
@@ -63,6 +64,7 @@ impl fmt::Display for MyError {
             MyError::Join(err) => write!(f, "Task join error: {}", err),
             MyError::SemaphoreError(err) => write!(f, "Semaphore error: {}", err), 
             MyError::TimeoutError(msg) => write!(f, "Error: {}", msg),
+            MyError::FileError(msg) => write!(f, "File Error: {}", msg),
         }
     }
 }

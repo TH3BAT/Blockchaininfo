@@ -31,7 +31,6 @@ use crate::models::blockchain_info::BlockchainInfo;
 use crate::models::chaintips_info::ChainTip;
 use crate::models::mempool_info::{MempoolDistribution, MempoolInfo};
 use crate::models::network_info::NetworkInfo;
-// use crate::models::errors::MyError;
 use crate::models::network_totals::NetTotals;
 use std::collections::VecDeque;
 
@@ -40,11 +39,22 @@ pub fn display_blockchain_info<B: Backend>(
     blockchain_info: &BlockchainInfo,
     block_info: &BlockInfo,
     block24_info: &BlockInfo,
+    last_miner: &String,
     frame: &mut Frame<B>,
-    area: Rect
+    area: Rect,
 ) {
-   let _ = display_blockchain_info::display_blockchain_info(blockchain_info, block_info, block24_info, frame, area);
+   let _ = display_blockchain_info::display_blockchain_info(blockchain_info, block_info, block24_info, last_miner, frame, area);
 }
+
+// Displays the blockchain information.
+pub fn render_hashrate_distribution_chart<B: Backend>(
+    distribution: &[(&str, u64)], 
+    frame: &mut Frame<B>,
+    area: Rect,
+) {
+   let _ = display_blockchain_info::render_hashrate_distribution_chart(distribution, frame, area);
+}
+
 
 // Displays the mempool information.
 pub fn display_mempool_info<B: Backend>(

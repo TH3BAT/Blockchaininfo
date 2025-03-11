@@ -12,7 +12,7 @@ mod mempool_distro;
 mod transaction;
 
 use crate::models::blockchain_info::BlockchainInfo;
-use crate::models::block_info::BlockInfo;
+use crate::models::block_info::{BlockInfo,  MinersData};
 use crate::models::mempool_info::MempoolInfo;
 use crate::models::network_info::NetworkInfo;
 use crate::models::chaintips_info::ChainTip;
@@ -61,4 +61,12 @@ pub async fn fetch_mempool_distribution(
 
 pub async fn fetch_transaction(config: &RpcConfig, txid: &str) -> Result<String, MyError> {
     transaction::fetch_transaction(config, txid).await
+}
+
+pub async fn fetch_miner(
+    config: &RpcConfig,
+    miners_data: &MinersData,
+    current_block: &u64,
+) -> Result<(), MyError> {
+    block::fetch_miner(config, miners_data, current_block).await
 }

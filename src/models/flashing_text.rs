@@ -20,6 +20,10 @@ lazy_static! {
     pub static ref CONNECTIONS_IN_TEXT: Mutex<FlashingText> = Mutex::new(FlashingText::new());
 }
 
+lazy_static! {
+    pub static ref MINER_TEXT: Mutex<FlashingMiner> = Mutex::new(FlashingMiner::new());
+}
+
 pub struct FlashingText {
     pub last_value: u64,          // The last value that was displayed
     pub flash_until: Option<Instant>, // When the flashing effect should end
@@ -36,7 +40,7 @@ impl FlashingText {
     pub fn update(&mut self, new_value: u64) {
         if new_value != self.last_value {
             self.last_value = new_value;
-            self.flash_until = Some(Instant::now() + Duration::from_millis(200)); // Flash for 200ms
+            self.flash_until = Some(Instant::now() + Duration::from_millis(200)); 
         }
     }
 
@@ -50,3 +54,33 @@ impl FlashingText {
     }
 }
 
+
+pub struct FlashingMiner {
+    pub last_value: String,          // The last value that was displayed
+    pub flash_until: Option<Instant>, // When the flashing effect should end
+}
+
+impl FlashingMiner {
+    pub fn new() -> Self {
+        Self {
+            last_value: " ".to_string(),
+            flash_until: None,
+        }
+    }
+
+    pub fn update(&mut self, new_value: String) {
+        if new_value != self.last_value {
+            self.last_value = new_value;
+            self.flash_until = Some(Instant::now() + Duration::from_millis(400)); 
+        }
+    }
+
+    pub fn style(&self) -> Style {
+        if let Some(flash_until) = self.flash_until {
+            if Instant::now() < flash_until {
+                return Style::default().fg(Color::LightYellow); //Highlight style
+            }
+        }
+        Style::default().fg(Color::Yellow) // Default style
+    }
+}

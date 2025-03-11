@@ -1,4 +1,31 @@
-# [v0.2.12] - 2025-03-08
+# [v3.0.0] - 2025-03-10
+
+Added
+
+- **Last Miner in Best Block View**:
+  - Display the last miner in the best block view for better insights.
+- **Hash Rate Distribution Chart**:
+  - A new toggleable chart showing the distribution of hash rate over the past 24 hours.
+  - Toggle between the original metrics and the chart using the `h` key.
+  - Displays up to the **Top 8 miners** of x rewarded in the past 144 blocks.
+  - Tracks data from the moment the dashboard loads (no historical data is loaded).
+- **miners.json Support**:
+  - A new file to map coinbase wallet addresses to miner names.
+  - Loaded at runtime and can be maintained by end-users.
+  - File must be placed in the same folder as the executable (default location if running from the Blockchaininfo parent folder).
+
+Changed
+
+- Updated `serde` to v1.0.219.
+- Updated `once_cell` to v1.21.0.
+
+Fixed
+
+- Improved handling of miner data to ensure accurate display in the Hash Distribution Chart.
+
+---
+
+[v0.2.12] - 2025-03-08
 
 Added
 
