@@ -1,26 +1,30 @@
 
 // display.rs
 
-/// Summary of Color Usage:
-/// Green: Used for healthy values like block count, transactions, and connections.
-///
-/// Yellow: Used for values that are important but not urgent, like chain info, verification progress, 
-/// and min relay transaction fees.
-///
-/// Bright Yellow: For metrics like chainwork that represent cumulative effort.
-///
-/// Bright Red: Used for metrics like difficulty to make them stand out, signaling critical importance.
-///
-/// Red: Used for critical time-related fields like "Time since block" to signal urgency.
-///
-/// White: Used for neutral data, like timestamps, sizes, and fees, where urgency is not a factor.
-///
-/// This approach ensures that critical, urgent, and less critical information is presented in a way 
-/// that emphasizes what's most important at a glance.
-///
+// Summary of Color Usage:
+// Green: Used for healthy values like block count, transactions, and connections.
+//
+// Yellow: Used for values that are important but not urgent, like chain info, verification progress, 
+// and min relay transaction fees.
+//
+// Bright Yellow: For metrics like chainwork that represent cumulative effort.
+//
+// Bright Red: Used for metrics like difficulty to make them stand out, signaling critical importance.
+//
+// Red: Used for critical time-related fields like "Time since block" to signal urgency.
+//
+// White: Used for neutral data, like timestamps, sizes, and fees, where urgency is not a factor.
+//
+// This approach ensures that critical, urgent, and less critical information is presented in a way 
+// that emphasizes what's most important at a glance.
+
+/// Module handles the displaying of metrics, charts for [BlockChain] section of Dashboard.
 pub mod display_blockchain_info;
+/// Module handles the displaying of metrics, charts for [Mempool] section of Dashboard.
 pub mod display_mempool_info;
+/// Module handles the displaying of metrics, charts for [Network] section of Dashboard.
 pub mod display_network_info;
+/// Module handles the displaying of metrics for [Consensus Security] section of Dashboard.
 pub mod display_consensus_security_info;
 
 use tui::backend::Backend;

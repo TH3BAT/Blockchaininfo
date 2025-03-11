@@ -1,14 +1,23 @@
 
 // rpc.rs
 
+/// Module handles RPC method calls for getblockchaininfo.
 mod blockchain;
+/// Module handles RPC method calls for getmempoolinfo & getrawmempool.
 mod mempool;
+/// Module handles RPC method calls for getnetworkinfo.
 mod network;
+/// Module handles RPC method calls for getblockhash & getblock.
 mod block;
+/// Module handles RPC method calls for getchaintips.
 mod chain_tips;
+/// Module handles RPC method calls for getnettotals.
 mod network_totals; 
+/// Module handles RPC method calls for getpeerinfo.
 mod network_peers;
+/// Module handles RPC method calls for getmempoolentry. Processes and updates mempool distribution metrics.
 mod mempool_distro;
+/// Module handles RPC method calls for getrawtransaction & getmempoolentry.
 mod transaction;
 
 use crate::models::blockchain_info::BlockchainInfo;
