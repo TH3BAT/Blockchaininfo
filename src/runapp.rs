@@ -534,7 +534,7 @@ pub async fn run_app<B: tui::backend::Backend>(
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(Color::DarkGray))
                 .border_type(BorderType::Rounded)
-                .title(Span::styled("[₿lockChain ('h' toggles HRD.)]", Style::default().fg(Color::DarkGray).add_modifier(Modifier::BOLD)));
+                .title(Span::styled("[₿lockChain ('h' toggles HRD)]", Style::default().fg(Color::DarkGray).add_modifier(Modifier::BOLD)));
             frame.render_widget(block_2, chunks[1]);
             
             // println!("DEBUG: block_info length = {}", block_info.len());
