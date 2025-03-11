@@ -5,7 +5,7 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-// Wrapper for JSON-RPC response.
+/// Wrapper Struct - The Bitcoin RPC response wraps the actual getpeerinfo data inside the result field.
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
@@ -15,6 +15,7 @@ pub struct PeerInfoResponse {
     pub result: Vec<PeerInfo>, 
 }
 
+/// This struct holds data from getpeerinfo RPC method.
 #[derive(Debug, Deserialize, Clone, Default)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]

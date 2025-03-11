@@ -7,7 +7,7 @@ use crate::models::errors::MyError;   // Custom error type from the errors modul
 use tui::style::Color;
 use crate::utils::DIFFICULTY_ADJUSTMENT_INTERVAL;
 
-// Data structure to deserialize blockchain information from the RPC response.
+/// Wrapper Struct - The Bitcoin RPC response wraps the actual getblockchaininfo data inside the result field.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
@@ -17,7 +17,7 @@ use crate::utils::DIFFICULTY_ADJUSTMENT_INTERVAL;
     pub result: BlockchainInfo,       // The actual blockchain information.
 }
 
-// Nested structure containing detailed blockchain information.
+/// This struct holds data from getblockchaininfo RPC method.
 #[derive(Debug, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
@@ -38,7 +38,7 @@ use crate::utils::DIFFICULTY_ADJUSTMENT_INTERVAL;
 }
 
 impl BlockchainInfo {
-    // Converts the chainwork from a hexadecimal string to bits.
+    /// Converts the chainwork from a hexadecimal string to bits.
     pub fn formatted_chainwork_bits(&self) -> Result<String, MyError> {
         u128::from_str_radix(&self.chainwork, 16)
             .map_or_else(
@@ -50,7 +50,8 @@ impl BlockchainInfo {
             )
     }
 
-   pub fn format_scientific(value: f64) -> Result<String, MyError> {
+    /// Returns a scientific format of current difficulty.
+    pub fn format_scientific(value: f64) -> Result<String, MyError> {
         if value == 0.0 {
             return Ok("0.0".to_string()); // Handle zero separately.
         }
@@ -91,12 +92,12 @@ impl BlockchainInfo {
 	        Ok(format!("{:.1}×10{}", scaled_value, superscript_exponent))
     }
 
-    // Format the `difficulty` field as a scientific notation string.
+    /// Format the `difficulty` field as a scientific notation string (e.g. 112.1×10¹²).
     pub fn formatted_difficulty(&self) -> Result<String, MyError> {
         BlockchainInfo::format_scientific(self.difficulty)
     }
 
-    // Parse and format UNIX timestamps into Datetime.
+    /// Parse and format UNIX Median Time into Datetime format.
     pub fn parse_mediantime(&self) -> Result<String, MyError> {
         Utc.timestamp_opt(self.mediantime as i64, 0)
             .single()
@@ -106,6 +107,7 @@ impl BlockchainInfo {
             )
     }
 
+    /// Parse and format UNIX Best Block Time into Datetime format.
     pub fn parse_time(&self) -> Result<String, MyError> {
         Utc.timestamp_opt(self.time as i64, 0)
             .single()
@@ -115,7 +117,7 @@ impl BlockchainInfo {
             )
     }
 
-    // Calculate time since the last block was produced.
+    /// Calculate time since the last block was produced.
     pub fn calculate_time_diff(&self) -> Result<String, MyError> {
         let current_time = Utc::now();
         Utc.timestamp_opt(self.time as i64, 0)
@@ -133,7 +135,7 @@ impl BlockchainInfo {
             )
     }
 
-    // Calculate blocks until the next difficulty adjustment.
+    /// Calculate blocks until the next difficulty adjustment.
     pub fn blocks_until_adjustment(&self) -> Result<u64, MyError> {
         if self.blocks == 0 {
             return Err(MyError::InvalidBlockHeight(self.blocks)); // Custom error for invalid block height.
@@ -141,6 +143,7 @@ impl BlockchainInfo {
         Ok((DIFFICULTY_ADJUSTMENT_INTERVAL - (self.blocks % DIFFICULTY_ADJUSTMENT_INTERVAL)) - 1)
     }
     
+    /// Returns the blocks reamining in current epoch with color format.
     pub fn display_blocks_until_difficulty_adjustment(&self) -> Result<(String, Color), MyError> {
         let blocks_left = self.blocks_until_adjustment()?;
         let color = match blocks_left {

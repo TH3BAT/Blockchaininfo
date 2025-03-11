@@ -4,7 +4,7 @@
 use serde::Deserialize;
 use std::str;
 
-// Response from the `getrawtransaction` RPC call.
+/// This struct holds data from getrawtransaction RPC method.
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
@@ -25,7 +25,7 @@ pub struct GetRawTransactionResponse {
     pub time: Option<u64>,          // The transaction time in Unix epoch time (if unconfirmed).
 }
 
-// Represents a transaction input (vin).
+/// This struct holds TxIn data from GetRawTransactionResponse struct.
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
@@ -38,7 +38,7 @@ pub struct TxIn {
     pub txinwitness: Option<Vec<String>>, // Witness data (if any) for this input.
 }
 
-// Represents the scriptSig for a transaction input.
+/// This struct holds ScriptSig data from GetRawTransactionResponse->TxIn struct.
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
@@ -47,7 +47,7 @@ pub struct ScriptSig {
     pub hex: String, // The hexadecimal representation of the script.
 }
 
-// Represents a transaction output (vout).
+/// This struct holds TxOut data from GetRawTransactionResponse struct.
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
@@ -58,7 +58,7 @@ pub struct TxOut {
     pub script_pub_key: Option<ScriptPubKey>, // The scriptPubKey for this output.
 }
 
-// Represents the scriptPubKey for a transaction output.
+/// This struct holds ScriptPubKey data from GetRawTransactionResponse->TxOut struct.
 #[derive(Deserialize, Debug, Clone)]
 #[allow(dead_code)]
 pub struct ScriptPubKey {
@@ -71,24 +71,24 @@ pub struct ScriptPubKey {
 }
 
 impl GetRawTransactionResponse {
-    // Returns whether the transaction is confirmed (has a blockhash).
+    /// Returns whether the transaction is confirmed (has a blockhash) from getrawtransaction method.
     #[allow(dead_code)]
     pub fn is_confirmed(&self) -> bool {
         self.blockhash.is_some()
     }
     
-    // Returns the total value of all outputs in the transaction.
+    /// Returns the total value of all outputs in the transaction from getrawtransaction method.
     pub fn total_output_value(&self) -> f64 {
         self.vout.iter().map(|vout| vout.value).sum()
     }
 
      
-    // Checks if the transaction contains any OP_RETURN outputs.
+    /// Returns true or false if the transaction contains any OP_RETURN outputs from getrawtransaction method.
     pub fn has_op_return(&self) -> bool {
         self.vout.iter().any(|output| output.is_op_return())
     }
 
-    // Returns the total value of all OP_RETURN outputs in the transaction.
+    /// Returns the total value of all OP_RETURN outputs in the transaction from getrawtransaction method.
     pub fn total_op_return_value(&self) -> f64 {
         self.vout
             .iter()
@@ -98,6 +98,7 @@ impl GetRawTransactionResponse {
     }
 
     #[allow(dead_code)]
+    /// Returns deciphered OP_RETURN message if any for TxOut from getrawtransaction method.
     pub fn get_op_return_msg(&self) -> Vec<String> {
         self.vout
             .iter()
@@ -108,7 +109,7 @@ impl GetRawTransactionResponse {
 }
 
  impl TxOut {
-    // Returns whether this output is spendable by the given address.
+    /// Returns whether this output is spendable by the given address from getrawtransaction method.
     #[allow(dead_code)]
     pub fn is_spendable_by(&self, address: &str) -> bool {
         if let Some(addresses) = &<std::option::Option<ScriptPubKey> as Clone>::clone(&self.script_pub_key).unwrap().addresses {
@@ -118,7 +119,7 @@ impl GetRawTransactionResponse {
         }
     }
 
-    // Checks if this output is an OP_RETURN output.    
+    /// Returns whether this output is an OP_RETURN output from getrawtransaction method.    
     pub fn is_op_return(&self) -> bool {
         if let Some(script_pub_key) = &self.script_pub_key {
             if let Some(asm) = &script_pub_key.asm {
@@ -134,8 +135,9 @@ impl GetRawTransactionResponse {
         }
     }
 
+    /// Deciphers OP_RETURN message
     #[allow(dead_code)]
-    pub fn decipher_op_return(&self) -> Option<String> {
+    fn decipher_op_return(&self) -> Option<String> {
         if let Some(script_pub_key) = &self.script_pub_key {
             if let Some(asm) = &script_pub_key.asm {
                 if asm.starts_with("OP_RETURN") {

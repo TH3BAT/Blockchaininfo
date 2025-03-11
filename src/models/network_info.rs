@@ -3,8 +3,7 @@
 
 use serde::Deserialize; // For struct serialization and deserialization.
 
-// Represents the information returned from the `getnetworkinfo` RPC call.
-// This struct represents the root response from the RPC call, which contains the `result` field.
+/// Wrapper Struct - The Bitcoin RPC response wraps the actual getnetworkinfo data inside the result field.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
@@ -14,7 +13,7 @@ pub struct NetworkInfoJsonWrap {
       pub result: NetworkInfo,   // The actual result field which contains the data we need.
 }
 
-// This struct encapsulates various details about the Bitcoin node's network status.
+/// This struct holds data from getnetworkinfo RPC method.
 #[derive(Debug, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
@@ -37,8 +36,7 @@ pub struct NetworkInfo {
       pub warnings: String,                      // Any warnings issued by the node. 
 }
 
-// Represents a specific network type (e.g., IPv4, IPv6, Onion) and its properties.
-// This struct is used in the `networks` field of the `NetworkInfo` struct.
+/// This struct holds the Network data from NetworkInfo struct.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
@@ -50,8 +48,7 @@ pub struct Network {
       pub proxy_randomize_credentials: bool,     // Boolean flag for randomizing proxy credentials.
 }
 
-// Represents a local address used by the node.
-// This struct is used in the `localaddresses` field of the `NetworkInfo` struct.
+/// This struct holds the LocalAddress data from NetworkInfo struct.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]

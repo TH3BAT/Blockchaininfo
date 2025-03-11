@@ -5,6 +5,7 @@ use serde::Deserialize; // For serializing and deserializing structures.
 use dashmap::DashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+/// This struct holds metrics derived from fetch_mempool_distribution().
 #[derive(Default)]
 pub struct MempoolDistribution {
     pub small: usize,
@@ -21,6 +22,7 @@ pub struct MempoolDistribution {
 }
 
 impl MempoolDistribution {
+    /// Updates the mempool distribution metrics for dust-free uncomfirmed transactions.
     pub fn update_metrics(&mut self, cache: &DashMap<String, MempoolEntry>) {
         let mut small = 0;
         let mut medium = 0;
@@ -98,7 +100,7 @@ impl MempoolDistribution {
 }
 
 
-// Wrapper Struct - The Bitcoin RPC response wraps the actual mempoolinfo data inside the result field.
+/// Wrapper Struct - The Bitcoin RPC response wraps the actual getmempoolinfo data inside the result field.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
@@ -108,7 +110,7 @@ impl MempoolDistribution {
         pub result: MempoolInfo,
 }
 
-// Represents the mempool information retrieved from the Bitcoin RPC `getmempoolinfo` call.
+/// This struct holds data from getmempoolinfo RPC method.
 #[derive(Debug, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
@@ -127,12 +129,13 @@ pub struct MempoolInfo {
 }
 
 impl MempoolInfo {
-    // Converts the minrelaytxfee to vSats (satoshis per virtual byte).
+    /// Converts the minrelaytxfee to vSats (satoshis per virtual byte).
     pub fn min_relay_tx_fee_vsats(&self) -> u64 {
         (self.minrelaytxfee * 100_000_000.0 / 1_000.0) as u64
     }
 }
 
+/// Wrapper Struct - The Bitcoin RPC response wraps the actual raw mempool transactions data inside the result field.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
@@ -142,6 +145,7 @@ impl MempoolInfo {
         pub result: Vec<String>,
 }
 
+/// Wrapper Struct - The Bitcoin RPC response wraps the actual getmempoolentry data inside the result field.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
@@ -151,6 +155,7 @@ pub struct MempoolEntryJsonWrap {
     pub result: MempoolEntry,
 }
 
+/// This struct holds data from getmempoolentry RPC method.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
@@ -172,6 +177,7 @@ pub struct MempoolEntry {
     pub unbroadcast: Option<bool>,    // Whether the transaction is unbroadcast (not yet relayed)
 }
 
+/// This holds the fee structure from MempoolEntry.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]

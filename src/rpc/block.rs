@@ -12,7 +12,8 @@ use std::time::Duration;
 // use std::fs::OpenOptions;
 // use std::io::Write;
 
-// Fetch block data based on the block height.
+/// Capture block info with verbose = 1.
+/// Returns block information with Vec of TxIDs.  
 pub async fn fetch_block_data_by_height(
     config: &RpcConfig,
     blocks: u64,
@@ -108,8 +109,8 @@ pub async fn fetch_block_data_by_height(
         Ok(block_response.result)
 }
 
-/// Added to capture block with verbose = 2, which requires a different Rust Struct.
-/// Used for new Miner for Best Block and Hash Distribution chart for past 144 blocks.  
+/// Capture block info with verbose = 2.
+/// Returns full transaction data with block information.  
 async fn fetch_full_block_data_by_height(
     config: &RpcConfig,
     blocks: &u64,
@@ -191,7 +192,7 @@ async fn fetch_full_block_data_by_height(
 
 }
 
-
+/// Fetches the miner for the block passed and adds them to BlockHistory.
 pub async fn fetch_miner(
     config: &RpcConfig,
     miners_data: &MinersData,
@@ -204,19 +205,6 @@ pub async fn fetch_miner(
     let coinbase_tx = &block.tx[0]; // First transaction is the coinbase
     let coinbase_tx_addresses = coinbase_tx.extract_wallet_addresses();
 
-    /* Debugging: Write coinbase_tx and coinbase_tx_addresses to a file
-    let mut file = OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open("debug_coinbase.log")
-        .map_err(|e| MyError::FileError(e.to_string()))?;
-
-    writeln!(file, "Block Height: {}", current_block)?;
-    writeln!(file, "Coinbase Transaction: {:?}", coinbase_tx)?;
-    writeln!(file, "Coinbase Addresses: {:?}", coinbase_tx_addresses)?;
-    writeln!(file, "-----------------------------")?;
-    */
-
     // Find the miner associated with the wallet address
     let miner = find_miner_by_wallet(coinbase_tx_addresses, miners_data).await
         .unwrap_or("Unknown".to_string()); // Use "Unknown" if no miner is found
@@ -228,6 +216,7 @@ pub async fn fetch_miner(
     Ok(())
 }
 
+/// Matches coinbase vout wallet adresess(es) against list of known miners and thier wallets from miners.json and returns the miner or none.
 async fn find_miner_by_wallet(addresses: Vec<String>, miners_data: &MinersData) -> Option<String> {
     for address in addresses {
         if let Some(miner) = miners_data.miners.iter()
@@ -239,15 +228,3 @@ async fn find_miner_by_wallet(addresses: Vec<String>, miners_data: &MinersData) 
     }
     None
 }
-
-/*
-fn extract_wallet_addresses(coinbase_tx: &Transaction) -> Vec<String> {
-    let mut addresses = Vec::new();
-    for output in &coinbase_tx.vout {
-        if !output.script_pub_key.address.is_empty() {
-            addresses.push(output.script_pub_key.address.clone());
-        }
-    }
-    addresses
-}
-*/

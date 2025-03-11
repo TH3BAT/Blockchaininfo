@@ -5,6 +5,7 @@ use serde::Deserialize;  // For serializing and deserializing structures.
 use std::collections::VecDeque;
 use std::sync::Mutex;
 
+/// This struct holds block hash from getblockhash RPC method.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
@@ -14,6 +15,7 @@ pub struct BlockHash {
     pub result: String,           // The block hash is a plain string.
 }
 
+/// Wrapper Struct - The Bitcoin RPC response wraps the actual getblock data inside the result field (verbose = 1).
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
@@ -21,6 +23,7 @@ pub struct BlockInfoJsonWrap {
     pub result: BlockInfo,        // Contains the block's details.
 }
 
+/// This struct holds data from getblock RPC method (verbose = 1).
 #[derive(Debug, Deserialize, Default, Clone)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
@@ -48,6 +51,7 @@ pub struct BlockInfo {
     pub tx: Vec<String>,          // List of transaction IDs (for verbose=1).
 }
 
+/// Wrapper Struct - The Bitcoin RPC response wraps the actual getblock data inside the result field (verbose = 2).
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
@@ -55,7 +59,7 @@ pub struct BlockInfoFullJsonWrap {
     pub result: BlockInfoFull,        // Contains the block's details.
 }
 
-// Added struct to handle verbose = 2 calls.
+/// This struct holds data from getblock RPC method (verbose = 2).
 #[derive(Debug, Deserialize, Default, Clone)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
@@ -84,6 +88,7 @@ pub struct BlockInfoFull {
     pub tx: Vec<Transaction>, // Full transaction details (for verbose=2).
 }
 
+/// This struct holds full transaction data from getblock (verbose = 2).
 #[allow(dead_code)]
 #[derive(Debug, Deserialize, Clone)]
 pub struct Transaction {
@@ -99,7 +104,7 @@ pub struct Transaction {
 }
 
 impl Transaction {
-    /// Extracts wallet addresses from the transaction's outputs.
+    /// Extracts wallet addresses from the transaction's outputs originating from block info, verbose = 2.
     /// Filters out outputs with empty addresses.
     pub fn extract_wallet_addresses(&self) -> Vec<String> {
         self.vout
@@ -110,6 +115,7 @@ impl Transaction {
     }
 }
 
+/// This struct holds TxOut data from getblock (verbose = 2).
 #[allow(dead_code)]
 #[derive(Debug, Deserialize, Clone)]
 pub struct TxOut {
@@ -119,6 +125,7 @@ pub struct TxOut {
     pub script_pub_key: ScriptPubKey, 
 }
 
+/// This struct holds ScriptPubKey data from getblock (verbose = 2).
 #[allow(dead_code)]
 #[derive(Debug, Deserialize, Clone)]
 pub struct ScriptPubKey {
@@ -130,6 +137,7 @@ pub struct ScriptPubKey {
     pub r#type: String,        
 }
 
+/// This struct holds TxIn data from getblock (verbose = 2).
 #[allow(dead_code)]
 #[derive(Debug, Deserialize, Clone)]
 pub struct TxIn {
@@ -145,6 +153,7 @@ pub struct TxIn {
     pub sequence: u32,       
 }
 
+/// This struct holds ScriptSig data from getblock (verbose = 2).
 #[allow(dead_code)]
 #[derive(Debug, Deserialize, Clone)]
 pub struct ScriptSig {
@@ -152,19 +161,20 @@ pub struct ScriptSig {
     pub hex: String,       
 }
 
-// For our miners.json dataset.
+/// This struct holds our known miners data used for Hash Rate Distribution chart and last miner.
 #[derive(Deserialize, Clone)]
 pub struct MinersData {
     pub miners: Vec<Miner>,
 }
 
+/// This struct holds miner name and known wallet address.
 #[derive(Deserialize, Clone)]
 pub struct Miner {
     pub name: String,
     pub wallet: String,
 }
 
-// Stores a rolling 24-hour miner history for hash rate distribution chart and last miner.
+/// This struct stores a rolling 24-hour miner history for hash rate distribution chart and last miner.
 pub struct BlockHistory {
     pub blocks: Mutex<VecDeque<Option<String>>>, // Thread-safe rolling window
 }
@@ -176,13 +186,13 @@ impl BlockHistory {
         }
     }
 
-     // Returns the last miner inserted, or `None` if the buffer is empty.
+     /// Returns the last miner inserted, or `None` if the buffer is empty.
      pub fn last_miner(&self) -> Option<String> {
         let blocks = self.blocks.lock().unwrap(); // Lock the Mutex
         blocks.back().cloned()? // Get the last element and clone it
     }
 
-    // Add latest miner.
+    /// Add latest miner.
     pub fn add_block(&self, miner: Option<String>) {
         let mut blocks = self.blocks.lock().unwrap();
         if blocks.len() == 144 {
@@ -191,6 +201,7 @@ impl BlockHistory {
         blocks.push_back(miner); // Add the new block
     }
 
+    /// Returns miner(s) and total blocks mined past 144 blocks.
     pub fn get_miner_distribution(&self) -> Vec<(String, u64)> {
         let blocks = self.blocks.lock().unwrap();
         let mut distribution = std::collections::HashMap::new();

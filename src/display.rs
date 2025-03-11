@@ -34,7 +34,7 @@ use crate::models::network_info::NetworkInfo;
 use crate::models::network_totals::NetTotals;
 use std::collections::VecDeque;
 
-// Displays the blockchain information.
+/// Displays the base metrics for blockchain sector of Dashboard.
 pub fn display_blockchain_info<B: Backend>(
     blockchain_info: &BlockchainInfo,
     block_info: &BlockInfo,
@@ -46,7 +46,7 @@ pub fn display_blockchain_info<B: Backend>(
    let _ = display_blockchain_info::display_blockchain_info(blockchain_info, block_info, block24_info, last_miner, frame, area);
 }
 
-// Displays the blockchain information.
+/// Displays the Hash Rate Distribution chart for [BlockChain] sector of Dashboard ('h' toggles).
 pub fn render_hashrate_distribution_chart<B: Backend>(
     distribution: &[(&str, u64)], 
     frame: &mut Frame<B>,
@@ -56,7 +56,7 @@ pub fn render_hashrate_distribution_chart<B: Backend>(
 }
 
 
-// Displays the mempool information.
+/// Displays the base metrics for [Mempool] sector of Dashboard.
 pub fn display_mempool_info<B: Backend>(
     mempool_info: &MempoolInfo,
     distribution: &MempoolDistribution,
@@ -66,7 +66,7 @@ pub fn display_mempool_info<B: Backend>(
     let _ = display_mempool_info::display_mempool_info(mempool_info, distribution, frame, area);
 }
 
-// Displays the network information.
+/// Displays the base metrics for [Network] sector of Dashboard.
 pub fn display_network_info<B: Backend>(
     network_info: &NetworkInfo,
     net_totals: &NetTotals,
@@ -80,7 +80,7 @@ pub fn display_network_info<B: Backend>(
         avg_block_propagate_time, propagation_times, area);
 }
 
-// Displays the consensus security information.
+/// Displays the base metrics for [Consensus Security] sector of Dashboard.
 pub fn display_consensus_security_info<B: Backend>(
     chaintips_info: &Vec<ChainTip>,
     frame: &mut Frame<B>,
