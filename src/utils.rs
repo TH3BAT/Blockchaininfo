@@ -98,7 +98,7 @@ pub fn format_size(bytes: u64) -> String {
     }
 }
 
-// Retrieves the RPC password stored in macOS Keychain.
+/// Retrieves the RPC password stored in macOS Keychain.
 #[cfg(target_os = "macos")]
 pub fn get_rpc_password_from_keychain() -> Result<String, MyError> {
     let output = Command::new("security")
@@ -137,7 +137,7 @@ pub fn get_rpc_password_from_keychain() -> Result<String, MyError> {
     Err(MyError::Keychain("Unsupported OS for keychain access".to_string()))
 }
 
-// Estimate the current epoch's difficulty change and return as a percentage.
+/// Estimate the current epoch's difficulty change and return as a percentage.
 pub fn estimate_difficulty_change(
     current_block_height: u64,
     current_block_time: u64,
@@ -151,6 +151,7 @@ pub fn estimate_difficulty_change(
     (adjustment_factor - 1.0) * 100.0 // Return percentage change
 } 
 
+/// Estimate the current past 24 hrs difficulty change and return as a percentage.
 pub fn estimate_24h_difficulty_change(
     current_block_time: u64,
     block24_time: u64,
@@ -163,7 +164,7 @@ pub fn estimate_24h_difficulty_change(
 }
 
 
-// Returns a `tui` widget for the blockchain header.
+/// Returns a `tui` widget for the header of Dashboard.
 pub fn render_header() -> Paragraph<'static> {
     // Combine the footer message and app version.
     let lines = vec![
@@ -182,6 +183,7 @@ pub fn render_header() -> Paragraph<'static> {
      .block(Block::default().title("").borders(Borders::NONE))
 }
 
+/// Returns a `tui` widget for the footer of Dashboard.
 pub fn render_footer<B: Backend>(f: &mut Frame<B>, area: Rect, message: &str) {
     let footer_text = vec![Spans::from(vec![Span::styled(
         message,
@@ -196,6 +198,7 @@ pub fn render_footer<B: Backend>(f: &mut Frame<B>, area: Rect, message: &str) {
     f.render_widget(footer, area);
 }
 
+/// Logs RPC errors to errors_log.txt file.
 pub fn log_error(message: &str) -> io::Result<()> {
     let log_path = "error_log.txt";
 
@@ -242,6 +245,7 @@ pub fn log_error(message: &str) -> io::Result<()> {
     Ok(())
 }
 
+/// Loads the miners.json file into [MinersData].
 pub fn load_miners_data() -> Result<MinersData, MyError> {
     let data = fs::read_to_string("miners.json")?;
     let miners_data: MinersData = serde_json::from_str(&data)?;

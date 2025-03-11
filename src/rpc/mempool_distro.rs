@@ -209,7 +209,7 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyErro
     Ok(())
 }
 
-
+/// Helper function uses Regex to search for TxID 64-character hex string.
 fn extract_tx_id_from_error_string(error_string: &str) -> Option<String> {
     // Look for the Tx ID pattern in the error string
     let tx_id_pattern = r#"RpcRequestError\("([a-f0-9]{64})"#;

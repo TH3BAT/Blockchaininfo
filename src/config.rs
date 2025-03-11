@@ -8,7 +8,7 @@ use crate::models::errors::MyError;
 use crate::utils::get_rpc_password_from_keychain;
 use serde::{Deserialize, Serialize}; // Added `Serialize` for writing config to TOML
 
-// Structure for RPC connection details.
+/// Structure for RPC connection details.
 #[derive(Debug, Deserialize, Serialize, Clone)] // `Serialize` added for writing to TOML
 #[serde(rename_all = "snake_case")]
 pub struct RpcConfig {
@@ -24,7 +24,7 @@ impl RpcConfig {
     }
 }
 
-// Determines config path from CLI args, env variable, or default location.
+/// Determines config path from CLI args, env variable, or default location.
 fn get_config_path() -> String {
     // Check CLI Args (`--config` flag)
     let args: Vec<String> = env::args().collect();
@@ -43,7 +43,7 @@ fn get_config_path() -> String {
     "./target/release/config.toml".to_string()
 }
 
-// Loads the configuration from a TOML file or environment variables.
+/// Loads the configuration from a TOML file or environment variables.
 pub fn load_config() -> Result<RpcConfig, MyError> {
     let file_path = get_config_path(); // Get config location dynamically
 

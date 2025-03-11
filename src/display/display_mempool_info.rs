@@ -357,7 +357,7 @@ pub fn display_mempool_info<B: Backend>(
     Ok(())
 }
 
-
+/// Helper function to round out percentages to equate to 100%.
 fn calculate_rounded_percentages(first: u64, second: u64, third: Option<u64>, total_size: u64) -> (u64, u64, Option<u64>) {
     if total_size == 0 {
         return (0, 0, third.map(|_| 0)); // Avoid division by zero
@@ -410,7 +410,7 @@ fn calculate_rounded_percentages(first: u64, second: u64, third: Option<u64>, to
     (first_floor, second_floor, third_floor)
 }
 
-
+/// Helper function to create a visual progres bar used alongside percent metrics.
 fn create_progress_bar(percent: u64, width: u16) -> String {
     let filled = (percent as f64 / 100.0 * width as f64).round() as usize;
     let empty = width as usize - filled;

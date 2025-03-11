@@ -34,7 +34,7 @@ use crate::models::network_info::NetworkInfo;
 use crate::models::network_totals::NetTotals;
 use std::collections::VecDeque;
 
-/// Displays the base metrics for blockchain sector of Dashboard.
+/// Displays the base metrics for [BlockChain] sector of Dashboard.
 pub fn display_blockchain_info<B: Backend>(
     blockchain_info: &BlockchainInfo,
     block_info: &BlockInfo,

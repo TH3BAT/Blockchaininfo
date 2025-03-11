@@ -58,7 +58,7 @@ impl App {
 
 static LAST_BLOCK_NUMBER: Lazy<DashSet<u64>> = Lazy::new(|| DashSet::new());
 
-// Sets up the terminal in TUI mode.
+/// Sets up the terminal in TUI mode.
 pub fn setup_terminal() -> Result<Terminal<CrosstermBackend<Stdout>>, io::Error> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -67,14 +67,14 @@ pub fn setup_terminal() -> Result<Terminal<CrosstermBackend<Stdout>>, io::Error>
     Terminal::new(backend)
 }
 
-// Cleans up the terminal on exit.
+/// Cleans up the terminal on exit.
 pub fn cleanup_terminal(terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<(), io::Error> {
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()
 }
 
-// Runs the application logic and keeps the TUI alive.
+/// Runs the application logic and keeps the Dashboard alive.
 pub async fn run_app<B: tui::backend::Backend>(
     terminal: &mut Terminal<B>,
     config: &RpcConfig,
@@ -641,7 +641,7 @@ pub async fn run_app<B: tui::backend::Backend>(
     Ok(())
 }
 
-// Helper function to center the popup
+/// Helper function to center the popup.
 fn centered_rect(percent_x: u16, percent_y: u16, size: Rect) -> Rect {
     let popup_layout = Layout::default()
         .direction(Direction::Vertical)
@@ -663,7 +663,7 @@ fn centered_rect(percent_x: u16, percent_y: u16, size: Rect) -> Rect {
 }
 
 
-// Function to validate TxID
+/// Function to validate TxID.
 fn is_valid_txid(tx_id: &str) -> bool {
     tx_id.len() == 64 && tx_id.chars().all(|c| c.is_ascii_hexdigit())
 }
