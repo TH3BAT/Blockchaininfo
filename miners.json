@@ -78,12 +78,20 @@
       "wallet": "bc1qrpp7g75sx3ejclvsfdw2uahzchtyu7vumkuadu"
     },
     {
+      "name": "SBI Crypto",
+      "wallet": "bc1qte0s6pz7gsdlqq2cf6hv5mxcfksykyyyjkdfd5"
+    },
+    {
       "name": "Binance Pool",
       "wallet": "3G7jcEELKh38L6kaSV8K35pTqsh5bgZW2D"
     },
 	{
 	  "name": "Solo CK",
 	  "wallet": "bc1qaxccz85rx6ywy2xw6ugtm6u37mvew6qqn7lgtd"
+	},
+	{
+	  "name": "Solo CK",
+	  "wallet": "bc1q28kkr5hk4gnqe3evma6runjrd2pvqyp8fpwfzu"
 	},
 	{
 	  "name": "NiceHash",
