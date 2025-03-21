@@ -2,8 +2,8 @@
 // models/block_info.rs
 
 use serde::Deserialize;  // For serializing and deserializing structures.
-use std::collections::VecDeque;
-use std::sync::Mutex;
+use std::collections::{VecDeque, HashMap};
+use std::sync::{Mutex, Arc};
 
 /// This struct holds block hash from getblockhash RPC method.
 #[derive(Debug, Deserialize)]
@@ -176,7 +176,7 @@ pub struct Miner {
 
 /// This struct stores a rolling 24-hour miner history for hash rate distribution chart and last miner.
 pub struct BlockHistory {
-    pub blocks: Mutex<VecDeque<Option<String>>>, // Thread-safe rolling window
+    pub blocks: Mutex<VecDeque<Option<Arc<str>>>>, // Thread-safe rolling window
 }
 
 impl BlockHistory {
@@ -187,7 +187,7 @@ impl BlockHistory {
     }
 
      /// Returns the last miner inserted, or `None` if the buffer is empty.
-     pub fn last_miner(&self) -> Option<String> {
+     pub fn last_miner(&self) -> Option<Arc<str>> {
         let blocks = self.blocks.lock().unwrap(); // Lock the Mutex
         blocks.back().cloned()? // Get the last element and clone it
     }
@@ -198,16 +198,19 @@ impl BlockHistory {
         if blocks.len() == 144 {
             blocks.pop_front(); // Remove the oldest block
         }
-        blocks.push_back(miner); // Add the new block
+        blocks.push_back(miner.map(|m| Arc::from(m.into_boxed_str()))); // Add the new block
     }
 
     /// Returns miner(s) and total blocks mined past 144 blocks.
-    pub fn get_miner_distribution(&self) -> Vec<(String, u64)> {
-        let blocks = self.blocks.lock().unwrap();
-        let mut distribution = std::collections::HashMap::new();
+    pub fn get_miner_distribution(&self) -> Vec<(Arc<str>, u64)> {
+        let blocks = self.blocks.lock().unwrap().clone(); // Clone the VecDeque and release the lock
+        let mut distribution = HashMap::new();
         for miner in blocks.iter().flatten() {
             *distribution.entry(miner.clone()).or_insert(0) += 1;
         }
-        distribution.into_iter().collect()
+        distribution
+            .into_iter()
+            // .map(|(k, v)| (k.to_string(), v)) // Convert &str to String only once
+            .collect()
     }
 }

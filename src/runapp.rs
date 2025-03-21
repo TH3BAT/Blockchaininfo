@@ -33,6 +33,7 @@ use once_cell::sync::Lazy;
 use crate::utils::{BLOCKCHAIN_INFO_CACHE, BLOCK_INFO_CACHE, MEMPOOL_INFO_CACHE, CHAIN_TIP_CACHE, BLOCK24_INFO_CACHE,
 PEER_INFO_CACHE, NETWORK_INFO_CACHE, NET_TOTALS_CACHE, MEMPOOL_DISTRIBUTION_CACHE, LOGGED_TXS};
 use std::sync::Arc;
+use tokio::time::Instant;
 
 struct App {
     show_popup: bool,
@@ -97,13 +98,22 @@ pub async fn run_app<B: tui::backend::Backend>(
         let config_clone = config.clone();
         async move {
             loop {
+                let start = Instant::now();
+    
                 // Step 1: Fetch Latest Blockchain Info From RPC
                 match fetch_blockchain_info(&config_clone).await {
-                    Ok(blockchain_info) => {
-                        *BLOCKCHAIN_INFO_CACHE.write().await = blockchain_info;  // Update cache
+                    Ok(new_blockchain_info) => {
+                        let mut cache = BLOCKCHAIN_INFO_CACHE.write().await;
+                        // Only update the cache if the data has changed
+                        if *cache != new_blockchain_info {
+                            *cache = new_blockchain_info; // Update cache
+                        } else {
+                            // If the data hasn't changed, skip the rest of the loop
+                            sleep(Duration::from_secs(2)).await;
+                            continue;
+                        }
                     }
                     Err(e) => {
-                        // Log the error to error_log.txt
                         if let Err(log_err) = log_error(&format!(
                             "Blockchain Info failed: {}", 
                             e
@@ -113,51 +123,27 @@ pub async fn run_app<B: tui::backend::Backend>(
                         sleep(Duration::from_secs(2)).await;
                         continue;
                     }
-                } 
-
+                }
+    
                 // Step 2: Read Blockchain Info from Cache (Now It Exists)
                 let block_height = {
                     let blockchain_info = BLOCKCHAIN_INFO_CACHE.read().await;
                     blockchain_info.blocks // Extract the latest block height
                 };
-
+    
                 // Step 3: Fetch Block Data Using the Latest Block Height (Epoch Start Block)
                 match fetch_block_data_by_height(&config_clone, block_height, 1).await {
                     Ok(new_data) => {
                         let mut cache = BLOCK_INFO_CACHE.write().await;
-                         // Maintain last 10 blocks to prevent infinite growth
-                        if cache.len() >= 10 {
+                        if cache.len() >= 1 {
                             cache.remove(0); // Remove the oldest block
                         }
-                    
-                        let new_data_clone = new_data.clone();  // Clone it before pushing
-                        cache.push(new_data_clone);
+                        cache.push(new_data); // Move the data into the cache
                     }
                     Err(e) => {
-                        // Log the error to error_log.txt
                         if let Err(log_err) = log_error(&format!(
-                            "Block Data by Height failed: {}", 
-                            e
-                        )) {
-                            eprintln!("Failed to log error: {}", log_err);
-                        }
-                        sleep(Duration::from_secs(2)).await;
-                        continue;
-                    }
-                } 
-
-                // Step 4: Fetch Block Data for 24 Hours Ago
-                match fetch_block_data_by_height(&config_clone, block_height, 2).await {
-                    Ok(block24_data) => {
-                        let mut cache_24 = BLOCK24_INFO_CACHE.write().await;
-                        let block24_clone = block24_data.clone();  // Clone before pushing
-                        cache_24.push(block24_clone);
-                    }
-                    Err(e) => {
-                        // Log the error to error_log.txt
-                        if let Err(log_err) = log_error(&format!(
-                            "Block Data by Height failed: {}", 
-                            e
+                            "Block Data by Height failed at block height {}: {}", 
+                            block_height, e
                         )) {
                             eprintln!("Failed to log error: {}", log_err);
                         }
@@ -165,8 +151,33 @@ pub async fn run_app<B: tui::backend::Backend>(
                         continue;
                     }
                 }
-                
-                sleep(Duration::from_secs(2)).await;
+    
+                // Step 4: Fetch Block Data for 24 Hours Ago
+                match fetch_block_data_by_height(&config_clone, block_height, 2).await {
+                    Ok(block24_data) => {
+                        let mut cache_24 = BLOCK24_INFO_CACHE.write().await;
+                        if cache_24.len() >= 1 { 
+                            cache_24.remove(0); // Remove the oldest block
+                        }
+                        cache_24.push(block24_data); // Move the data into the cache
+                    }
+                    Err(e) => {
+                        if let Err(log_err) = log_error(&format!(
+                            "Block Data by Height failed at block height {}: {}", 
+                            block_height, e
+                        )) {
+                            eprintln!("Failed to log error: {}", log_err);
+                        }
+                        sleep(Duration::from_secs(2)).await;
+                        continue;
+                    }
+                }
+    
+                // Dynamic sleep to maintain a 2-second interval
+                let elapsed = start.elapsed();
+                if elapsed < Duration::from_secs(2) {
+                    sleep(Duration::from_secs(2) - elapsed).await;
+                }
             }
         }
     });
@@ -176,12 +187,16 @@ pub async fn run_app<B: tui::backend::Backend>(
         let config_clone = config.clone();
         async move {
             loop {
+                let start = Instant::now();
+    
                 match fetch_mempool_info(&config_clone).await {
                     Ok(new_data) => {
-                        *MEMPOOL_INFO_CACHE.write().await = new_data;
+                        let mut cache = MEMPOOL_INFO_CACHE.write().await;
+                        if *cache != new_data { // Only update if the data has changed
+                            *cache = new_data;
+                        }
                     }
                     Err(e) => {
-                        // Log the error to error_log.txt
                         if let Err(log_err) = log_error(&format!(
                             "Mempool Info failed: {}", 
                             e
@@ -190,7 +205,12 @@ pub async fn run_app<B: tui::backend::Backend>(
                         }
                     }
                 }
-                sleep(Duration::from_secs(3)).await;
+    
+                // Dynamic sleep to maintain a 3-second interval
+                let elapsed = start.elapsed();
+                if elapsed < Duration::from_secs(3) {
+                    sleep(Duration::from_secs(3) - elapsed).await;
+                }
             }
         }
     });
@@ -200,21 +220,30 @@ pub async fn run_app<B: tui::backend::Backend>(
         let config_clone = config.clone();
         async move {
             loop {
-                match fetch_network_info(&config_clone).await { 
+                let start = Instant::now();
+    
+                match fetch_network_info(&config_clone).await {
                     Ok(new_data) => {
-                        *NETWORK_INFO_CACHE.write().await = new_data;
+                        let mut cache = NETWORK_INFO_CACHE.write().await;
+                        if *cache != new_data { // Only update if the data has changed
+                            *cache = new_data;
+                        }
                     }
                     Err(e) => {
-                        // Log the error to error_log.txt
                         if let Err(log_err) = log_error(&format!(
-                            "Net Info failed: {}", 
+                            "Network Info failed: {}",  
                             e
                         )) {
                             eprintln!("Failed to log error: {}", log_err);
                         }
                     }
-                }   
-                sleep(Duration::from_secs(7)).await;
+                }
+    
+                // Dynamic sleep to maintain a 7-second interval
+                let elapsed = start.elapsed();
+                if elapsed < Duration::from_secs(7) {
+                    sleep(Duration::from_secs(7) - elapsed).await;
+                }
             }
         }
     });
@@ -224,21 +253,31 @@ pub async fn run_app<B: tui::backend::Backend>(
         let config_clone = config.clone();
         async move {
             loop {
+                let start = Instant::now();
+    
                 match fetch_peer_info(&config_clone).await {
                     Ok(new_data) => {
-                    *PEER_INFO_CACHE.write().await = new_data;
+                        let mut cache = PEER_INFO_CACHE.write().await;
+                        if *cache != new_data {
+                            cache.clear();
+                            cache.extend(new_data);
+                        }
                     }
                     Err(e) => {
-                        // Log the error to error_log.txt
                         if let Err(log_err) = log_error(&format!(
-                            "Peer Info failed: {}", 
+                            "Peer Info failed: {}",  
                             e
                         )) {
                             eprintln!("Failed to log error: {}", log_err);
                         }
                     }
                 }
-                sleep(Duration::from_secs(7)).await;
+    
+                // Dynamic sleep to maintain a 7-second interval
+                let elapsed = start.elapsed();
+                if elapsed < Duration::from_secs(7) {
+                    sleep(Duration::from_secs(7) - elapsed).await;
+                }
             }
         }
     });
@@ -248,25 +287,35 @@ pub async fn run_app<B: tui::backend::Backend>(
         let config_clone = config.clone();
         async move {
             loop {
-                match fetch_chain_tips(&config_clone).await {                    
+                let start = Instant::now();
+    
+                match fetch_chain_tips(&config_clone).await {
                     Ok(new_data) => {
-                        *CHAIN_TIP_CACHE.write().await = ChainTipsResponse {
-                            error: None,  // Adjust if error handling is needed
-                            id: None,     // Adjust if an ID is required
-                            result: new_data,  // Wrap `Vec<ChainTip>` inside `ChainTipsResponse`
+                        let mut cache = CHAIN_TIP_CACHE.write().await;
+                        let new_response = ChainTipsResponse {
+                            error: None,
+                            id: None,
+                            result: new_data,
                         };
+                        if *cache != new_response { // Only update if the data has changed
+                            *cache = new_response;
+                        }
                     }
                     Err(e) => {
-                        // Log the error to error_log.txt
                         if let Err(log_err) = log_error(&format!(
-                            "Chain Tips failed: {}", 
+                            "Chain Tips failed: {}",  
                             e
                         )) {
                             eprintln!("Failed to log error: {}", log_err);
                         }
                     }
                 }
-                sleep(Duration::from_secs(10)).await;
+    
+                // Dynamic sleep to maintain a 10-second interval
+                let elapsed = start.elapsed();
+                if elapsed < Duration::from_secs(10) {
+                    sleep(Duration::from_secs(10) - elapsed).await;
+                }
             }
         }
     });
@@ -276,10 +325,14 @@ pub async fn run_app<B: tui::backend::Backend>(
         let config_clone = config.clone();
         async move {
             loop {
+                let start = Instant::now();
+
                 match fetch_net_totals(&config_clone).await {
                     Ok(new_data) => {
-                        // Update the cache with new data
-                        *NET_TOTALS_CACHE.write().await = new_data;
+                        let mut cache = NET_TOTALS_CACHE.write().await;
+                        if *cache != new_data { // Only update if the data has changed
+                            *cache = new_data;
+                        }
                     }
                     Err(e) => {
                         // Log the error to error_log.txt
@@ -291,7 +344,12 @@ pub async fn run_app<B: tui::backend::Backend>(
                         }
                     }
                 }
-                sleep(Duration::from_secs(7)).await;
+                
+                 // Dynamic sleep to maintain a 7-second interval
+                 let elapsed = start.elapsed();
+                 if elapsed < Duration::from_secs(7) {
+                     sleep(Duration::from_secs(7) - elapsed).await;
+                 }
             }
         }
     });
@@ -301,26 +359,25 @@ pub async fn run_app<B: tui::backend::Backend>(
         let config_clone = config.clone();
         async move {
             let txid_regex = Regex::new(r#""([a-fA-F0-9]{64})""#).unwrap(); // Matches 64-char TxID
-
-            // Step 2: Main Loop (Incremental Updates)
+    
             loop {
-                // Clone the Arc for each iteration
+                let start = Instant::now();
+    
                 if let Err(e) = fetch_mempool_distribution(&config_clone).await {
                     let error_str = e.to_string();
-
+    
                     // Extract TxID using regex
                     if let Some(captures) = txid_regex.captures(&error_str) {
                         if let Some(txid) = captures.get(1) {
                             let txid_str = txid.as_str().to_string();
-
+    
                             // Check if we've logged this TxID already
                             let logged_txs_read = LOGGED_TXS.read().await;
                             if !logged_txs_read.0.contains(&txid_str) {
                                 if let Err(log_err) = log_error(&format!(
-                                    "Mempool Distribution failed: {}", 
+                                    "Mempool Distribution failed: {}",  
                                     e
-                                ))
-                                {
+                                )) {
                                     eprintln!("Failed to log error: {}", log_err);
                                 }
                                 drop(logged_txs_read);
@@ -331,7 +388,7 @@ pub async fn run_app<B: tui::backend::Backend>(
                                         set.remove(&oldest_tx);
                                     }
                                 }
-                                 // Wrap `tx_id` in an `Arc` for shared ownership
+                                // Wrap `tx_id` in an `Arc` for shared ownership
                                 let tx_id_arc = Arc::new(txid_str.clone());
                                 set.insert(tx_id_arc.clone());
                                 queue.push_back(tx_id_arc);
@@ -339,7 +396,12 @@ pub async fn run_app<B: tui::backend::Backend>(
                         }
                     }
                 }
-                sleep(Duration::from_secs(2)).await;
+    
+                // Dynamic sleep to maintain a 2-second interval
+                let elapsed = start.elapsed();
+                if elapsed < Duration::from_secs(2) {
+                    sleep(Duration::from_secs(2) - elapsed).await;
+                }
             }
         }
     });
@@ -347,39 +409,50 @@ pub async fn run_app<B: tui::backend::Backend>(
     sleep(Duration::from_secs(1)).await;
 
     loop {
-
         // Step 1: Fetch all UI data first
-        let blockchain_info = BLOCKCHAIN_INFO_CACHE.read().await;
-        let mempool_info = MEMPOOL_INFO_CACHE.read().await;
-        let network_info = NETWORK_INFO_CACHE.read().await;
-        let peer_info = PEER_INFO_CACHE.read().await;
-        let block_info = BLOCK_INFO_CACHE.read().await;
-        let block24_info = BLOCK24_INFO_CACHE.read().await;
-        let net_totals = NET_TOTALS_CACHE.read().await;
-        let distribution = MEMPOOL_DISTRIBUTION_CACHE.read().await;
-        let chaintips_info = CHAIN_TIP_CACHE.read().await;
+        let (
+            blockchain_info,
+            mempool_info,
+            network_info,
+            peer_info,
+            block_info,
+            block24_info,
+            net_totals,
+            distribution,
+            chaintips_info,
+        ) = tokio::join!(
+            BLOCKCHAIN_INFO_CACHE.read(),
+            MEMPOOL_INFO_CACHE.read(),
+            NETWORK_INFO_CACHE.read(),
+            PEER_INFO_CACHE.read(),
+            BLOCK_INFO_CACHE.read(),
+            BLOCK24_INFO_CACHE.read(),
+            NET_TOTALS_CACHE.read(),
+            MEMPOOL_DISTRIBUTION_CACHE.read(),
+            CHAIN_TIP_CACHE.read(),
+        );
+    
         let chaintips_result = &chaintips_info.result;
         let version_counts = PeerInfo::aggregate_and_sort_versions(&peer_info);
         let version_counts_ref: &[(String, usize)] = &version_counts;
-       
+    
         let avg_block_propagate_time = PeerInfo::calculate_block_propagation_time(
-                &peer_info,
-                blockchain_info.time,
-                blockchain_info.blocks
+            &peer_info,
+            blockchain_info.time,
+            blockchain_info.blocks,
         );
-
-       // Track Propagation Time
-       if !LAST_BLOCK_NUMBER.contains(&blockchain_info.blocks) {
+    
+        // Track Propagation Time
+        if !LAST_BLOCK_NUMBER.contains(&blockchain_info.blocks) {
             if propagation_times.len() == 20 {
                 propagation_times.pop_front();
             }
             propagation_times.push_back(avg_block_propagate_time);
-
-             // Fetch and update the latest block
+    
             if let Err(e) = fetch_miner(&config, &miners_data, &blockchain_info.blocks).await {
                 eprintln!("Error in fetch_miner: {}", e);
             }
-
+    
             LAST_BLOCK_NUMBER.clear(); // Clear the set
             LAST_BLOCK_NUMBER.insert(blockchain_info.blocks); // Insert the new block number
         } else {
@@ -390,20 +463,19 @@ pub async fn run_app<B: tui::backend::Backend>(
                 }
             }
         }
+    
         // Read the last miner inserted
         let last_miner = BLOCK_HISTORY.read().await.last_miner();
-        let last_miner_ref = last_miner.as_ref().unwrap_or(&default_miner);
+        let default_miner_arc = Arc::from(default_miner.as_str()); // Convert &str to Arc<str>
+        let last_miner_ref = last_miner.as_ref().unwrap_or(&default_miner_arc);
         
         // Convert Vec<(String, u64)> to &[(&str, u64)]
-        let hash_distribution: Vec<(&str, u64)> = BLOCK_HISTORY
+        let hash_distribution: Vec<(Arc<str>, u64)> = BLOCK_HISTORY
             .read()
             .await
             .get_miner_distribution()
-            .into_iter()
-            .map(|(miner, hashrate)| {
-                let miner_str: &'static str = Box::leak(miner.into_boxed_str()); // Convert String to &'static str
-                (miner_str, hashrate) // Use the immutable reference
-            })
+            .iter()
+            .map(|(miner, hashrate)| (Arc::from(miner.to_string()), *hashrate))
             .collect::<Vec<_>>();
 
     

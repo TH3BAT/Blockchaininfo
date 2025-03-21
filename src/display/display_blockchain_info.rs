@@ -14,13 +14,14 @@ use crate::{models::{block_info::BlockInfo, blockchain_info::BlockchainInfo},
     utils::{estimate_difficulty_change, estimate_24h_difficulty_change, format_size}};
 use crate::models::errors::MyError;  
 use crate::models::flashing_text::{BEST_BLOCK_TEXT, MINER_TEXT};
+use std::sync::Arc;
 
 // Render the blockchain info into a `tui` terminal UI.
 pub fn display_blockchain_info<B: Backend>(
     blockchain_info: &BlockchainInfo,
     block_info: &BlockInfo,
     block24_info: &BlockInfo,
-    last_miner: &String,
+    last_miner: &Arc<str>,
     frame: &mut Frame<B>,
     area: Rect
 ) -> Result<(), MyError> {
@@ -239,7 +240,7 @@ pub fn display_blockchain_info<B: Backend>(
 
 
 pub fn render_hashrate_distribution_chart<B: Backend>(
-    distribution: &[(&str, u64)], 
+    distribution: &Vec<(Arc<str>, u64)>, 
     frame: &mut Frame<B>,
     area: Rect,
 ) -> Result<(), MyError> {
@@ -270,24 +271,30 @@ pub fn render_hashrate_distribution_chart<B: Backend>(
     });
 
     // Take only the top 8 miners
-    let top_8_distribution: Vec<(&str, u64)> = sorted_distribution
-        .into_iter()
-        .take(8) // Limit to top 8
-        .collect();
+    let top_8_distribution: Vec<(Arc<str>, u64)> = sorted_distribution
+    .into_iter()
+    .take(8) // Limit to top 8
+    .collect();
 
     let total_miners = distribution.len();
     let top8_dist = top_8_distribution.len();
 
+    // Convert Vec<(Arc<str>, u64)> to Vec<(&str, u64)>
+    let top_8_distribution_ref: Vec<(&str, u64)> = top_8_distribution
+    .iter()
+    .map(|(miner, hashrate)| (miner.as_ref(), *hashrate))
+    .collect::<Vec<_>>();
+
     let barchart = BarChart::default()
-        .block(Block::default().title(format!("Hash Rate Distribution Top {} of {} 🌐 (24 hrs)", top8_dist, total_miners))
-        .borders(Borders::ALL))
-        .data(&top_8_distribution) // Use the sorted and filtered data
-        .bar_width(7)
-        .bar_gap(1)
-        .bar_style(Style::default().fg(Color::DarkGray))
-        .value_style(Style::default().fg(Color::White));
-    
+    .block(Block::default().title(format!("Hash Rate Distribution Top {} of {} 🌐 (24 hrs)", top8_dist, total_miners))
+    .borders(Borders::ALL))
+    .data(&top_8_distribution_ref) // Use the converted data
+    .bar_width(7)
+    .bar_gap(1)
+    .bar_style(Style::default().fg(Color::DarkGray))
+    .value_style(Style::default().fg(Color::White));
+
     frame.render_widget(barchart, chunks[1]);
-    
+
     Ok(())
 }

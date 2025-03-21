@@ -37,13 +37,14 @@ use crate::models::mempool_info::{MempoolDistribution, MempoolInfo};
 use crate::models::network_info::NetworkInfo;
 use crate::models::network_totals::NetTotals;
 use std::collections::VecDeque;
+use std::sync::Arc;
 
 /// Displays the base metrics for [BlockChain] sector of Dashboard.
 pub fn display_blockchain_info<B: Backend>(
     blockchain_info: &BlockchainInfo,
     block_info: &BlockInfo,
     block24_info: &BlockInfo,
-    last_miner: &String,
+    last_miner: &Arc<str>,
     frame: &mut Frame<B>,
     area: Rect,
 ) {
@@ -52,7 +53,7 @@ pub fn display_blockchain_info<B: Backend>(
 
 /// Displays the Hash Rate Distribution chart for [BlockChain] sector of Dashboard ('h' toggles).
 pub fn render_hashrate_distribution_chart<B: Backend>(
-    distribution: &[(&str, u64)], 
+    distribution: &Vec<(Arc<str>, u64)>, 
     frame: &mut Frame<B>,
     area: Rect,
 ) {

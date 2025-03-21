@@ -33,7 +33,7 @@ pub async fn fetch_mempool_info(
         .connect_timeout(Duration::from_secs(5))
         .build()?;
 
-    let response = client
+    let mempoolinfo_response = client
         .post(&config.address)
         .basic_auth(&config.username, Some(&config.password))
         .header(CONTENT_TYPE, "application/json")
@@ -55,8 +55,6 @@ pub async fn fetch_mempool_info(
         .map_err(|_e| {
             MyError::CustomError("JSON Parsing error for getmempoolinfo.".to_string())
         })?;
-
-    let mempool_info = response.result;
 
     // Step 3: Fetch raw mempool transactions.
     let json_rpc_request = json!({
@@ -97,5 +95,5 @@ pub async fn fetch_mempool_info(
         MEMPOOL_CACHE.insert(txid);
     }
 
-    Ok(mempool_info)
+    Ok(mempoolinfo_response.result)
 }

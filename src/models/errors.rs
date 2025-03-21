@@ -30,6 +30,7 @@ pub enum MyError {
     SemaphoreError(String),
     TimeoutError(String),
     FileError(String),
+    FileNotFound(String),
 }
 
 impl From<tokio::task::JoinError> for MyError {
@@ -65,6 +66,7 @@ impl fmt::Display for MyError {
             MyError::SemaphoreError(err) => write!(f, "Semaphore error: {}", err), 
             MyError::TimeoutError(msg) => write!(f, "Error: {}", msg),
             MyError::FileError(msg) => write!(f, "File Error: {}", msg),
+            MyError::FileNotFound(msg) => write!(f, "File Error: {}", msg),
         }
     }
 }

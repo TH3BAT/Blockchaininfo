@@ -14,7 +14,7 @@ pub struct NetworkInfoJsonWrap {
 }
 
 /// This struct holds data from getnetworkinfo RPC method.
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct NetworkInfo {
@@ -37,7 +37,7 @@ pub struct NetworkInfo {
 }
 
 /// This struct holds the Network data from NetworkInfo struct.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct Network {
@@ -49,7 +49,7 @@ pub struct Network {
 }
 
 /// This struct holds the LocalAddress data from NetworkInfo struct.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct LocalAddress {

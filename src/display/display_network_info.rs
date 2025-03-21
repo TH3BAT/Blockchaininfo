@@ -141,7 +141,7 @@ pub fn display_network_info<B: Backend>(
                     .borders(Borders::ALL),
             )
             .data(&data)
-            .bar_width(8)
+            .bar_width(7)
             .bar_gap(1)
             .bar_style(Style::default().fg(Color::DarkGray))
             .value_style(Style::default().fg(Color::White));

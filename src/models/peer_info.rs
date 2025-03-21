@@ -16,7 +16,7 @@ pub struct PeerInfoResponse {
 }
 
 /// This struct holds data from getpeerinfo RPC method.
-#[derive(Debug, Deserialize, Clone, Default)]
+#[derive(Debug, Deserialize, Clone, Default, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct PeerInfo {

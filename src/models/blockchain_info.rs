@@ -8,7 +8,7 @@ use tui::style::Color;
 use crate::utils::DIFFICULTY_ADJUSTMENT_INTERVAL;
 
 /// Wrapper Struct - The Bitcoin RPC response wraps the actual getblockchaininfo data inside the result field.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
     pub struct BlockchainInfoJsonWrap {
@@ -18,7 +18,7 @@ use crate::utils::DIFFICULTY_ADJUSTMENT_INTERVAL;
 }
 
 /// This struct holds data from getblockchaininfo RPC method.
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
     pub struct BlockchainInfo {

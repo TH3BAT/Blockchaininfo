@@ -4,7 +4,7 @@
 use serde::Deserialize;
 
 /// Wrapper Struct - The Bitcoin RPC response wraps the actual getnettotals data inside the result field.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct NetTotalsJsonWrap {
@@ -14,7 +14,7 @@ pub struct NetTotalsJsonWrap {
 }
 
 /// This struct holds data from getnettotals RPC method.
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct NetTotals {
@@ -25,7 +25,7 @@ pub struct NetTotals {
 }
 
 /// This struct holds UploadTarget data from NetTotals struct.
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct UploadTarget {

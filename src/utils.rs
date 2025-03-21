@@ -247,9 +247,15 @@ pub fn log_error(message: &str) -> io::Result<()> {
 
 /// Loads the miners.json file into [MinersData].
 pub fn load_miners_data() -> Result<MinersData, MyError> {
-    let data = fs::read_to_string("miners.json")?;
+    let file_path = "miners.json";
+    let data = fs::read_to_string(file_path).map_err(|e| {
+        if e.kind() == io::ErrorKind::NotFound {
+            MyError::FileNotFound(format!("The file '{}' was not found.", file_path))
+        } else {
+            MyError::Io(e)
+        }
+    })?;
     let miners_data: MinersData = serde_json::from_str(&data)?;
     Ok(miners_data)
 }
-
 

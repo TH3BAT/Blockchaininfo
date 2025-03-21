@@ -111,7 +111,7 @@ impl MempoolDistribution {
 }
 
 /// This struct holds data from getmempoolinfo RPC method.
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct MempoolInfo {

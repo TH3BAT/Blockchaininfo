@@ -9,8 +9,6 @@ use crate::config::RpcConfig;
 use crate::models::block_info::{BlockHash, BlockInfo, BlockInfoJsonWrap, MinersData, BlockInfoFull, BlockInfoFullJsonWrap};
 use crate::utils::{DIFFICULTY_ADJUSTMENT_INTERVAL, BLOCK_HISTORY};
 use std::time::Duration;
-// use std::fs::OpenOptions;
-// use std::io::Write;
 
 /// Capture block info with verbose = 1.
 /// Returns block information with Vec of TxIDs.  
@@ -210,8 +208,8 @@ pub async fn fetch_miner(
         .unwrap_or("Unknown".to_string()); // Use "Unknown" if no miner is found
 
     // Add the miner to the BlockHistory (oldest block is automatically removed if full)
-    let block_history = BLOCK_HISTORY.write().await; // Lock the RwLock for writing
-    block_history.add_block(Some(miner.to_string())); // Convert &str to String here
+    let block_history = BLOCK_HISTORY.write().await; 
+    block_history.add_block(Some(miner.into())); // Convert &str to String here
 
     Ok(())
 }

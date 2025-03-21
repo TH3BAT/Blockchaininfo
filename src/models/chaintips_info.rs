@@ -4,7 +4,7 @@
 use serde::Deserialize;
 
 /// Wrapper Struct - The Bitcoin RPC response wraps the actual getchaintips data inside the result field.
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct ChainTipsResponse {
@@ -14,7 +14,7 @@ pub struct ChainTipsResponse {
 }
 
 /// This struct holds data from getchaintips RPC method.
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct ChainTip {
