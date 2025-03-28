@@ -64,6 +64,8 @@ We’re not just another fee tracker—we’re **Bitcoin’s network watchdog**.
 
 **Stay tuned. Stay paranoid.** ⚡  
 
+---
+
 👇 **Here's how our system stacks up against other mempool trackers…**  
 
 ---
