@@ -64,18 +64,6 @@ We’re not just another fee tracker—we’re **Bitcoin’s network watchdog**.
 
 **Stay tuned. Stay paranoid.** ⚡  
 
----
-
-### **Key Changes from Your Original:**  
-
-- Replaced "arcade" tone with **security/decentralization focus**.  
-- Added **direct comparison table** vs. mempool.space.  
-- Highlighted **RBF monitoring as the flagship feature**.  
-- Kept **dust-free fee analytics** (still a differentiator).  
-- Roadmap now **prioritizes RBF forensics** over generic optimizations.  
-
-Want to tweak the emphasis? More technical? Less? Let me know! 🛠️
-
 👇 **Here's how our system stacks up against other mempool trackers…**  
 
 ---
