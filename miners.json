@@ -116,6 +116,10 @@
 	{
 	  "name": "CKPoolXMI",
 	  "wallet": "1BnPfCyvgq7PD2Np6mTTLfdHatApiiRfsV"
-	}
+	},
+  {
+    "name": "BitFuFuPool",
+    "wallet": "3JP3zF7LoeoAotqkNGdvX5szUyNPwd937d"
+  }
   ]
 }
