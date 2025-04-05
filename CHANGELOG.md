@@ -1,4 +1,29 @@
-# [v3.0.0] - 2025-03-10
+# [v0.3.1] - 2025-03-24
+
+Added
+
+- **Memory Efficiency Improvements**:
+  - `Arc<str>` usage for miner data in BlockHistory and distribution functions
+  - Optimized cache update logic with change detection
+- **Performance Enhancements**:
+  - Improved spawn logic to skip redundant operations
+  - Streamlined block number/propagation time handling
+
+Changed
+
+- Updated `tokio` to v1.44.1
+- Updated `reqwest` to v0.12.15
+- Narrowed Version Distribution chart bars for better terminal compatibility
+
+Fixed
+
+- Improved error messaging for missing miners.json
+- Removed redundant conversions and improved type safety
+- Optimized PeerInfo cache updates to reuse allocations
+
+---
+
+[v3.0.0] - 2025-03-10
 
 Added
 
