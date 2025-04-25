@@ -37,6 +37,9 @@
       "name": "MARA Pool",
       "wallet": "15MdAHnkxt9TMC2Rj595hsg8Hnv693pPBB"
     },
+    {  "name": "MARA Pool",
+       "wallet": "bc1q695z03z6kweljcvpwft7vfu6kd0guf24yaaht2"
+    },
     {
       "name": "Braiins Pool",
       "wallet": "34XC8GbijKCCvppNvhw4Ra8QZdWsg8tC11"
@@ -96,6 +99,10 @@
 	{
 	  "name": "NiceHash",
 	  "wallet": "bc1qlltnwqnx4esnkux675k7j5ffx97ue9lkyxvhw0"
+	},
+  {
+	  "name": "NiceHash",
+	  "wallet": "bc1qcxfg3az7fqcdpyfgekqfafw0k7qasxx0aajxtn"
 	},
 	{
 	  "name": "Mining-Dutch",
