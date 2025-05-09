@@ -140,7 +140,8 @@ impl BlockchainInfo {
         if self.blocks == 0 {
             return Err(MyError::InvalidBlockHeight(self.blocks)); // Custom error for invalid block height.
         }
-        Ok((DIFFICULTY_ADJUSTMENT_INTERVAL - (self.blocks % DIFFICULTY_ADJUSTMENT_INTERVAL)) - 1)
+        // Removed the minus 1. The subtraction is done in rpc/blocks.rs. 
+        Ok(DIFFICULTY_ADJUSTMENT_INTERVAL - (self.blocks % DIFFICULTY_ADJUSTMENT_INTERVAL))
     }
     
     /// Returns the blocks reamining in current epoch with color format.
