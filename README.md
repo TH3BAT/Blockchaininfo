@@ -4,7 +4,7 @@
 ![Rust][rust-badge] ![Uptime][uptime-badge]  
 
 [rust-badge]: https://img.shields.io/badge/Rust-1.70+-orange
-[uptime-badge]: https://img.shields.io/badge/Uptime-38_days-brightgreen
+[uptime-badge]: https://img.shields.io/badge/Uptime-60_days-brightgreen
 ![BlockchainInfo Avatar](https://image.nostr.build/98d63043b0980b9b5ffcb5c0aeb904a69e4054f432736f07b159411db669500f.jpg)
 
 ## Overview
@@ -26,7 +26,7 @@ Whether you're a developer, node operator, or Bitcoin enthusiast, Blockchaininfo
 
 ### Reliability  
 
-- **38-day continuous uptime** on Linux/macOS (Rust’s zero-cost abstractions FTW)  
+- **60-day continuous uptime** on Linux/macOS (Rust’s zero-cost abstractions FTW)  
 - Zero unexpected RPC crashes (RPC conflicts handled gracefully)  
 - Memory-safe even during mempool spam storms  
 
