@@ -81,13 +81,9 @@ Whether you're a developer, node operator, or Bitcoin enthusiast, Blockchaininfo
 
 ## Requirements
 
-Here’s the updated **README.md** section with the **new configuration logic** (CLI flag & environment variable support). 🔥  
-
----
-
 ### **Configuration**
 
-The application requires Bitcoin Core RPC credentials to function properly. These credentials can be provided in one of the following ways:
+The application requires Bitcoin Knots or Core RPC credentials to function properly. These credentials can be provided in one of the following ways:
 
 ---
 
@@ -129,7 +125,7 @@ password = "your_password"
 address = "http://127.0.0.1:8332"
 ```
 
-Replace the values with your actual Bitcoin Core RPC credentials.
+Replace the values with your actual Bitcoin Knots or Core RPC credentials.
 
 ---
 
