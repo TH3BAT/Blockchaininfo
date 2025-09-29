@@ -3,3 +3,6 @@ Cargo.lock
 error_log.txt
 src/rpc/initial_mempool_distro_bkup.rs
 src/rpc/mempool_distro_bkup.rs
+.DS_Store
+error_log_20250925_154500.txt
+.gitignore
