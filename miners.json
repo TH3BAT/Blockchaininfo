@@ -41,6 +41,10 @@
        "wallet": "bc1q695z03z6kweljcvpwft7vfu6kd0guf24yaaht2"
     },
     {
+      "name": "MARA Pool",
+       "wallet": "32i1m6gNcSHwiPX9nfTNXVjme9j5DU8y5g"
+    },
+    {
       "name": "Braiins Pool",
       "wallet": "34XC8GbijKCCvppNvhw4Ra8QZdWsg8tC11"
     },
@@ -91,6 +95,10 @@
     {
       "name": "SBI Crypto",
       "wallet": "bc1q7jhxdldstgj9cc95s0wlcg3ys9p27smzn2jrws"
+    },
+    {
+      "name": "SBI Crypto",
+      "wallet": "bc1q2aq0qup0x3dl2vpfdwpsj3f62yw5p47rap7u2n"
     },
     {
       "name": "Binance Pool",
@@ -151,6 +159,10 @@
   {
     "name": "Redrock Pool",
     "wallet": "3F6LYG6o3iP42RrEGgSW4xiVu4i95qm7Ag"
+  },
+  {
+    "name": "Redrock Pool",
+    "wallet": "3554kSaWNnP3B49Xyybert7gmxq2YSnfnx"
   }
   ]
 }
