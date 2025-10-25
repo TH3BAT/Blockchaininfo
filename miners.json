@@ -25,10 +25,10 @@
       "name": "Foundry USA",
       "wallet": "bc1qwzrryqr3ja8w7hnja2spmkgfdcgvqwp5swz4af4ngsjecfz0w0pqud7k38"
     },
-	{
-	  "name": "Foundry USA",
-	  "wallet": "bc1qxhmdufsvnuaaaer4ynz88fspdsxq2h9e9cetdj"	
-	},
+	  {
+	    "name": "Foundry USA",
+	    "wallet": "bc1qxhmdufsvnuaaaer4ynz88fspdsxq2h9e9cetdj"	
+	  },
     {
       "name": "Luxor",
       "wallet": "32BfKjhByDSxx3BM5vUkQ3NQq9csZR6nt6"
@@ -52,10 +52,10 @@
       "name": "F2Pool",
       "wallet": "1KGG9kvV5zXiqyQAMfY32sGt9eFLMmgpgX"
     },
-	{
-	  "name": "F2Pool",
-	  "wallet": "1AfCc4F9c4VTYSE31PUe2kUEKs6ZxiDjxm"
-	},
+	  {
+	    "name": "F2Pool",
+	    "wallet": "1AfCc4F9c4VTYSE31PUe2kUEKs6ZxiDjxm"
+	  },
     {
       "name": "SpiderPool",
       "wallet": "1BM1sAcrfV6d4zPKytzziu4McLQDsFC2Qc"
@@ -75,6 +75,10 @@
     {
       "name": "OCEAN",
       "wallet": "37dvwZZoT3D7RXpTCpN2yKzMmNs2i2Fd1n"
+    },
+    {
+      "name": "OCEAN",
+      "wallet": "3Dkn56s9MVsN7tc6dm8rD4s5rqRyRDHBWC"
     },
     {
       "name": "Poolin",
@@ -104,65 +108,69 @@
       "name": "Binance Pool",
       "wallet": "3G7jcEELKh38L6kaSV8K35pTqsh5bgZW2D"
     },
-	{
-	  "name": "Solo CK",
-	  "wallet": "bc1qaxccz85rx6ywy2xw6ugtm6u37mvew6qqn7lgtd"
-	},
-	{
-	  "name": "Solo CK",
-	  "wallet": "bc1q28kkr5hk4gnqe3evma6runjrd2pvqyp8fpwfzu"
-	},
-	{
-	  "name": "NiceHash",
-	  "wallet": "bc1qlltnwqnx4esnkux675k7j5ffx97ue9lkyxvhw0"
-	},
-  {
-	  "name": "NiceHash",
-	  "wallet": "bc1qcxfg3az7fqcdpyfgekqfafw0k7qasxx0aajxtn"
-	},
-	{
-	  "name": "Mining-Dutch",
-	  "wallet": "1AfPSq5ZbqBaxU5QAayLQJMcXV8HZt92eq"
-	},
-	{
-	  "name": "KuCoinPool",
-	  "wallet": "32AiiExkMB4ta2mCHTrbEESNnUJpZv8X3J"
-	},
-	{
-	  "name": "PEGA Pool",
-	  "wallet": "3GRKUVRe91ariqquFWTsAhxA9D21S9aRat"
-	},
-	{
-	  "name": "EMCDPool",
-	  "wallet": "3LwoXDToPiq2rBaQzoe2ZnaUvhGykFp2LM"
-	},
-	{
-	  "name": "CKPoolXMI",
-	  "wallet": "1BnPfCyvgq7PD2Np6mTTLfdHatApiiRfsV"
-	},
-  {
-    "name": "BitFuFuPool",
-    "wallet": "3JP3zF7LoeoAotqkNGdvX5szUyNPwd937d"
-  },
-  {
-    "name": "MiningSquared",
-    "wallet": "3GdjWJdkJhtkxRZ3Ns1LstaoHNMBW8XsvU"
-  },
-  {
-    "name": "Innopolis Tech",
-    "wallet": "bc1q75t4wewkmf3l9qg097zvtlh05v5pdz6699kv8k"
-  },
-  {
-    "name": "luckyPool",
-    "wallet": "1DnPPFQPrfyNTiHPXhDFyqNnW9T62GEhB1"
-  },
-  {
-    "name": "Redrock Pool",
-    "wallet": "3F6LYG6o3iP42RrEGgSW4xiVu4i95qm7Ag"
-  },
-  {
-    "name": "Redrock Pool",
-    "wallet": "3554kSaWNnP3B49Xyybert7gmxq2YSnfnx"
-  }
+	  {
+	    "name": "Solo CK",
+	    "wallet": "bc1qaxccz85rx6ywy2xw6ugtm6u37mvew6qqn7lgtd"
+	  },
+	  {
+	    "name": "Solo CK",
+	    "wallet": "bc1q28kkr5hk4gnqe3evma6runjrd2pvqyp8fpwfzu"
+	  },
+	  {
+	    "name": "NiceHash",
+	    "wallet": "bc1qlltnwqnx4esnkux675k7j5ffx97ue9lkyxvhw0"
+	  },
+    {
+	    "name": "NiceHash",
+	    "wallet": "bc1qcxfg3az7fqcdpyfgekqfafw0k7qasxx0aajxtn"
+	  },
+	  {
+	    "name": "Mining-Dutch",
+	    "wallet": "1AfPSq5ZbqBaxU5QAayLQJMcXV8HZt92eq"
+	  },
+	  {
+	    "name": "KuCoinPool",
+	    "wallet": "32AiiExkMB4ta2mCHTrbEESNnUJpZv8X3J"
+	  },
+	  {
+	    "name": "PEGA Pool",
+	    "wallet": "3GRKUVRe91ariqquFWTsAhxA9D21S9aRat"
+	  },
+	  {
+	    "name": "EMCDPool",
+	    "wallet": "3LwoXDToPiq2rBaQzoe2ZnaUvhGykFp2LM"
+	  },
+	  {
+	    "name": "CKPoolXMI",
+	    "wallet": "1BnPfCyvgq7PD2Np6mTTLfdHatApiiRfsV"
+	  },
+    {
+      "name": "BitFuFuPool",
+      "wallet": "3JP3zF7LoeoAotqkNGdvX5szUyNPwd937d"
+    },
+    {
+      "name": "MiningSquared",
+      "wallet": "3GdjWJdkJhtkxRZ3Ns1LstaoHNMBW8XsvU"
+    },
+    {
+      "name": "Innopolis Tech",
+      "wallet": "bc1q75t4wewkmf3l9qg097zvtlh05v5pdz6699kv8k"
+    },
+    {
+      "name": "luckyPool",
+      "wallet": "1DnPPFQPrfyNTiHPXhDFyqNnW9T62GEhB1"
+    },
+    {
+      "name": "Redrock Pool",
+      "wallet": "3F6LYG6o3iP42RrEGgSW4xiVu4i95qm7Ag"
+    },
+    {
+      "name": "Redrock Pool",
+      "wallet": "3554kSaWNnP3B49Xyybert7gmxq2YSnfnx"
+    },
+    {
+      "name": "Est3lar",
+      "wallet": "34qGNFx6uQv6SzjYPbYVWtjvuy5DSGugt8"
+    }
   ]
 }
