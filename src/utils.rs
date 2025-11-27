@@ -165,22 +165,32 @@ pub fn estimate_24h_difficulty_change(
 
 
 /// Returns a `tui` widget for the header of Dashboard.
-pub fn render_header() -> Paragraph<'static> {
+pub fn render_header(epoch_flip: bool) -> Paragraph<'static> {
+    let flip_dot = if epoch_flip {
+        // Filled dot
+        Span::styled(" ●", Style::default().fg(Color::Yellow))
+    } else {
+        // Empty dot
+        Span::styled(" ○", Style::default().fg(Color::DarkGray))
+    };
     // Combine the footer message and app version.
     let lines = vec![
-        Spans::from(Span::styled(
-            r"₿lockChainInfo",
-            Style::default().fg(Color::Cyan),
-        )),
+        Spans::from(vec![
+            Span::styled(
+                r"₿lockChainInfo",
+                Style::default().fg(Color::Cyan),
+            ),
+            flip_dot,
+        ]),
         Spans::from(Span::styled(
             format!("v{}", APP_VERSION),
             Style::default().fg(Color::DarkGray).add_modifier(Modifier::ITALIC),
         )),
     ];
-     // Create the paragraph widget.
-     Paragraph::new(lines)
-     .alignment(Alignment::Center)
-     .block(Block::default().title("").borders(Borders::NONE))
+
+    Paragraph::new(lines)
+        .alignment(Alignment::Center)
+        .block(Block::default().title("").borders(Borders::NONE))
 }
 
 /// Returns a `tui` widget for the footer of Dashboard.

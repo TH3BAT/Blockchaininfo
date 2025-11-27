@@ -41,7 +41,9 @@ struct App {
     tx_result: Option<String>,
     is_exiting: bool,
     is_pasting: bool, 
-    show_hash_distribution: bool, 
+    show_hash_distribution: bool,
+    latest_height: u64,
+    epoch_flip: bool, 
 }
 
 impl App {
@@ -53,6 +55,8 @@ impl App {
             is_exiting: false,
             is_pasting: false,
             show_hash_distribution: false,
+            latest_height: 0,
+            epoch_flip: false,
         }
     }
 }
@@ -431,7 +435,18 @@ pub async fn run_app<B: tui::backend::Backend>(
             MEMPOOL_DISTRIBUTION_CACHE.read(),
             CHAIN_TIP_CACHE.read(),
         );
-    
+        
+        // Adding a Flip Dot to indicate when difficulty epoch changes
+        let previous_height = app.latest_height;
+        let current_height = blockchain_info.blocks;
+        
+        // Detect epoch flip (2016-block boundary)
+        app.epoch_flip = (previous_height % 2016 != 0) &&
+                       (current_height % 2016 == 0);
+        
+        // Update stored height
+        app.latest_height = current_height;
+
         let chaintips_result = &chaintips_info.result;
         let version_counts = PeerInfo::aggregate_and_sort_versions(&peer_info);
         let version_counts_ref: &[(String, usize)] = &version_counts;
@@ -598,7 +613,7 @@ pub async fn run_app<B: tui::backend::Backend>(
             // Header Block
             let block_1 = Block::default().borders(Borders::NONE);
             frame.render_widget(block_1, chunks[0]);
-            let header_widget = render_header();
+            let header_widget = render_header(app.epoch_flip);
             frame.render_widget(header_widget, chunks[0]);
 
             // Blockchain Info Block
