@@ -42,7 +42,6 @@ struct App {
     is_exiting: bool,
     is_pasting: bool, 
     show_hash_distribution: bool,
-    latest_height: u64,
 }
 
 impl App {
@@ -54,7 +53,6 @@ impl App {
             is_exiting: false,
             is_pasting: false,
             show_hash_distribution: false,
-            latest_height: 0,
         }
     }
 }
@@ -435,12 +433,8 @@ pub async fn run_app<B: tui::backend::Backend>(
         );
         
         // Adding a Flip Dot to indicate when difficulty epoch changes
-        let current_height = blockchain_info.blocks;
-        let into_epoch = current_height % 2016;
+        let into_epoch = blockchain_info.blocks % 2016;
         let percent = (into_epoch as f64 / 2016.0) * 100.0;
-        
-        // Update stored height
-        app.latest_height = current_height;
 
         let chaintips_result = &chaintips_info.result;
         let version_counts = PeerInfo::aggregate_and_sort_versions(&peer_info);
