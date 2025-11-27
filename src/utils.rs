@@ -165,19 +165,26 @@ pub fn estimate_24h_difficulty_change(
 
 
 /// Returns a `tui` widget for the header of Dashboard.
-pub fn render_header(epoch_flip: bool) -> Paragraph<'static> {
-    let flip_dot = if epoch_flip {
-        // Filled dot
-        Span::styled(" ●", Style::default().fg(Color::Yellow))
+pub fn render_header(percent: f64) -> Paragraph<'static> {
+    let dot: &'static str = if percent < 25.0 {
+        "○"
+    } else if percent < 50.0 {
+        "◔"
+    } else if percent < 75.0 {
+        "◑"
+    } else if percent < 100.0 {
+        "◕"
     } else {
-        // Empty dot
-        Span::styled(" ○", Style::default().fg(Color::DarkGray))
+        "●"
     };
+    
+    let flip_dot = Span::styled(dot, Style::default().fg(Color::Yellow));
+
     // Combine the footer message and app version.
     let lines = vec![
         Spans::from(vec![
             Span::styled(
-                r"₿lockChainInfo",
+                r"₿lockChainInfo ",
                 Style::default().fg(Color::Cyan),
             ),
             flip_dot,

@@ -439,6 +439,8 @@ pub async fn run_app<B: tui::backend::Backend>(
         // Adding a Flip Dot to indicate when difficulty epoch changes
         let previous_height = app.latest_height;
         let current_height = blockchain_info.blocks;
+        let into_epoch = current_height % 2016;
+        let percent = (into_epoch as f64 / 2016.0) * 100.0;
         
         // Detect epoch flip (2016-block boundary)
         app.epoch_flip = (previous_height % 2016 != 0) &&
@@ -613,7 +615,7 @@ pub async fn run_app<B: tui::backend::Backend>(
             // Header Block
             let block_1 = Block::default().borders(Borders::NONE);
             frame.render_widget(block_1, chunks[0]);
-            let header_widget = render_header(app.epoch_flip);
+            let header_widget = render_header(percent);
             frame.render_widget(header_widget, chunks[0]);
 
             // Blockchain Info Block
