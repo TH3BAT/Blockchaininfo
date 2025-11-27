@@ -39,7 +39,28 @@ pub fn display_blockchain_info<B: Backend>(
         block_info.time,  
     );
 
-    let difficulty_change_display = if block_info.confirmations < 6 {
+    // Difficulty estimate visibility rule:
+    //
+    // We only display the estimated difficulty change *after* 5 blocks have
+    // passed in the new difficulty epoch.
+    //
+    //   - Using `block_info.confirmations` was incorrect and only worked
+    //     accidentally because the newest block starts with low confirmations.
+    //     It did NOT reliably correlate to epoch position.
+    //
+    // Correct logic:
+    //   - Each difficulty epoch is exactly 2016 blocks.
+    //   - `height % 2016` gives how many blocks *into* the epoch we are.
+    //   - Show "N/A" for blocks 0–4 (i.e. 2016–2012 remaining).
+    //   - Show estimate starting at block 5 (2011 blocks remaining).
+    //
+    // This guarantees stable behavior every epoch with no accidental side effects.
+
+    let height = blockchain_info.blocks;
+    let blocks_into_epoch = height % 2016;
+
+
+    let difficulty_change_display = if blocks_into_epoch < 5 {
         // Display "N/A" for the first 6 blocks
         Span::styled(
             " N/A ",
