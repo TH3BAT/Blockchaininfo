@@ -29,6 +29,7 @@ use crate::models::network_info::NetworkInfo;
 use crate::models::network_totals::NetTotals;
 use crate::models::block_info::{BlockHistory, MinersData};
 use std::io::Read;
+use tui::style::Color::{DarkGray, Yellow};
 
 // Constants for bytes formatting.
 const KB: u64 = 1024;
@@ -178,8 +179,16 @@ pub fn render_header(percent: f64) -> Paragraph<'static> {
         "◕"
     };
 
-    
-    let cycle_dot = Span::styled(dot, Style::default().fg(Color::Yellow));
+    let outline_color = if percent < 0.10 {
+        DarkGray
+    } else {
+        Yellow
+    };
+
+    let cycle_dot = Span::styled(
+        dot,
+        Style::default().fg(outline_color)
+    );
 
     // Combine the footer message and app version.
     let lines = vec![
