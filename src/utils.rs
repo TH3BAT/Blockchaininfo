@@ -166,19 +166,20 @@ pub fn estimate_24h_difficulty_change(
 
 /// Returns a `tui` widget for the header of Dashboard.
 pub fn render_header(percent: f64) -> Paragraph<'static> {
-    let dot: &'static str = if percent < 25.0 {
+    let dot: &'static str = if percent == 0.0 {
+        "●" // new epoch signature (full moon)
+    } else if percent < 25.0 {
         "○"
     } else if percent < 50.0 {
         "◔"
     } else if percent < 75.0 {
         "◑"
-    } else if percent < 100.0 {
-        "◕"
     } else {
-        "●"
+        "◕"
     };
+
     
-    let flip_dot = Span::styled(dot, Style::default().fg(Color::Yellow));
+    let cycle_dot = Span::styled(dot, Style::default().fg(Color::Yellow));
 
     // Combine the footer message and app version.
     let lines = vec![
@@ -187,7 +188,7 @@ pub fn render_header(percent: f64) -> Paragraph<'static> {
                 r"₿lockChainInfo ",
                 Style::default().fg(Color::Cyan),
             ),
-            flip_dot,
+            cycle_dot,
         ]),
         Spans::from(Span::styled(
             format!("v{}", APP_VERSION),

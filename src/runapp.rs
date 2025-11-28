@@ -432,7 +432,8 @@ pub async fn run_app<B: tui::backend::Backend>(
             CHAIN_TIP_CACHE.read(),
         );
         
-        // Adding a Flip Dot to indicate when difficulty epoch changes
+        /*  Adding a progressive Epoch dot which indicates where we are in ths current difficulty cycle.
+            The percent variable is passed to render_header() to indicate which circle phase is visible. */
         let into_epoch = blockchain_info.blocks % 2016;
         let percent = (into_epoch as f64 / 2016.0) * 100.0;
 
