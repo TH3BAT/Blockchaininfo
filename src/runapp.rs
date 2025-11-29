@@ -368,7 +368,7 @@ pub async fn run_app<B: tui::backend::Backend>(
                 let start = Instant::now();
                 let dust_free = dust_flag.load(Ordering::Relaxed);
                 if let Err(e) = fetch_mempool_distribution(&config_clone, dust_free).await {
-                    eprintln!("getmempoolentry error {}", e);
+                    let _ = &e;
                     // let error_str = e.to_string();
                    /*
                     // Extract TxID using regex
