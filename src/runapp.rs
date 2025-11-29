@@ -617,11 +617,39 @@ pub async fn run_app<B: tui::backend::Backend>(
             frame.render_widget(header_widget, chunks[0]);
 
             // Blockchain Info Block
+            let hrd_label = if app.show_hash_distribution {
+                // ON — match Mempool's yellow highlight
+                Span::styled(
+                    "[H] HRD",
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD)
+                )
+            } else {
+                // OFF — dark gray, same as inactive Mempool toggle
+                Span::styled(
+                    "[H] HRD",
+                    Style::default().fg(Color::DarkGray)
+                )
+            };
+
+            // Build the full title as two spans for clean separation
+            let blockchain_title = Spans::from(vec![
+                Span::styled(
+                    "[Blockchain] ",
+                    Style::default()
+                        .fg(Color::DarkGray)
+                        .add_modifier(Modifier::BOLD)
+                ),
+                hrd_label,
+            ]);
+
             let block_2 = Block::default()
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(Color::DarkGray))
                 .border_type(BorderType::Rounded)
-                .title(Span::styled("[₿lockChain ('h' toggles HRD)]", Style::default().fg(Color::DarkGray).add_modifier(Modifier::BOLD)));
+                .title(blockchain_title);
+
             frame.render_widget(block_2, chunks[1]);
             
             // println!("DEBUG: block_info length = {}", block_info.len());
