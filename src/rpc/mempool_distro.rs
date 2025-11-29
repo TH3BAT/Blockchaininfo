@@ -10,7 +10,7 @@ use crate::models::mempool_info::{MempoolEntryJsonWrap, MempoolEntry};
 use rand::rngs::StdRng;
 use rand::SeedableRng; 
 use rand::prelude::SliceRandom;
-use crate::utils::{log_error, LOGGED_TXS};
+use crate::utils::{log_error};
 use crate::rpc::mempool::MEMPOOL_CACHE; 
 use crate::utils::MEMPOOL_DISTRIBUTION_CACHE;
 // use dashmap::DashSet;
@@ -111,6 +111,8 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig, dust_free: bool) -> 
                     Ok(()) 
                 }
                 Err(e) => {
+                    /* Removing logging getmempoolentry as errors since they are expected.
+                       The number of TXs incresase under ALL TX view, as dust txs are the primary culprit.
                     let logged_txs_read = LOGGED_TXS.read().await;
                     if !logged_txs_read.0.contains(&tx_id) {
                         // Log the error
@@ -133,7 +135,7 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig, dust_free: bool) -> 
                         let tx_id_arc = Arc::new(tx_id.clone());
                         set.insert(tx_id_arc.clone());
                         queue.push_back(tx_id_arc);
-                    }
+                    } */
                     return Err(MyError::RpcRequestError(tx_id.clone(), e.to_string())); // Return CustomError
                 }
             }
@@ -145,9 +147,12 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig, dust_free: bool) -> 
         match task.await {
             Ok(result) => {
                 if let Err(e) = result {
+                    eprintln!("Task reported Tx failure: {}", e);
+
                     // Convert the error to a string
-                    let error_string = format!("{:?}", e);
-    
+                    // let error_string = format!("{:?}", e);
+                    
+                    /*
                     // Extract the Tx ID from the error string
                     if let Some(tx_id) = extract_tx_id_from_error_string(&error_string) {
                         // Check if the Tx ID is already logged
@@ -180,11 +185,11 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig, dust_free: bool) -> 
                             )) {
                                 eprintln!("Task reported Tx failure: {}", log_err);
                             }
-                    }
+                    } */
                 }
             }
             Err(e) => {
-                // Log the join error using your custom log_error function
+                // Log the join error using our custom log_error function
                 if let Err(log_err) = log_error(&format!(
                     "Task joined failed: {}", e
                 )) {
@@ -201,7 +206,8 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig, dust_free: bool) -> 
     Ok(())
 }
 
-/// Helper function uses Regex to search for TxID 64-character hex string.
+/* Helper function uses Regex to search for TxID 64-character hex string.
+
 fn extract_tx_id_from_error_string(error_string: &str) -> Option<String> {
     // Look for the Tx ID pattern in the error string
     let tx_id_pattern = r#"RpcRequestError\("([a-f0-9]{64})"#;
@@ -217,3 +223,4 @@ fn extract_tx_id_from_error_string(error_string: &str) -> Option<String> {
     // If no Tx ID is found, return None
     None
 }
+*/

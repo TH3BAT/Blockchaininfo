@@ -27,11 +27,11 @@ use std::time::Duration;
 use tokio::time::sleep;
 use blockchaininfo::utils::log_error;
 use crate::models::chaintips_info::ChainTipsResponse;
-use regex::Regex;
+// use regex::Regex;
 use dashmap::DashSet;
 use once_cell::sync::Lazy;
 use crate::utils::{BLOCKCHAIN_INFO_CACHE, BLOCK_INFO_CACHE, MEMPOOL_INFO_CACHE, CHAIN_TIP_CACHE, BLOCK24_INFO_CACHE,
-PEER_INFO_CACHE, NETWORK_INFO_CACHE, NET_TOTALS_CACHE, MEMPOOL_DISTRIBUTION_CACHE, LOGGED_TXS};
+PEER_INFO_CACHE, NETWORK_INFO_CACHE, NET_TOTALS_CACHE, MEMPOOL_DISTRIBUTION_CACHE}; // LOGGED_TXS};
 use std::sync::Arc;
 use tokio::time::Instant;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -362,13 +362,15 @@ pub async fn run_app<B: tui::backend::Backend>(
     tokio::spawn({
         let config_clone = config.clone();
         async move {
-            let txid_regex = Regex::new(r#""([a-fA-F0-9]{64})""#).unwrap(); // Matches 64-char TxID
+            // let txid_regex = Regex::new(r#""([a-fA-F0-9]{64})""#).unwrap(); // Matches 64-char TxID
     
             loop {
                 let start = Instant::now();
                 let dust_free = dust_flag.load(Ordering::Relaxed);
                 if let Err(e) = fetch_mempool_distribution(&config_clone, dust_free).await {
-                    let error_str = e.to_string();
+                    eprintln!("getmempoolentry error {}", e);
+                    // let error_str = e.to_string();
+                   /*
                     // Extract TxID using regex
                     if let Some(captures) = txid_regex.captures(&error_str) {
                         if let Some(txid) = captures.get(1) {
@@ -397,7 +399,7 @@ pub async fn run_app<B: tui::backend::Backend>(
                                 queue.push_back(tx_id_arc);
                             }
                         }
-                    }
+                    } */
                 }
     
                 // Dynamic sleep to maintain a 2-second interval
