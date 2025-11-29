@@ -193,7 +193,7 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig, dust_free: bool) -> 
                 if let Err(log_err) = log_error(&format!(
                     "Task joined failed: {}", e
                 )) {
-                    eprintln!("Task join failure: {}", log_err);
+                    let _ = log_err;
                 }
             }
         }
