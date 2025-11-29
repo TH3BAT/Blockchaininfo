@@ -147,7 +147,7 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig, dust_free: bool) -> 
         match task.await {
             Ok(result) => {
                 if let Err(e) = result {
-                    eprintln!("Task reported Tx failure: {}", e);
+                    let _ = e;
 
                     // Convert the error to a string
                     // let error_string = format!("{:?}", e);
