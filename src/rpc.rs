@@ -72,9 +72,10 @@ pub async fn fetch_peer_info(config: &RpcConfig) -> Result<Vec<PeerInfo>, MyErro
 
 /// Fetches mempool transactions, processes dust-free, and collects the metrics into MempoolDistribution struct.
 pub async fn fetch_mempool_distribution(
-    config: &RpcConfig, 
+    config: &RpcConfig,
+    dust_free: bool, 
 ) -> Result<(), MyError> {
-    mempool_distro::fetch_mempool_distribution(config).await
+    mempool_distro::fetch_mempool_distribution(config, dust_free).await
 }
 
 /// Fetches transaction and returns either confirmed on-chain tx or mempool status.

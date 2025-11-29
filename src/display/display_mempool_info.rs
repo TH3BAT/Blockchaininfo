@@ -22,6 +22,7 @@ const SPINNER_FRAMES: [&str; 4] = ["|", "/", "-", "\\"];
 pub fn display_mempool_info<B: Backend>(
     mempool_info: &MempoolInfo,
     distribution: &MempoolDistribution,
+    dust_free: bool,
     frame: &mut Frame<B>,
     area: Rect, 
 ) -> Result<(), MyError> {
@@ -58,7 +59,7 @@ pub fn display_mempool_info<B: Backend>(
     let total_size = distribution.small + distribution.medium + distribution.large;
     let dust_free_percentage = (total_size as f64 / mempool_info.size as f64) * 100.0;
     let formatted_dust_free = format!("{:.1}%", dust_free_percentage);
-
+    
     let (small_pct, medium_pct, large_pct) = calculate_rounded_percentages(distribution.small.try_into().unwrap(), distribution.medium.try_into().unwrap(), Some(distribution.large.try_into().unwrap()), total_size.try_into().unwrap());
     let (young_pct, moderate_pct, old_pct) = calculate_rounded_percentages(distribution.young.try_into().unwrap(), distribution.moderate.try_into().unwrap(), Some(distribution.old.try_into().unwrap()), total_size.try_into().unwrap());
     let (rbf_pct, non_rbf_pct, _) = calculate_rounded_percentages(distribution.rbf_count.try_into().unwrap(), distribution.non_rbf_count.try_into().unwrap(), None, total_size.try_into().unwrap());
@@ -77,21 +78,33 @@ pub fn display_mempool_info<B: Backend>(
 
      // Get the style for the FlashingText
      let transaction_style = TRANSACTION_TEXT.lock().unwrap().style();
-
-     let transaction_spans = Spans::from(vec![
+    
+    let mut spans: Vec<Span> = vec![
         Span::styled("📊 Transactions: ", Style::default().fg(Color::Gray)),
         Span::styled(
             mempool_info.size.to_formatted_string(&Locale::en),
             transaction_style,
         ),
-        Span::styled(" | ", Style::default().fg(Color::DarkGray)),
-        Span::styled(
+    ];
+
+    // Only show dust-free metrics if toggle is ON
+    if dust_free {
+        spans.push(Span::styled(" | ", Style::default().fg(Color::DarkGray)));
+        spans.push(Span::styled(
             format!("{} ", formatted_dust_free),
-            Style::default().fg(Color::Gray), // Dust-free percentage in Gray
-        ),
-        Span::styled("dᵤₛₜ₋fᵣₑₑ", Style::default().fg(Color::DarkGray)
-            .add_modifier(Modifier::ITALIC)),
-    ]);
+            Style::default().fg(Color::Gray),
+        ));
+        spans.push(
+            Span::styled(
+                "dᵤₛₜ₋fᵣₑₑ",
+                Style::default()
+                    .fg(Color::DarkGray)
+                    .add_modifier(Modifier::ITALIC),
+            )
+        );
+    }
+
+    let transaction_spans = Spans::from(spans);
 
     // Create the layout for this specific chunk (using passed 'area').
     let chunks = Layout::default()
@@ -121,24 +134,7 @@ pub fn display_mempool_info<B: Backend>(
     frame.render_widget(mempool_gauge, chunks[1]);
 
     let mempool_content = vec![
-        transaction_spans
-        /* Spans::from(vec![
-            Span::styled("📊 Transactions: ", Style::default().fg(Color::Gray)),
-            Span::styled(
-                format!(
-                    "{} ",
-                    mempool_info.size.to_formatted_string(&Locale::en),
-                ),
-                Style::default().fg(Color::Green),
-            ),
-            Span::styled("| ", Style::default().fg(Color::DarkGray)),
-            Span::styled(
-                format!("{} ", formatted_dust_free),
-                Style::default().fg(Color::Gray), // Dust-free percentage in Gray
-            ),
-            Span::styled("dᵤₛₜ₋fᵣₑₑ", Style::default().fg(Color::DarkGray)
-                .add_modifier(Modifier::ITALIC)),
-        ]) */,
+        transaction_spans,
         Spans::from(vec![
             Span::styled("💾 Memory: ", Style::default().fg(Color::Gray)),
             Span::styled(
@@ -166,8 +162,8 @@ pub fn display_mempool_info<B: Backend>(
          // Size Distribution.
         Spans::from(vec![
             Span::styled("📏 Size Distribution ", Style::default().fg(Color::Gray)),
-            Span::styled("dᵤₛₜ₋fᵣₑₑ", Style::default().fg(Color::DarkGray)
-                .add_modifier(Modifier::ITALIC)),
+            //Span::styled("dᵤₛₜ₋fᵣₑₑ", Style::default().fg(Color::DarkGray)
+            //    .add_modifier(Modifier::ITALIC)),
             ]),
         Spans::from(vec![
             Span::styled("  🔹 Small (< 250 vBytes)     ", Style::default().fg(Color::Yellow)),
@@ -224,8 +220,8 @@ pub fn display_mempool_info<B: Backend>(
         // Age Distribution.
         Spans::from(vec![
             Span::styled("⏳ Age Distribution ", Style::default().fg(Color::Gray)),
-            Span::styled("dᵤₛₜ₋fᵣₑₑ", Style::default().fg(Color::DarkGray)
-                .add_modifier(Modifier::ITALIC)),
+            //Span::styled("dᵤₛₜ₋fᵣₑₑ", Style::default().fg(Color::DarkGray)
+            //    .add_modifier(Modifier::ITALIC)),
             ]),
         Spans::from(vec![
             Span::styled("  🟢 Young (< 5 min)          ", Style::default().fg(Color::Yellow)),
@@ -282,8 +278,8 @@ pub fn display_mempool_info<B: Backend>(
         // RBF Distribution.
         Spans::from(vec![
             Span::styled("♻️ RBF Distribution ", Style::default().fg(Color::Gray)),
-            Span::styled("dᵤₛₜ₋fᵣₑₑ", Style::default().fg(Color::DarkGray)
-                .add_modifier(Modifier::ITALIC)),
+            //Span::styled("dᵤₛₜ₋fᵣₑₑ", Style::default().fg(Color::DarkGray)
+            //    .add_modifier(Modifier::ITALIC)),
             ]),
         Spans::from(vec![
             Span::styled("  🔄 RBF Transactions         ", Style::default().fg(Color::Yellow)),
@@ -321,8 +317,8 @@ pub fn display_mempool_info<B: Backend>(
         ]),
         Spans::from(vec![
             Span::styled("📉 Fee Metrics ", Style::default().fg(Color::Gray)),
-            Span::styled("dᵤₛₜ₋fᵣₑₑ", Style::default().fg(Color::DarkGray)
-                .add_modifier(Modifier::ITALIC)),
+            //Span::styled("dᵤₛₜ₋fᵣₑₑ", Style::default().fg(Color::DarkGray)
+            //    .add_modifier(Modifier::ITALIC)),
             ]),
         Spans::from(vec![
             Span::styled("  📊 Average Fee (BTC): ", Style::default().fg(Color::Yellow)),

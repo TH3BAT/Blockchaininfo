@@ -14,7 +14,7 @@ use tui::backend::CrosstermBackend;
 use tui::layout::{Layout, Constraint, Direction, Margin, Rect};
 use tui::widgets::{Block, Borders, Paragraph, Clear, Wrap, BorderType};
 use tui::style::{Color, Style, Modifier};
-use tui::text::Span;
+use tui::text::{Span, Spans};
 use tui::Terminal;
 use crossterm::{
     event::{self, Event, KeyCode},
@@ -34,6 +34,7 @@ use crate::utils::{BLOCKCHAIN_INFO_CACHE, BLOCK_INFO_CACHE, MEMPOOL_INFO_CACHE, 
 PEER_INFO_CACHE, NETWORK_INFO_CACHE, NET_TOTALS_CACHE, MEMPOOL_DISTRIBUTION_CACHE, LOGGED_TXS};
 use std::sync::Arc;
 use tokio::time::Instant;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 struct App {
     show_popup: bool,
@@ -42,6 +43,7 @@ struct App {
     is_exiting: bool,
     is_pasting: bool, 
     show_hash_distribution: bool,
+    dust_free: Arc<AtomicBool>,
 }
 
 impl App {
@@ -53,6 +55,7 @@ impl App {
             is_exiting: false,
             is_pasting: false,
             show_hash_distribution: false,
+            dust_free: Arc::new(AtomicBool::new(true)),
         }
     }
 }
@@ -355,6 +358,7 @@ pub async fn run_app<B: tui::backend::Backend>(
     });
 
     // Mempool Distribution
+    let dust_flag = app.dust_free.clone();
     tokio::spawn({
         let config_clone = config.clone();
         async move {
@@ -362,10 +366,9 @@ pub async fn run_app<B: tui::backend::Backend>(
     
             loop {
                 let start = Instant::now();
-    
-                if let Err(e) = fetch_mempool_distribution(&config_clone).await {
+                let dust_free = dust_flag.load(Ordering::Relaxed);
+                if let Err(e) = fetch_mempool_distribution(&config_clone, dust_free).await {
                     let error_str = e.to_string();
-    
                     // Extract TxID using regex
                     if let Some(captures) = txid_regex.captures(&error_str) {
                         if let Some(txid) = captures.get(1) {
@@ -573,6 +576,13 @@ pub async fn run_app<B: tui::backend::Backend>(
                             app.is_pasting = false; // Reset paste flag
                         }
                     }
+                    KeyCode::Char('d') | KeyCode::Char('D') => {
+                        app.dust_free.store(
+                        !app.dust_free.load(Ordering::Relaxed),
+                        Ordering::Relaxed
+                    );
+
+                    }
                     _ => {
                         // Assume paste is complete when a non-char key is pressed
                         if app.is_pasting {
@@ -628,13 +638,24 @@ pub async fn run_app<B: tui::backend::Backend>(
                 }                       
             }
             // Mempool Info Block
+            let dust_label = if app.dust_free.load(Ordering::Relaxed) {
+                Span::styled(" [D] DUST-FREE", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))
+            } else {
+                Span::styled(" [D] ALL TX", Style::default().fg(Color::DarkGray))
+            };
+
+            let mempool_title = Spans(vec![
+                Span::styled("[Mempool]", Style::default().fg(Color::DarkGray).add_modifier(Modifier::BOLD)),
+                dust_label,
+            ]);
+
             let block_3 = Block::default()
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(Color::DarkGray))
                 .border_type(BorderType::Rounded)
-                .title(Span::styled("[Mempool]", Style::default().fg(Color::DarkGray).add_modifier(Modifier::BOLD)));
+                .title(mempool_title);
             frame.render_widget(block_3, chunks[2]);
-            display_mempool_info(&mempool_info, &distribution, frame, chunks[2]);
+            display_mempool_info(&mempool_info, &distribution, app.dust_free.load(Ordering::Relaxed), frame, chunks[2]);
 
             // Network Info Block
             let block_4 = Block::default()

@@ -13,7 +13,7 @@ use rand::prelude::SliceRandom;
 use crate::utils::{log_error, LOGGED_TXS};
 use crate::rpc::mempool::MEMPOOL_CACHE; 
 use crate::utils::MEMPOOL_DISTRIBUTION_CACHE;
-use dashmap::DashSet;
+// use dashmap::DashSet;
 use once_cell::sync::Lazy;
 use dashmap::DashMap;
 use std::sync::Arc;
@@ -21,33 +21,29 @@ use tokio::sync::Semaphore;
 use tokio::task;             // For spawning tasks
 use std::time::Duration;
 
-
 const DUST_THRESHOLD: f64 = 0.00000546; // 546 sats in BTC
-const MAX_CACHE_SIZE: usize = 100_000; // Rolling cache size
-const MAX_DUST_CACHE_SIZE: usize = 150_000; // Rolling cache size
+const MAX_TX_CACHE_SIZE: usize = 250_000; // Rolling cache size
 
-static DUST_FREE_TX_CACHE: Lazy<Arc<DashMap<String, MempoolEntry>>> =
-    Lazy::new(|| Arc::new(DashMap::with_capacity(100_000)));
+// Convert to one cache to handle new toggle feature. 
+static TX_CACHE: Lazy<Arc<DashMap<String, MempoolEntry>>> =
+    Lazy::new(|| Arc::new(DashMap::with_capacity(250_000)));
 
-static DUST_CACHE: Lazy<Arc<DashSet<String>>> =
-    Lazy::new(|| Arc::new(DashSet::with_capacity(150_000)));
-
-
-pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyError> {
+pub async fn fetch_mempool_distribution(config: &RpcConfig, dust_free: bool) -> Result<(), MyError> {
     let client = Client::builder()
         .timeout(Duration::from_secs(10))
         .connect_timeout(Duration::from_secs(5))
         .build()?;
 
-    // Remove expired TXs from DUST_CACHE
-    DUST_CACHE.retain(|tx_id| MEMPOOL_CACHE.contains(tx_id));
+    if dust_free {
+        // Remove expired TXs from TX_CACHE
+        TX_CACHE.retain(|tx_id, _| MEMPOOL_CACHE.contains(tx_id));
+    } else {
+        TX_CACHE.clear();
+    }
 
-    // Remove expired TXs from DUST_FREE_TX_CACHE
-    DUST_FREE_TX_CACHE.retain(|tx_id, _| MEMPOOL_CACHE.contains(tx_id));
-
-    // Collect new transaction IDs that are not in either cache
+    // Collect new transaction IDs that are not in cache.
     let new_tx_ids: Vec<String> = MEMPOOL_CACHE.iter()
-        .filter(|txid| !DUST_FREE_TX_CACHE.contains_key(txid.as_str()) && !DUST_CACHE.contains(txid.as_str()))
+        .filter(|txid| !TX_CACHE.contains_key(txid.as_str()))
         .map(|txid| txid.clone())
         .collect();
 
@@ -93,30 +89,26 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyErro
 
             match result {
                 Ok((tx_id, mempool_entry)) => {
-                    if mempool_entry.fees.base < DUST_THRESHOLD {
-                        // Insert into DUST_CACHE, evict if necessary
-                        if DUST_CACHE.len() == MAX_DUST_CACHE_SIZE {
-                            let mut keys: Vec<_> = DUST_CACHE.iter().map(|key| key.clone()).collect();
-                            let mut rng = StdRng::seed_from_u64(42);
-                            keys.shuffle(&mut rng);
-                            if let Some(random_key) = keys.first() {
-                                DUST_CACHE.remove(random_key);
-                            }
+                    if TX_CACHE.len() == MAX_TX_CACHE_SIZE {
+                        let mut keys: Vec<_> = TX_CACHE.iter().map(|entry| entry.key().clone()).collect();
+                        let mut rng = StdRng::seed_from_u64(42);
+                        keys.shuffle(&mut rng);
+                        if let Some(random_key) = keys.first() {
+                            TX_CACHE.remove(random_key);
                         }
-                        DUST_CACHE.insert(tx_id.clone());
-                    } else {
-                        // Insert into DUST_FREE_TX_CACHE, evict if necessary
-                        if DUST_FREE_TX_CACHE.len() == MAX_CACHE_SIZE {
-                            let mut keys: Vec<_> = DUST_FREE_TX_CACHE.iter().map(|entry| entry.key().clone()).collect();
-                            let mut rng = StdRng::seed_from_u64(42);
-                            keys.shuffle(&mut rng);
-                            if let Some(random_key) = keys.first() {
-                                DUST_FREE_TX_CACHE.remove(random_key);
-                            }
-                        }
-                        DUST_FREE_TX_CACHE.insert(tx_id.clone(), mempool_entry);
                     }
-                    Ok(()) // Return Ok(()) to satisfy the Result type
+                    
+                    if dust_free {
+                        if mempool_entry.fees.base >= DUST_THRESHOLD {
+                            TX_CACHE.insert(tx_id.clone(), mempool_entry);
+                        } 
+                        // keep only entries >= DUST_THRESHOLD
+                        TX_CACHE.retain(|_, mempool_entry| mempool_entry.fees.base >= DUST_THRESHOLD);
+                    } else {
+                        TX_CACHE.insert(tx_id.clone(), mempool_entry);
+                    }
+
+                    Ok(()) 
                 }
                 Err(e) => {
                     let logged_txs_read = LOGGED_TXS.read().await;
@@ -204,7 +196,7 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig) -> Result<(), MyErro
 
     // Step 2: Calculate Metrics
     let mut dist = MEMPOOL_DISTRIBUTION_CACHE.write().await;
-    dist.update_metrics(&DUST_FREE_TX_CACHE);
+    dist.update_metrics(&TX_CACHE);
 
     Ok(())
 }

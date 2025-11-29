@@ -65,10 +65,11 @@ pub fn render_hashrate_distribution_chart<B: Backend>(
 pub fn display_mempool_info<B: Backend>(
     mempool_info: &MempoolInfo,
     distribution: &MempoolDistribution,
+    dust_free: bool,
     frame: &mut Frame<B>,
     area: Rect
 ) {
-    let _ = display_mempool_info::display_mempool_info(mempool_info, distribution, frame, area);
+    let _ = display_mempool_info::display_mempool_info(mempool_info, distribution, dust_free, frame, area);
 }
 
 /// Displays the base metrics for [Network] sector of Dashboard.

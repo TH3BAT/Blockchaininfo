@@ -156,7 +156,7 @@ pub struct MempoolEntryJsonWrap {
 }
 
 /// This struct holds data from getmempoolentry RPC method.
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct MempoolEntry {
@@ -178,7 +178,7 @@ pub struct MempoolEntry {
 }
 
 /// This holds the fee structure from MempoolEntry.
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct Fees {
