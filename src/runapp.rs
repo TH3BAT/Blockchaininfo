@@ -44,6 +44,7 @@ struct App {
     is_pasting: bool, 
     show_hash_distribution: bool,
     dust_free: Arc<AtomicBool>,
+    show_client_distribution: bool, //NEW
 }
 
 impl App {
@@ -56,6 +57,7 @@ impl App {
             is_pasting: false,
             show_hash_distribution: false,
             dust_free: Arc::new(AtomicBool::new(true)),
+            show_client_distribution: false, // default: show version first
         }
     }
 }
@@ -444,7 +446,9 @@ pub async fn run_app<B: tui::backend::Backend>(
 
         let chaintips_result = &chaintips_info.result;
         let version_counts = PeerInfo::aggregate_and_sort_versions(&peer_info);
-        let version_counts_ref: &[(String, usize)] = &version_counts;
+        // let version_counts_ref: &[(String, usize)] = &version_counts;
+        let client_counts  = PeerInfo::aggregate_and_sort_clients(&peer_info);
+        // let client_counts_ref: &[(String, usize)] = &client_counts;
     
         let avg_block_propagate_time = PeerInfo::calculate_block_propagation_time(
             &peer_info,
@@ -582,9 +586,12 @@ pub async fn run_app<B: tui::backend::Backend>(
                         app.dust_free.store(
                         !app.dust_free.load(Ordering::Relaxed),
                         Ordering::Relaxed
-                    );
-
+                        );
+                     }
+                    KeyCode::Char('c') => {
+                        app.show_client_distribution = !app.show_client_distribution;
                     }
+
                     _ => {
                         // Assume paste is complete when a non-char key is pressed
                         if app.is_pasting {
@@ -687,20 +694,32 @@ pub async fn run_app<B: tui::backend::Backend>(
             frame.render_widget(block_3, chunks[2]);
             display_mempool_info(&mempool_info, &distribution, app.dust_free.load(Ordering::Relaxed), frame, chunks[2]);
 
-            // Network Info Block
+           // Network Info Block
+            let toggle_label = if app.show_client_distribution {
+                "(c→Version)"
+            } else {
+                "(c→Client)"
+            };
+
             let block_4 = Block::default()
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(Color::DarkGray))
                 .border_type(BorderType::Rounded)
-                .title(Span::styled("[Network]", Style::default().fg(Color::DarkGray).add_modifier(Modifier::BOLD)));
+                .title(Span::styled(
+                    format!("[Network] {}", toggle_label),
+                    Style::default().fg(Color::DarkGray).add_modifier(Modifier::BOLD),
+                ));
+
             frame.render_widget(block_4, chunks[3]);
             display_network_info(
                 &network_info,
                 &net_totals,
                 frame,
-                &version_counts_ref,
+                &version_counts,
+                &client_counts,
                 &avg_block_propagate_time,
                 &propagation_times,
+                app.show_client_distribution,
                 chunks[3]
             );
 

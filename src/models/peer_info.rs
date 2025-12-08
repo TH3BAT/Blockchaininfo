@@ -91,6 +91,64 @@ impl PeerInfo {
     
         sorted_counts
     }
+
+    fn extract_client(subver: &str) -> String {
+        fn normalize(name: &str) -> String {
+            match name.to_lowercase().as_str() {
+                "satoshi" => "Core".to_string(),
+                "knots"   => "Knots".to_string(),
+                "ronin"   => "Ronin".to_string(),
+                ""        => "Unknown".to_string(),
+                _         => "Other".to_string(),
+            }
+        }
+
+        let trimmed = subver.trim_matches('/').trim();
+
+        // Empty or numeric → Unknown
+        if trimmed.is_empty() || trimmed.chars().all(|c| c.is_ascii_digit()) {
+            return "Unknown".to_string();
+        }
+
+        // Split into multi-segment parts
+        let parts: Vec<&str> = trimmed.split('/').collect();
+
+        // Look RIGHT → LEFT for "name:version"
+        for segment in parts.iter().rev() {
+            if segment.contains(':') {
+                let raw = segment.split(':').next().unwrap_or("").trim();
+                return normalize(raw);
+            }
+        }
+
+        // Fallback: treat first segment as client if non-numeric
+        let first = parts.first().unwrap_or(&"").trim();
+
+        if first.is_empty() || first.chars().all(|c| c.is_ascii_digit()) {
+            return "Unknown".to_string();
+        }
+
+        normalize(first)
+    }
+
+
+    pub fn aggregate_and_sort_clients(peer_info: &[PeerInfo]) -> Vec<(String, usize)> {
+        let mut counts: HashMap<String, usize> = HashMap::new();
+
+        for peer in peer_info {
+            let client = PeerInfo::extract_client(&peer.subver);
+            *counts.entry(client).or_insert(0) += 1;
+        }
+
+        let mut sorted: Vec<(String, usize)> = counts.into_iter().collect();
+
+        // Sort by count desc, then name asc
+        sorted.sort_by(|a, b| {
+            b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0))
+        });
+
+        sorted
+    }
     
     // Version Comparison (parses version numbers correctly)
     fn compare_versions(a: &str, b: &str) -> std::cmp::Ordering {

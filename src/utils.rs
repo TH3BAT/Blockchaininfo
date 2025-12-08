@@ -286,3 +286,44 @@ pub fn load_miners_data() -> Result<MinersData, MyError> {
     Ok(miners_data)
 }
 
+pub fn normalize_percentages(counts: &[u64]) -> Vec<u64> {
+    let total: u64 = counts.iter().sum();
+
+    if total == 0 {
+        return vec![0; counts.len()];
+    }
+
+    // Step 1: compute raw percentages
+    let raw: Vec<f64> = counts
+        .iter()
+        .map(|c| (*c as f64 / total as f64) * 100.0)
+        .collect();
+
+    // Step 2: floor them
+    let mut floored: Vec<u64> = raw.iter().map(|v| v.floor() as u64).collect();
+
+    // Step 3: compute fractional remainders
+    // pair: (remainder, index)
+    let mut remainders: Vec<(f64, usize)> = raw
+        .iter()
+        .enumerate()
+        .map(|(i, v)| (v - v.floor(), i))
+        .collect();
+
+    // Step 4: sort by remainder descending (largest fractional parts get +1 first)
+    remainders.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap());
+
+    // Step 5: sum the floored percentages
+    let mut sum: u64 = floored.iter().sum();
+
+    // Step 6: distribute remaining points until sum = 100
+    for &(_, idx) in remainders.iter() {
+        if sum >= 100 {
+            break;
+        }
+        floored[idx] += 1;
+        sum += 1;
+    }
+
+    floored
+}

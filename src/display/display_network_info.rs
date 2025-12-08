@@ -10,7 +10,7 @@ use tui::{
     Frame,
 };
 use crate::models::{errors::MyError, network_info::NetworkInfo, network_totals::NetTotals};
-use crate::utils::format_size;
+use crate::utils::{format_size, normalize_percentages};
 use std::collections::VecDeque;
 use crate::models::flashing_text::CONNECTIONS_IN_TEXT;
 
@@ -20,8 +20,10 @@ pub fn display_network_info<B: Backend>(
     net_totals: &NetTotals,
     frame: &mut Frame<B>,
     version_counts: &[(String, usize)],
+    client_counts: &[(String, usize)],
     avg_block_propagate_time: &i64,
     propagation_times: &VecDeque<i64>,
+    show_client_distribution: bool,
     area: Rect,
 ) -> Result<(), MyError> {
     
@@ -120,35 +122,36 @@ pub fn display_network_info<B: Backend>(
         .constraints([Constraint::Percentage(68), Constraint::Percentage(32)])
         .split(chunks[2]);
 
-    // Node Version Distribution Bar Chart.
-    if !version_counts.is_empty() {
-        // Take only the top 5 versions.
-        let limited_version_counts = version_counts.iter().take(5);
+    if show_client_distribution {
+        // 🔹 ASCII client distribution in sub_chunks[0]
+        draw_client_distribution(frame, sub_chunks[0], client_counts);
+    } else {
+        // 🔹 Your existing Version Distribution BarChart
+        if !version_counts.is_empty() {
+            let limited_version_counts = version_counts.iter().take(5);
 
-        // Convert limited version counts into BarChart format.
-        let data: Vec<(&str, u64)> = limited_version_counts
-            .map(|(version, count)| (version.as_str(), *count as u64))
-            .collect();
+            let data: Vec<(&str, u64)> = limited_version_counts
+                .map(|(version, count)| (version.as_str(), *count as u64))
+                .collect();
 
-        // Get the total number of versions for the title.
-        let total_versions = version_counts.len();
+            let total_versions = version_counts.len();
 
-        // BarChart for node version distribution.
-        let barchart = BarChart::default()
-            .block(
-                Block::default()
-                    .title(format!("Version Distribution (Top 5 of {})", total_versions)) // Dynamic title.
-                    .borders(Borders::ALL),
-            )
-            .data(&data)
-            .bar_width(7)
-            .bar_gap(1)
-            .bar_style(Style::default().fg(Color::DarkGray))
-            .value_style(Style::default().fg(Color::White));
+            let barchart = BarChart::default()
+                .block(
+                    Block::default()
+                        .title(format!("Version Distribution (Top 5 of {})", total_versions))
+                        .borders(Borders::ALL),
+                )
+                .data(&data)
+                .bar_width(7)
+                .bar_gap(1)
+                .bar_style(Style::default().fg(Color::DarkGray))
+                .value_style(Style::default().fg(Color::White));
 
-        // Render the BarChart in the left sub-chunk.
-        frame.render_widget(barchart, sub_chunks[0]);
+            frame.render_widget(barchart, sub_chunks[0]);
+        }
     }
+
 
     // Sparkline for block propagation times.
     if !propagation_times.is_empty() {
@@ -171,4 +174,58 @@ pub fn display_network_info<B: Backend>(
     }
 
     Ok(())
+}
+
+fn draw_client_distribution<B: Backend>(
+    frame: &mut Frame<B>,
+    area: Rect,
+    client_counts: &[(String, usize)],
+) {
+    if client_counts.is_empty() {
+        return;
+    }
+
+    // NEW: extract raw counts and compute normalized percentages
+    let raw_counts: Vec<u64> = client_counts
+        .iter()
+        .map(|(_, c)| *c as u64)
+        .collect();
+
+    let pcts: Vec<u64> = normalize_percentages(&raw_counts);
+
+    let mut lines: Vec<Spans> = Vec::new();
+
+    // UPDATED: zip client rows with normalized percentages
+    for ((name, count), pct) in client_counts.iter().zip(pcts.iter()).take(6) {
+
+        // ASCII bar width
+        let bar_width = 10;
+        let filled = (*pct as usize * bar_width) / 100;
+        let empty = bar_width - filled;
+
+        let bar = format!(
+            "[{}{}]",
+            "=".repeat(filled),
+            " ".repeat(empty)
+        );
+
+        lines.push(Spans::from(vec![
+            Span::styled(
+                format!("{:<10}", name),
+                Style::default().fg(Color::Cyan),
+            ),
+            Span::raw(format!("{:>5} - {:>3}% ", count, pct)),   // <-- modernized
+            Span::styled(bar, Style::default().fg(Color::DarkGray)),
+        ]));
+    }
+    // Insert a blank row at the top for vertical centering
+    lines.insert(0, Spans::from(" "));
+    
+    let block = Block::default()
+        .title("Client Distribution")
+        .borders(Borders::ALL);
+
+    let paragraph = Paragraph::new(lines).block(block);
+
+    frame.render_widget(paragraph, area);
 }

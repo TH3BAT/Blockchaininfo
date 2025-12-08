@@ -10,7 +10,8 @@ use tui::{
     Frame,
 };
 use num_format::{Locale, ToFormattedString};
-use crate::{models::mempool_info::{MempoolDistribution, MempoolInfo}, utils::format_size};
+use crate::{models::mempool_info::{MempoolDistribution, MempoolInfo}, utils::{format_size,
+    normalize_percentages}};
 use crate::models::errors::MyError;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use crate::models::flashing_text::TRANSACTION_TEXT;
@@ -60,16 +61,46 @@ pub fn display_mempool_info<B: Backend>(
     let dust_free_percentage = (total_size as f64 / mempool_info.size as f64) * 100.0;
     let formatted_dust_free = format!("{:.1}%", dust_free_percentage);
     
-    let (small_pct, medium_pct, large_pct) = calculate_rounded_percentages(distribution.small.try_into().unwrap(), distribution.medium.try_into().unwrap(), Some(distribution.large.try_into().unwrap()), total_size.try_into().unwrap());
-    let (young_pct, moderate_pct, old_pct) = calculate_rounded_percentages(distribution.young.try_into().unwrap(), distribution.moderate.try_into().unwrap(), Some(distribution.old.try_into().unwrap()), total_size.try_into().unwrap());
-    let (rbf_pct, non_rbf_pct, _) = calculate_rounded_percentages(distribution.rbf_count.try_into().unwrap(), distribution.non_rbf_count.try_into().unwrap(), None, total_size.try_into().unwrap());
+    // Size Distribution (Small / Medium / Large)
+    let size_counts = vec![
+        distribution.small as u64,
+        distribution.medium as u64,
+        distribution.large as u64,
+    ];
+
+    let size_pcts = normalize_percentages(&size_counts);
+    let small_pct  = size_pcts[0];
+    let medium_pct = size_pcts[1];
+    let large_pct  = size_pcts[2];
+
+    // Age Distribution (Young / Moderate / Old)
+    let age_counts = vec![
+        distribution.young as u64,
+        distribution.moderate as u64,
+        distribution.old as u64,
+    ];
+
+    let age_pcts = normalize_percentages(&age_counts);
+    let young_pct    = age_pcts[0];
+    let moderate_pct = age_pcts[1];
+    let old_pct      = age_pcts[2];
+
+    // RBF Distribution (RBF / Non-RBF)
+    let rbf_counts = vec![
+        distribution.rbf_count as u64,
+        distribution.non_rbf_count as u64,
+    ];
+
+    let rbf_pcts = normalize_percentages(&rbf_counts);
+    let rbf_pct     = rbf_pcts[0];
+    let non_rbf_pct = rbf_pcts[1];
 
     let small_prog_bar = create_progress_bar(small_pct, 10);
     let medium_prog_bar = create_progress_bar(medium_pct, 10);
-    let large_prog_bar = create_progress_bar(large_pct.unwrap_or(0), 10);
+    let large_prog_bar = create_progress_bar(large_pct, 10);
     let young_prog_bar = create_progress_bar(young_pct, 10);
     let moderate_prog_bar = create_progress_bar(moderate_pct, 10);
-    let old_prog_bar = create_progress_bar(old_pct.unwrap_or(0), 10);
+    let old_prog_bar = create_progress_bar(old_pct, 10);
     let rbf_prog_bar = create_progress_bar(rbf_pct, 10);
     let non_rbf_prog_bar = create_progress_bar(non_rbf_pct, 10);
 
@@ -211,7 +242,7 @@ pub fn display_mempool_info<B: Backend>(
             Span::styled(
                 format!(
                     "{:>3}% {}",
-                    large_pct.unwrap_or(0), large_prog_bar
+                    large_pct, large_prog_bar
                 ),
                 Style::default().fg(Color::Gray),
             ),
@@ -269,7 +300,7 @@ pub fn display_mempool_info<B: Backend>(
             Span::styled(
                 format!(
                     "{:>3}% {}",
-                    old_pct.unwrap_or(0), old_prog_bar
+                    old_pct, old_prog_bar
                 ),
                 Style::default().fg(Color::Gray),
             ),
@@ -351,59 +382,6 @@ pub fn display_mempool_info<B: Backend>(
     frame.render_widget(mempool_paragraph, chunks[2]);
 
     Ok(())
-}
-
-/// Helper function to round out percentages to equate to 100%.
-fn calculate_rounded_percentages(first: u64, second: u64, third: Option<u64>, total_size: u64) -> (u64, u64, Option<u64>) {
-    if total_size == 0 {
-        return (0, 0, third.map(|_| 0)); // Avoid division by zero
-    }
-
-    // Calculate raw percentages
-    let first_pct = (first * 100) as f64 / total_size as f64;
-    let second_pct = (second * 100) as f64 / total_size as f64;
-    let third_pct = third.map(|t| (t * 100) as f64 / total_size as f64);
-
-    // Floor the percentages
-    let mut first_floor = first_pct.floor() as u64;
-    let mut second_floor = second_pct.floor() as u64;
-    let mut third_floor = third_pct.map(|p| p.floor() as u64);
-
-    // Calculate remainders
-    let mut remainders = vec![
-        (first_pct - first_floor as f64, "first"),
-        (second_pct - second_floor as f64, "second"),
-    ];
-
-    if let Some(pct) = third_pct {
-        remainders.push((pct - third_floor.unwrap() as f64, "third"));
-    }
-
-    // Sort by remainder in descending order
-    remainders.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap());
-
-    // Calculate the total of floored percentages
-    let mut total = first_floor + second_floor + third_floor.unwrap_or(0);
-
-    // Distribute the remainder
-    for (_remainder, category) in remainders {
-        if total >= 100 {
-            break;
-        }
-        match category {
-            "first" => first_floor += 1,
-            "second" => second_floor += 1,
-            "third" => {
-                if let Some(t) = third_floor.as_mut() {
-                    *t += 1;
-                }
-            }
-            _ => unreachable!(),
-        }
-        total += 1;
-    }
-
-    (first_floor, second_floor, third_floor)
 }
 
 /// Helper function to create a visual progres bar used alongside percent metrics.

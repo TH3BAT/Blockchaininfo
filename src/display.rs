@@ -78,12 +78,14 @@ pub fn display_network_info<B: Backend>(
     net_totals: &NetTotals,
     frame: &mut Frame<B>,
     version_counts: &[(String, usize)],
+    client_counts: &[(String, usize)],
     avg_block_propagate_time: &i64, 
     propagation_times: &VecDeque<i64>,
+    show_client_distribution: bool,
     area: Rect,
 ) {
     let _ = display_network_info::display_network_info(network_info, net_totals, frame, version_counts, 
-        avg_block_propagate_time, propagation_times, area);
+        client_counts, avg_block_propagate_time, propagation_times, show_client_distribution, area);
 }
 
 /// Displays the base metrics for [Consensus Security] sector of Dashboard.
