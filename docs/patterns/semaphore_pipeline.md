@@ -184,7 +184,7 @@ Avoid this pattern for:
 The complete implementation lives in:
 
 ``` rust
-src/mempool/mempool_distro.rs  
+src/rpc/mempool_distro.rs  
 → fetch_mempool_distribution()
 ```
 
