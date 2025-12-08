@@ -833,7 +833,7 @@ fn render_tx_lookup_popup<B: Backend>(frame: &mut Frame<B>, app: &mut App) {
 }
 
 fn render_help_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) {
-    let popup_area = centered_rect(60, 22, frame.size());
+    let popup_area = centered_rect(80, 35, frame.size());
     frame.render_widget(Clear, popup_area);
 
     let help_text = vec![
@@ -854,7 +854,7 @@ fn render_help_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) {
         " Toggles are displayed directly inside",
         " each section for clarity.",
         "",
-        " BlockChainInfo v1.0.0",
+        " BlockChainInfo v0.6.1",
         " Built for the community",
     ];
 
