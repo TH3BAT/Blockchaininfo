@@ -11,7 +11,7 @@ use tui::{
 };
 use num_format::{Locale, ToFormattedString};
 use crate::{models::mempool_info::{MempoolDistribution, MempoolInfo}, utils::{format_size,
-    normalize_percentages}};
+    normalize_percentages, BAR_ACTIVE}};
 use crate::models::errors::MyError;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use crate::models::flashing_text::TRANSACTION_TEXT;
@@ -210,7 +210,7 @@ pub fn display_mempool_info<B: Backend>(
                     "{:>3}% {}",
                     small_pct, small_prog_bar
                 ),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(BAR_ACTIVE),
             ),
         ]),
         Spans::from(vec![
@@ -227,7 +227,7 @@ pub fn display_mempool_info<B: Backend>(
                     "{:>3}% {}",
                     medium_pct, medium_prog_bar
                 ),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(BAR_ACTIVE),
             ),
         ]),
         Spans::from(vec![
@@ -244,7 +244,7 @@ pub fn display_mempool_info<B: Backend>(
                     "{:>3}% {}",
                     large_pct, large_prog_bar
                 ),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(BAR_ACTIVE),
             ),
         ]),
 
@@ -268,7 +268,7 @@ pub fn display_mempool_info<B: Backend>(
                     "{:>3}% {}",
                     young_pct, young_prog_bar
                 ),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(BAR_ACTIVE),
             ),
         ]),
         Spans::from(vec![
@@ -285,7 +285,7 @@ pub fn display_mempool_info<B: Backend>(
                     "{:>3}% {}",
                     moderate_pct, moderate_prog_bar
                 ),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(BAR_ACTIVE),
             ),
         ]),
         Spans::from(vec![
@@ -302,7 +302,7 @@ pub fn display_mempool_info<B: Backend>(
                     "{:>3}% {}",
                     old_pct, old_prog_bar
                 ),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(BAR_ACTIVE),
             ),
         ]),
 
@@ -326,7 +326,7 @@ pub fn display_mempool_info<B: Backend>(
                     "{:>3}% {}",
                     rbf_pct, rbf_prog_bar
                 ),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(BAR_ACTIVE),
             ),
         ]),
         Spans::from(vec![
@@ -343,7 +343,7 @@ pub fn display_mempool_info<B: Backend>(
                     "{:>3}% {}",
                     non_rbf_pct, non_rbf_prog_bar
                 ),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(BAR_ACTIVE),
             ),
         ]),
         Spans::from(vec![

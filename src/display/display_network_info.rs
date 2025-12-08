@@ -10,7 +10,7 @@ use tui::{
     Frame,
 };
 use crate::models::{errors::MyError, network_info::NetworkInfo, network_totals::NetTotals};
-use crate::utils::{format_size, normalize_percentages};
+use crate::utils::{format_size, normalize_percentages, BAR_ACTIVE};
 use std::collections::VecDeque;
 use crate::models::flashing_text::CONNECTIONS_IN_TEXT;
 
@@ -208,14 +208,30 @@ fn draw_client_distribution<B: Backend>(
             "=".repeat(filled),
             " ".repeat(empty)
         );
+        let count_span = Span::styled(
+            format!("{:>5} ", count),
+            Style::default().fg(Color::Gray),
+        );
+
+        let dash_span = Span::styled(
+            "- ",
+            Style::default().fg(Color::DarkGray),
+        );
+
+        let pct_span = Span::styled(
+            format!("{:>3}% ", pct),
+            Style::default().fg(Color::Gray),
+        );
 
         lines.push(Spans::from(vec![
             Span::styled(
                 format!("{:<10}", name),
                 Style::default().fg(Color::Cyan),
             ),
-            Span::raw(format!("{:>5} - {:>3}% ", count, pct)),   // <-- modernized
-            Span::styled(bar, Style::default().fg(Color::DarkGray)),
+            count_span,
+            dash_span,
+            pct_span,
+            Span::styled(bar, Style::default().fg(BAR_ACTIVE)),
         ]));
     }
     // Insert a blank row at the top for vertical centering

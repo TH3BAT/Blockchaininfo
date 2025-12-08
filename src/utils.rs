@@ -37,6 +37,11 @@ const MB: u64 = KB * 1024;
 const GB: u64 = MB * 1024;
 const TB: u64 = GB * 1024;
 
+// For ASCII bar charts.
+pub const BAR_ACTIVE: Color = Color::Gray;
+// pub const BAR_DIM: Color = Color::DarkGray;
+
+
 // Constants for estimated difficulty adjustment change.
 pub const DIFFICULTY_ADJUSTMENT_INTERVAL: u64 = 2016;
 pub const BLOCK_TIME_SECONDS: u64 = 600;
