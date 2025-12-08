@@ -10,10 +10,11 @@ use crate::display::{display_blockchain_info, display_mempool_info, display_netw
     , display_consensus_security_info, render_hashrate_distribution_chart};
 use crate::utils::{render_header, render_footer, load_miners_data, BLOCK_HISTORY};
 use crate::models::peer_info::PeerInfo;
-use tui::backend::CrosstermBackend;
-use tui::layout::{Layout, Constraint, Direction, Margin, Rect};
+use tui::backend::{CrosstermBackend, Backend};
+use tui::layout::{Layout, Constraint, Direction, Margin, Rect, Alignment};
 use tui::widgets::{Block, Borders, Paragraph, Clear, Wrap, BorderType};
 use tui::style::{Color, Style, Modifier};
+use tui::Frame;
 use tui::text::{Span, Spans};
 use tui::Terminal;
 use crossterm::{
@@ -23,7 +24,7 @@ use crossterm::{
 };
 use std::io::{self, Stdout};
 use std::collections::VecDeque;
-use std::time::Duration; 
+use std::time::Duration;
 use tokio::time::sleep;
 use blockchaininfo::utils::log_error;
 use crate::models::chaintips_info::ChainTipsResponse;
@@ -36,8 +37,14 @@ use std::sync::Arc;
 use tokio::time::Instant;
 use std::sync::atomic::{AtomicBool, Ordering};
 
+#[derive(PartialEq)]
+pub enum PopupType {
+    None,
+    TxLookup,
+    Help,
+}
 struct App {
-    show_popup: bool,
+    popup: PopupType,
     tx_input: String,
     tx_result: Option<String>,
     is_exiting: bool,
@@ -50,7 +57,7 @@ struct App {
 impl App {
     fn new() -> Self {
         Self {
-            show_popup: false,
+            popup: PopupType::None,
             tx_input: String::new(),
             tx_result: None,
             is_exiting: false,
@@ -494,7 +501,7 @@ pub async fn run_app<B: tui::backend::Backend>(
 
     
         // Dynamic Polling for Smooth Input & CPU Optimization
-        let poll_time = if app.show_popup {
+        let poll_time = if app.popup == PopupType::TxLookup {
             Duration::from_millis(50)
         } else {
             Duration::from_millis(250) // More relaxed updates when idle
@@ -504,9 +511,9 @@ pub async fn run_app<B: tui::backend::Backend>(
         if event::poll(poll_time)? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
-                    KeyCode::Esc if app.show_popup => {
-                        app.show_popup = false; // Close Popup
-                        app.is_pasting = false; // Reset paste flag
+                    KeyCode::Esc if app.popup != PopupType::None => {
+                        app.popup = PopupType::None;
+                        app.is_pasting = false;
                     }
                     KeyCode::Char('q') if !app.is_pasting => {
                         app.is_exiting = true; // 🚀 Flag shutdown mode
@@ -538,17 +545,21 @@ pub async fn run_app<B: tui::backend::Backend>(
         
                         break; // Quit App
                     }
-                    KeyCode::Char('t') if !app.show_popup => {
-                        app.show_popup = true;
+                    KeyCode::Char('t') if app.popup == PopupType::None => {
+                        app.popup = PopupType::TxLookup;
                         app.tx_input.clear();
                         app.tx_result = None;
-                        app.is_pasting = false; // Reset paste flag
+                        app.is_pasting = false;
                     }
-                    KeyCode::Char('h') if !app.show_popup => {
+                    KeyCode::Char('?') if app.popup == PopupType::None => {
+                        app.popup = PopupType::Help;
+                    }
+                    KeyCode::Char('h') if app.popup == PopupType::None => {
                         // Toggle the hash distribution flag
                         app.show_hash_distribution = !app.show_hash_distribution;
                     }
-                    KeyCode::Char(c) if app.show_popup => {
+                    // Character input (typing or paste) only when Tx Lookup popup is open
+                    KeyCode::Char(c) if app.popup == PopupType::TxLookup => {
                         if app.is_pasting {
                             // Ignore special characters during paste
                             if c != 'q' && c != '\n' {
@@ -558,17 +569,21 @@ pub async fn run_app<B: tui::backend::Backend>(
                             // Normal character input
                             app.tx_input.push(c);
                         }
-        
+
                         // Detect paste start
                         if !app.is_pasting && app.tx_input.len() > 10 {
                             app.is_pasting = true;
                         }
                     }
-                    KeyCode::Backspace if app.show_popup => {
+
+                    // Backspace inside Tx Lookup
+                    KeyCode::Backspace if app.popup == PopupType::TxLookup => {
                         app.tx_input.pop();
                         app.is_pasting = false; // Reset paste flag on backspace
                     }
-                    KeyCode::Enter if app.show_popup => {
+
+                    // Enter key inside Tx Lookup
+                    KeyCode::Enter if app.popup == PopupType::TxLookup => {
                         if !app.tx_input.is_empty() {
                             if is_valid_txid(&app.tx_input.trim()) {
                                 let tx_result = fetch_transaction(&config, &app.tx_input).await;
@@ -579,7 +594,7 @@ pub async fn run_app<B: tui::backend::Backend>(
                             } else {
                                 app.tx_result = Some("Invalid TxID. Please enter a 64-character hex string.".to_string());
                             }
-                            app.is_pasting = false; // Reset paste flag
+                            app.is_pasting = false; // Reset paste
                         }
                     }
                     KeyCode::Char('d') | KeyCode::Char('D') => {
@@ -736,51 +751,21 @@ pub async fn run_app<B: tui::backend::Backend>(
             let footer_msg = if app.is_exiting {
                 "Shutting Down Cleanly..."
             } else {
-                "Press 'q' to quit | 't' for Tx Lookup"
+                "Press 'q' to quit | 't' for Tx Lookup | '?' for Help"
             };
 
             let block_6 = Block::default().borders(Borders::NONE);
             frame.render_widget(block_6, chunks[5]);
             render_footer(frame, chunks[5], footer_msg);
 
-            // Popup for Transaction Lookup
-            if app.show_popup {
-                let popup_area = centered_rect(80, 28, frame.size());
-
-                // Clear the area to avoid text overlapping
-                frame.render_widget(Clear, popup_area);
-
-                // Popup UI Block
-                let popup = Block::default()
-                    .title("Transaction Lookup (Press Esc to go back)")
-                    .borders(Borders::ALL)
-                    .style(Style::default().fg(Color::Yellow));
-
-                // User Input Field
-                let input = Paragraph::new(app.tx_input.clone())
-                    .style(Style::default().fg(Color::Cyan))
-                    .wrap(Wrap { trim: true });
-
-                // Transaction Result Display
-                let result = match &app.tx_result {
-                    Some(tx) => Paragraph::new(tx.clone())
-                        .style(Style::default().fg(Color::Green))
-                        .wrap(Wrap { trim: true }), // Ensures multi-line text fits within the popup
-                    None => {
-                        // Only show invalid TxID message after Enter is pressed (not while typing or pasting)
-                        if app.tx_input.trim().is_empty() {
-                            Paragraph::new("Enter a TxID and press Enter")
-                                .style(Style::default())
-                        } else {
-                            Paragraph::new("Press Enter to validate TxID")
-                                .style(Style::default().fg(Color::Yellow))
-                        }
-                    }
-                };
-
-                frame.render_widget(popup, popup_area);
-                frame.render_widget(input, popup_area.inner(&Margin { vertical: 2, horizontal: 2 }));
-                frame.render_widget(result, popup_area.inner(&Margin { vertical: 5, horizontal: 2 }));
+            match app.popup {
+                PopupType::None => {}
+                PopupType::TxLookup => {
+                    render_tx_lookup_popup(frame, &mut app);
+                }
+                PopupType::Help => {
+                    render_help_popup(frame, &mut app);
+                }
             }
         })?;
 
@@ -813,4 +798,78 @@ fn centered_rect(percent_x: u16, percent_y: u16, size: Rect) -> Rect {
 /// Function to validate TxID.
 fn is_valid_txid(tx_id: &str) -> bool {
     tx_id.len() == 64 && tx_id.chars().all(|c| c.is_ascii_hexdigit())
+}
+
+fn render_tx_lookup_popup<B: Backend>(frame: &mut Frame<B>, app: &mut App) {
+    let popup_area = centered_rect(80, 28, frame.size());
+    frame.render_widget(Clear, popup_area);
+
+    let popup = Block::default()
+        .title("Transaction Lookup (Press Esc to go back)")
+        .borders(Borders::ALL)
+        .style(Style::default().fg(Color::Yellow));
+
+    let input = Paragraph::new(app.tx_input.clone())
+        .style(Style::default().fg(Color::Cyan))
+        .wrap(Wrap { trim: true });
+
+    let result = match &app.tx_result {
+        Some(tx) => Paragraph::new(tx.clone())
+            .style(Style::default().fg(Color::Green))
+            .wrap(Wrap { trim: true }),
+        None => {
+            if app.tx_input.trim().is_empty() {
+                Paragraph::new("Enter a TxID and press Enter")
+            } else {
+                Paragraph::new("Press Enter to validate TxID")
+                    .style(Style::default().fg(Color::Yellow))
+            }
+        }
+    };
+
+    frame.render_widget(popup, popup_area);
+    frame.render_widget(input, popup_area.inner(&Margin { vertical: 2, horizontal: 2 }));
+    frame.render_widget(result, popup_area.inner(&Margin { vertical: 5, horizontal: 2 }));
+}
+
+fn render_help_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) {
+    let popup_area = centered_rect(60, 22, frame.size());
+    frame.render_widget(Clear, popup_area);
+
+    let help_text = vec![
+        "",
+        " GLOBAL CONTROLS",
+        " ─────────────────────────",
+        "  Q     Quit application",
+        "  T     Transaction lookup",
+        "  ESC   Close panels",
+        "",
+        " DASHBOARD SECTIONS",
+        " ─────────────────────────",
+        "  Blockchain   Hashrate Distribution",
+        "  Mempool      Mempool Visuals",
+        "  Network      Node Versions & Clients",
+        "  Consensus    Fork Monitoring",
+        "",
+        " Toggles are displayed directly inside",
+        " each section for clarity.",
+        "",
+        " BlockChainInfo v1.0.0",
+        " Built for the community",
+    ];
+
+    let paragraph = Paragraph::new(help_text.join("\n"))
+        .alignment(Alignment::Left)
+        .style(Style::default().fg(Color::Green))
+        .wrap(Wrap { trim: false });
+
+    let block = Block::default()
+        .title("Help (Press Esc to go back)")
+        .borders(Borders::ALL)
+        .style(Style::default().fg(Color::Yellow));
+
+    let container = block.inner(popup_area);
+
+    frame.render_widget(block, popup_area);
+    frame.render_widget(paragraph, container);
 }
