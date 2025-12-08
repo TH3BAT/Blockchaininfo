@@ -854,7 +854,6 @@ fn render_help_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) {
         " Toggles are displayed directly inside",
         " each section for clarity.",
         "",
-        " BlockChainInfo v0.6.1",
         " Built for the community",
     ];
 
