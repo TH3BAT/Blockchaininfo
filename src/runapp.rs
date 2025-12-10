@@ -42,6 +42,7 @@ pub enum PopupType {
     None,
     TxLookup,
     Help,
+    ConsensusWarning,
 }
 struct App {
     popup: PopupType,
@@ -452,6 +453,16 @@ pub async fn run_app<B: tui::backend::Backend>(
         let percent = (into_epoch as f64 / 2016.0) * 100.0;
 
         let chaintips_result = &chaintips_info.result;
+        for tip in chaintips_result {
+            if tip.status == "valid-fork" && tip.branchlen >= 2 {
+                // Trigger the popup globally
+                if app.popup == PopupType::None {
+                    app.popup = PopupType::ConsensusWarning;
+                }
+
+                break;
+            }
+        }
         let version_counts = PeerInfo::aggregate_and_sort_versions(&peer_info);
         // let version_counts_ref: &[(String, usize)] = &version_counts;
         let client_counts  = PeerInfo::aggregate_and_sort_clients(&peer_info);
@@ -766,7 +777,11 @@ pub async fn run_app<B: tui::backend::Backend>(
                 PopupType::Help => {
                     render_help_popup(frame, &mut app);
                 }
+                PopupType::ConsensusWarning => {
+                    render_consensus_warning_popup(frame, &mut app);
+                }
             }
+
         })?;
 
     }           
@@ -872,3 +887,39 @@ fn render_help_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) {
     frame.render_widget(block, popup_area);
     frame.render_widget(paragraph, container);
 }
+
+fn render_consensus_warning_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) {
+    let popup_area = centered_rect(70, 20, frame.size());
+    frame.render_widget(Clear, popup_area);
+
+    let warning_text = vec![
+        "",
+        " CONSENSUS WARNING",
+        " ─────────────────────────",
+        " A stale fork has reached length 2.",
+        "",
+        " This is unusual and may indicate:",
+        "  • network propagation delay",
+        "  • isolated miner region",
+        "  • temporary chain split",
+        "  • delayed block relay",
+        "",
+        " Press ESC to continue.",
+    ];
+
+    let paragraph = Paragraph::new(warning_text.join("\n"))
+        .alignment(Alignment::Left)
+        .style(Style::default().fg(Color::Green))
+        .wrap(Wrap { trim: false });
+
+    let block = Block::default()
+        .title("Consensus Warning (Press Esc to go back)")
+        .borders(Borders::ALL)
+        .style(Style::default().fg(Color::Yellow));
+
+    let container = block.inner(popup_area);
+
+    frame.render_widget(block, popup_area);
+    frame.render_widget(paragraph, container);
+}
+
