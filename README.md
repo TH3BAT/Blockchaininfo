@@ -212,19 +212,11 @@ The application loads configuration in the following order:
 
 ---
 
-## Example Output
+## Demo Video
 
-### Dashboard Overview
+A 1:36 live demonstration of BlockchainInfo — showcasing all panels, toggles, and real-time updates — is available in the **Releases** section (v0.6.0).
 
-![Sample Output](assets/Output.png)
-
-### Hashrate Distribution
-
-![Hashrate Distribution](assets/Output2.png)
-
-### Transaction Lookup
-
-![Network Metrics](assets/Output3.png)
+➡️ Download `BlockChainInfoLiveDemo.mov` from the latest release.
 
 ---
 
