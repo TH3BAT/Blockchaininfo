@@ -53,6 +53,7 @@ struct App {
     show_hash_distribution: bool,
     dust_free: Arc<AtomicBool>,
     show_client_distribution: bool, //NEW
+    last_fork_alert_height: Option<u64>,
 }
 
 impl App {
@@ -66,6 +67,7 @@ impl App {
             show_hash_distribution: false,
             dust_free: Arc::new(AtomicBool::new(true)),
             show_client_distribution: false, // default: show version first
+            last_fork_alert_height: None,
         }
     }
 }
@@ -453,13 +455,13 @@ pub async fn run_app<B: tui::backend::Backend>(
         let percent = (into_epoch as f64 / 2016.0) * 100.0;
 
         let chaintips_result = &chaintips_info.result;
-        for tip in chaintips_result {
+        for tip in &chaintips_info.result {
             if tip.status == "valid-fork" && tip.branchlen >= 2 {
-                // Trigger the popup globally
-                if app.popup == PopupType::None {
+                // Only trigger if this height is new
+                if app.last_fork_alert_height != Some(tip.height) {
+                    app.last_fork_alert_height = Some(tip.height);
                     app.popup = PopupType::ConsensusWarning;
                 }
-
                 break;
             }
         }
