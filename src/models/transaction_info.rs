@@ -1,160 +1,225 @@
-
-// models/transactions_info.rs
+//! Data models for Bitcoin Core’s `getrawtransaction` RPC.
+//!
+//! This module provides full transaction parsing for both confirmed and
+//! unconfirmed transactions, including:
+//! - inputs (vin)
+//! - outputs (vout)
+//! - scriptSig / scriptPubKey structures
+//! - OP_RETURN message decoding
+//! - helper methods for value aggregation & spendability
+//!
+//! All models intentionally mirror Core’s RPC format exactly. Interpretation
+//!––such as OP_RETURN decoding or spendability checks––happens in helpers.
 
 use serde::Deserialize;
 use std::str;
 
-/// This struct holds data from getrawtransaction RPC method.
+//
+// ────────────────────────────────────────────────────────────────────────────────
+//   RPC WRAPPER & MAIN TX STRUCT
+// ────────────────────────────────────────────────────────────────────────────────
+//
+
+/// Mirror of `getrawtransaction` (verbose=1 or verbose=2 depending on call).
+///
+/// A transaction may be:
+/// - *confirmed* → includes `blockhash`, `confirmations`, `blocktime`  
+/// - *unconfirmed* → includes only `time`
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct GetRawTransactionResponse {
-    pub hex: String,                // The raw transaction in hexadecimal format.
-    pub txid: String,               // The transaction ID (hash) in hexadecimal format.
-    pub hash: String,               // The hash of the block containing this transaction.
-    pub size: u32,                  // The size of the transaction in bytes.
-    pub vsize: u32,                 // The virtual transaction size (used for fee calculation).
-    pub weight: u32,                // The weight of the transaction (used for fee calculation).
-    pub version: u32,               // The version number of the transaction format.
-    pub locktime: u32,              // The lock time of the transaction (block height or timestamp).
-    pub vin: Vec<TxIn>,             // A list of inputs (vin) in the transaction.
-    pub vout: Vec<TxOut>,           // A list of outputs (vout) in the transaction.
-    pub blockhash: Option<String>,  // The block hash containing this transaction (if confirmed).
-    pub confirmations: Option<u32>, // The number of confirmations for this transaction.
-    pub blocktime: Option<u64>,     // The block time in Unix epoch time (if confirmed).
-    pub time: Option<u64>,          // The transaction time in Unix epoch time (if unconfirmed).
+    pub hex: String,
+    pub txid: String,
+    pub hash: String,
+    pub size: u32,
+    pub vsize: u32,
+    pub weight: u32,
+    pub version: u32,
+    pub locktime: u32,
+
+    /// Transaction inputs.
+    pub vin: Vec<TxIn>,
+
+    /// Transaction outputs.
+    pub vout: Vec<TxOut>,
+
+    /// Block metadata if confirmed.
+    pub blockhash: Option<String>,
+    pub confirmations: Option<u32>,
+    pub blocktime: Option<u64>,
+
+    /// Timestamp for unconfirmed transactions.
+    pub time: Option<u64>,
 }
 
-/// This struct holds TxIn data from GetRawTransactionResponse struct.
+//
+// ────────────────────────────────────────────────────────────────────────────────
+//   TX-LEVEL HELPERS
+// ────────────────────────────────────────────────────────────────────────────────
+//
+
+impl GetRawTransactionResponse {
+    /// True if the transaction is confirmed and has a blockhash.
+     #[allow(dead_code)]
+    pub fn is_confirmed(&self) -> bool {
+        self.blockhash.is_some()
+    }
+
+    /// Sum of all output values (in BTC).
+    pub fn total_output_value(&self) -> f64 {
+        self.vout.iter().map(|v| v.value).sum()
+    }
+
+    /// True if any output contains an OP_RETURN script.
+    pub fn has_op_return(&self) -> bool {
+        self.vout.iter().any(|out| out.is_op_return())
+    }
+
+    /// Total value of all OP_RETURN outputs (usually zero).
+    pub fn total_op_return_value(&self) -> f64 {
+        self.vout
+            .iter()
+            .filter(|out| out.is_op_return())
+            .map(|out| out.value)
+            .sum()
+    }
+
+    /// Returns all OP_RETURN messages decoded as UTF-8 strings.
+     #[allow(dead_code)]
+    pub fn get_op_return_msg(&self) -> Vec<String> {
+        self.vout
+            .iter()
+            .filter_map(|out| out.decipher_op_return())
+            .collect()
+    }
+}
+
+//
+// ────────────────────────────────────────────────────────────────────────────────
+//   INPUT STRUCTURES
+// ────────────────────────────────────────────────────────────────────────────────
+//
+
+/// A transaction input.
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct TxIn {
-    pub txid: String,                     // The transaction ID of the output being spent.
-    pub vout: u32,                        // The index of the output being spent.
+    /// The txid of the spent output.
+    pub txid: String,
+
+    /// Output index being spent.
+    pub vout: u32,
+
+    /// ScriptSig for legacy inputs.
     #[serde(rename = "scriptSig")]
-    pub script_sig: Option<ScriptSig>,    // The scriptSig for this input.
-    pub sequence: u32,                    // The sequence number for this input.
-    pub txinwitness: Option<Vec<String>>, // Witness data (if any) for this input.
+    pub script_sig: Option<ScriptSig>,
+
+    /// Sequence number.
+    pub sequence: u32,
+
+    /// Optional witness stack for segwit inputs.
+    pub txinwitness: Option<Vec<String>>,
 }
 
-/// This struct holds ScriptSig data from GetRawTransactionResponse->TxIn struct.
+/// ScriptSig for legacy inputs.
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct ScriptSig {
-    pub asm: String, // The assembly representation of the script.
-    pub hex: String, // The hexadecimal representation of the script.
+    pub asm: String,
+    pub hex: String,
 }
 
-/// This struct holds TxOut data from GetRawTransactionResponse struct.
+//
+// ────────────────────────────────────────────────────────────────────────────────
+//   OUTPUT STRUCTURES
+// ────────────────────────────────────────────────────────────────────────────────
+//
+
+/// A transaction output.
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct TxOut {
-    pub value: f64,                   // The value of the output in BTC.
-    pub n: u32,                       // The index of this output in the transaction.
+    /// Value in BTC.
+    pub value: f64,
+
+    /// Output index.
+    pub n: u32,
+
+    /// ScriptPubKey structure.
     #[serde(rename = "scriptPubKey")]
-    pub script_pub_key: Option<ScriptPubKey>, // The scriptPubKey for this output.
+    pub script_pub_key: Option<ScriptPubKey>,
 }
 
-/// This struct holds ScriptPubKey data from GetRawTransactionResponse->TxOut struct.
+/// ScriptPubKey metadata.
 #[derive(Deserialize, Debug, Clone)]
+#[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct ScriptPubKey {
-    pub asm: Option<String>,             // The assembly representation of the script.
-    pub hex: Option<String>,             // The hexadecimal representation of the script.
+    pub asm: Option<String>,
+    pub hex: Option<String>,
     #[serde(rename = "reqSigs")]
-    pub req_sigs: Option<u32>,           // The number of signatures required to spend this output.
-    pub r#type: Option<String>,          // The type of script (e.g., "pubkeyhash").
-    pub addresses: Option<Vec<String>>,  // The addresses associated with this output (if any).
+    pub req_sigs: Option<u32>,
+    pub r#type: Option<String>,
+    pub addresses: Option<Vec<String>>,
 }
 
-impl GetRawTransactionResponse {
-    /// Returns whether the transaction is confirmed (has a blockhash) from getrawtransaction method.
-    #[allow(dead_code)]
-    pub fn is_confirmed(&self) -> bool {
-        self.blockhash.is_some()
-    }
-    
-    /// Returns the total value of all outputs in the transaction from getrawtransaction method.
-    pub fn total_output_value(&self) -> f64 {
-        self.vout.iter().map(|vout| vout.value).sum()
-    }
+//
+// ────────────────────────────────────────────────────────────────────────────────
+//   OUTPUT HELPERS
+// ────────────────────────────────────────────────────────────────────────────────
+//
 
-     
-    /// Returns true or false if the transaction contains any OP_RETURN outputs from getrawtransaction method.
-    pub fn has_op_return(&self) -> bool {
-        self.vout.iter().any(|output| output.is_op_return())
-    }
-
-    /// Returns the total value of all OP_RETURN outputs in the transaction from getrawtransaction method.
-    pub fn total_op_return_value(&self) -> f64 {
-        self.vout
-            .iter()
-            .filter(|output| output.is_op_return())
-            .map(|output| output.value)
-            .sum()
-    }
-
-    #[allow(dead_code)]
-    /// Returns deciphered OP_RETURN message if any for TxOut from getrawtransaction method.
-    pub fn get_op_return_msg(&self) -> Vec<String> {
-        self.vout
-            .iter()
-            .filter_map(|vout| vout.decipher_op_return())
-            .collect()
-    }
-    
-}
-
- impl TxOut {
-    /// Returns whether this output is spendable by the given address from getrawtransaction method.
-    #[allow(dead_code)]
+impl TxOut {
+    /// Whether this output pays to a given Bitcoin address.
+     #[allow(dead_code)]
     pub fn is_spendable_by(&self, address: &str) -> bool {
-        if let Some(addresses) = &<std::option::Option<ScriptPubKey> as Clone>::clone(&self.script_pub_key).unwrap().addresses {
-            addresses.contains(&address.to_string())
-        } else {
-            false
+        if let Some(script) = &self.script_pub_key {
+            if let Some(addrs) = &script.addresses {
+                return addrs.contains(&address.to_string());
+            }
         }
+        false
     }
 
-    /// Returns whether this output is an OP_RETURN output from getrawtransaction method.    
+    /// True if the script begins with `OP_RETURN`.
     pub fn is_op_return(&self) -> bool {
-        if let Some(script_pub_key) = &self.script_pub_key {
-            if let Some(asm) = &script_pub_key.asm {
-                // Check if the ASM script starts with "OP_RETURN"
-                let is_op_return = asm.starts_with("OP_RETURN");
-
-                is_op_return
-            } else {
-                false
-            }
-        } else {
-            false
-        }
+        self.script_pub_key
+            .as_ref()
+            .and_then(|spk| spk.asm.as_ref())
+            .map(|asm| asm.starts_with("OP_RETURN"))
+            .unwrap_or(false)
     }
 
-    /// Deciphers OP_RETURN message
-    #[allow(dead_code)]
-    fn decipher_op_return(&self) -> Option<String> {
-        if let Some(script_pub_key) = &self.script_pub_key {
-            if let Some(asm) = &script_pub_key.asm {
-                if asm.starts_with("OP_RETURN") {
-                    // Split the ASM script into parts
-                    let parts: Vec<&str> = asm.split_whitespace().collect();
-                    if parts.len() > 1 {
-                        // The data is the second part (hexadecimal string)
-                        let hex_data = parts[1];
-                        // Convert the hex string to bytes (Vec<u8>)
-                        if let Ok(bytes) = hex::decode(hex_data) {
-                            // Convert the bytes to a UTF-8 string (if possible)
-                            return str::from_utf8(&bytes).map(|s| s.to_string()).ok();
-                        }
-                    }
-                }
-            }
+    /// Attempt to decode the OP_RETURN payload as UTF-8.
+    ///
+    /// Returns:
+    /// - `Some(String)` on success
+    /// - `None` if the script is not OP_RETURN or cannot be decoded
+     #[allow(dead_code)]
+    pub fn decipher_op_return(&self) -> Option<String> {
+        let script = self.script_pub_key.as_ref()?;
+        let asm = script.asm.as_ref()?;
+
+        if !asm.starts_with("OP_RETURN") {
+            return None;
         }
-        None
-    } 
+
+        // OP_RETURN <hex>
+        let parts: Vec<&str> = asm.split_whitespace().collect();
+        if parts.len() < 2 {
+            return None;
+        }
+
+        let hex_data = parts[1];
+
+        // Decode hex → bytes → utf8
+        let bytes = hex::decode(hex_data).ok()?;
+        let msg = str::from_utf8(&bytes).ok()?.to_string();
+
+        Some(msg)
+    }
 }

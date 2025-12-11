@@ -1,5 +1,17 @@
-
 // display/display_network_info.rs
+//
+// Network dashboard renderer.
+//
+// This module draws the Network section of the BlockchainInfo TUI.
+// It includes:
+//   - Incoming/outgoing connection counts (with flashing IN counter)
+//   - Total bytes received/sent (formatted human-readable)
+//   - Average block propagation time (color-coded severity)
+//   - Toggle-view section: Version Distribution (BarChart) OR Client Distribution (ASCII)
+//   - Sparkline showing recent block propagation times
+//
+// Like all display modules, it is pure rendering logic,
+// receiving preprocessed data from `models` and plotting it visually.
 
 use tui::{
     backend::Backend,
@@ -14,7 +26,16 @@ use crate::utils::{format_size, normalize_percentages, BAR_ACTIVE};
 use std::collections::VecDeque;
 use crate::models::flashing_text::CONNECTIONS_IN_TEXT;
 
-// Displays the network information in a `tui` terminal.
+/// Renders the Network Information section of the dashboard.
+///
+/// This function displays:
+///   - Incoming/outgoing peer counts
+///   - Total bytes received/sent over the network
+///   - Average block propagation time (with dynamic color coding)
+///   - Either: version distribution (BarChart) OR client distribution (ASCII)
+///   - A sparkline of recent propagation times
+///
+/// The caller controls whether to show client distribution via `show_client_distribution`.
 pub fn display_network_info<B: Backend>(
     network_info: &NetworkInfo,
     net_totals: &NetTotals,
@@ -27,60 +48,72 @@ pub fn display_network_info<B: Backend>(
     area: Rect,
 ) -> Result<(), MyError> {
     
-    // Determine color based on average block propagation time.
+    // -----------------------------------------------------------------------
+    // 1. BLOCK PROPAGATION TIME COLORING
+    // -----------------------------------------------------------------------
+    // Color thresholds:
+    //   < 3 seconds      → Ideal (Green)
+    //   < 60 seconds     → Caution (Yellow)
+    //   >= 60 seconds    → Critical (Red)
     let color = if avg_block_propagate_time.abs() < 3 {
-        Color::Green // Ideal.
+        Color::Green
     } else if avg_block_propagate_time.abs() < 60 {
-        Color::Yellow // Caution.
+        Color::Yellow
     } else {
-        Color::Red // Critical.
+        Color::Red
     };
     let abpt_text = "seconds";
 
-    // Update the FlashingText variable
-    CONNECTIONS_IN_TEXT.lock().unwrap().update(network_info.connections_in as u64);
+    // -----------------------------------------------------------------------
+    // 2. FLASHING CONNECTION-IN COUNTER
+    // -----------------------------------------------------------------------
+    // Each render, update the FlashingText handler so incoming connections
+    // animate visually when the number changes.
+    CONNECTIONS_IN_TEXT
+        .lock()
+        .unwrap()
+        .update(network_info.connections_in as u64);
 
-    // Get the style for the FlashingText
     let connections_in_style = CONNECTIONS_IN_TEXT.lock().unwrap().style();
 
-    let connections_in_spans =Spans::from(vec![
+    let connections_in_spans = Spans::from(vec![
         Span::styled("🔌 Connections in: ", Style::default().fg(Color::Gray)),
-        Span::styled(
-            network_info.connections_in.to_string(),
-            connections_in_style,
-        ),
+        Span::styled(network_info.connections_in.to_string(), connections_in_style),
     ]);
 
-    // Define layout with space for Node Version Distribution bar chart and sparkline.
+    // -----------------------------------------------------------------------
+    // 3. TOP-LEVEL NETWORK LAYOUT
+    // -----------------------------------------------------------------------
+    // Layout for:
+    //   chunks[0] → header (visual spacing)
+    //   chunks[1] → network core stats
+    //   chunks[2] → version/client distribution + sparkline
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
         .constraints(
             [
-                Constraint::Length(1),  // Header section.
-                Constraint::Length(6), // Network info section.
-                Constraint::Min(8),    // Bar chart and sparkline section.
+                Constraint::Length(1),  // Header line.
+                Constraint::Length(6),  // Network stats block.
+                Constraint::Min(8),     // Distribution + Sparkline.
             ]
             .as_ref(),
         )
         .split(area);
 
-    // Header block.
+    // Header placeholder (keeps consistency across display modules).
     let header = Block::default()
         .borders(Borders::NONE)
         .style(Style::default().fg(Color::Cyan));
     frame.render_widget(header, chunks[0]);
 
-    // Network information content.
+    // -----------------------------------------------------------------------
+    // 4. CORE NETWORK STATS
+    // -----------------------------------------------------------------------
+    // These are presented as vertically stacked Span rows.
     let network_content = vec![
         connections_in_spans,
-        /* Spans::from(vec![
-            Span::styled("🔌 Connections in: ", Style::default().fg(Color::Gray)),
-            Span::styled(
-                network_info.connections_in.to_string(),
-                Style::default().fg(Color::Green),
-            ),
-        ]), */
+
         Spans::from(vec![
             Span::styled("🔗 Connections out: ", Style::default().fg(Color::Gray)),
             Span::styled(
@@ -88,6 +121,7 @@ pub fn display_network_info<B: Backend>(
                 Style::default().fg(Color::Yellow),
             ),
         ]),
+
         Spans::from(vec![
             Span::styled("⬇️ Total Bytes Received: ", Style::default().fg(Color::Gray)),
             Span::styled(
@@ -95,6 +129,7 @@ pub fn display_network_info<B: Backend>(
                 Style::default().fg(Color::Gray),
             ),
         ]),
+
         Spans::from(vec![
             Span::styled("⬆️ Total Bytes Sent: ", Style::default().fg(Color::Gray)),
             Span::styled(
@@ -102,8 +137,12 @@ pub fn display_network_info<B: Backend>(
                 Style::default().fg(Color::Gray),
             ),
         ]),
+
         Spans::from(vec![
-            Span::styled("⏱️ Average Block Propagation Time: ", Style::default().fg(Color::Gray)),
+            Span::styled(
+                "⏱️ Average Block Propagation Time: ",
+                Style::default().fg(Color::Gray),
+            ),
             Span::styled(
                 format!("{:.0} {}", avg_block_propagate_time, abpt_text),
                 Style::default().fg(color),
@@ -111,25 +150,34 @@ pub fn display_network_info<B: Backend>(
         ]),
     ];
 
-    // Render network info paragraph.
+    // Render the network stats paragraph.
     let network_paragraph = Paragraph::new(network_content)
         .block(Block::default().borders(Borders::NONE));
     frame.render_widget(network_paragraph, chunks[1]);
 
-    // Define sub-chunks for bar chart and sparkline.
+    // -----------------------------------------------------------------------
+    // 5. DISTRIBUTION + SPARKLINE LAYOUT
+    // -----------------------------------------------------------------------
+    // Left  68% → Version Distribution BarChart OR ASCII Client Distribution
+    // Right 32% → Sparkline of propagation times
     let sub_chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(68), Constraint::Percentage(32)])
         .split(chunks[2]);
 
+    // -----------------------------------------------------------------------
+    // 6. LEFT SIDE: CLIENT OR VERSION DISTRIBUTION
+    // -----------------------------------------------------------------------
     if show_client_distribution {
-        // 🔹 ASCII client distribution in sub_chunks[0]
+        // ASCII client distribution (new feature)
         draw_client_distribution(frame, sub_chunks[0], client_counts);
+
     } else {
-        // 🔹 Your existing Version Distribution BarChart
+        // Traditional Version Distribution BarChart (Top 5 entries)
         if !version_counts.is_empty() {
             let limited_version_counts = version_counts.iter().take(5);
 
+            // Convert input tuple format → BarChart data array
             let data: Vec<(&str, u64)> = limited_version_counts
                 .map(|(version, count)| (version.as_str(), *count as u64))
                 .collect();
@@ -139,7 +187,10 @@ pub fn display_network_info<B: Backend>(
             let barchart = BarChart::default()
                 .block(
                     Block::default()
-                        .title(format!("Version Distribution (Top 5 of {})", total_versions))
+                        .title(format!(
+                            "Version Distribution (Top 5 of {})",
+                            total_versions
+                        ))
                         .borders(Borders::ALL),
                 )
                 .data(&data)
@@ -152,11 +203,15 @@ pub fn display_network_info<B: Backend>(
         }
     }
 
-
-    // Sparkline for block propagation times.
+    // -----------------------------------------------------------------------
+    // 7. RIGHT SIDE: SPARKLINE OF BLOCK PROPAGATION TIMES
+    // -----------------------------------------------------------------------
     if !propagation_times.is_empty() {
-        // Bind the temporary vector to a variable for longer lifetime.
-        let propagation_data: Vec<u64> = propagation_times.iter().map(|&t| t.unsigned_abs()).collect();
+        // Convert from VecDeque<i64> → Vec<u64> (unsigned)
+        let propagation_data: Vec<u64> = propagation_times
+            .iter()
+            .map(|&t| t.unsigned_abs())
+            .collect();
 
         let sparkline = Sparkline::default()
             .block(
@@ -164,18 +219,22 @@ pub fn display_network_info<B: Backend>(
                     .title("Propagation Times")
                     .borders(Borders::ALL),
             )
-            .data(&propagation_data) // Pass the reference to the bound variable.
+            .data(&propagation_data)
             .style(Style::default().fg(Color::DarkGray));
 
-        // Render the Sparkline in the right sub-chunk.
         frame.render_widget(sparkline, sub_chunks[1]);
-    } else {
-        // println!("Propagation times are empty. Sparkline won't render.");
     }
 
     Ok(())
 }
 
+/// Draws the ASCII Client Distribution panel.
+///
+/// This is used when `[Network] (c→Client)` toggle is active.
+/// Displays up to 6 client names, with count, percent, and ASCII progress bar.
+///
+/// Example row:
+///   BitcoinKnots     134  -  18% [====      ]
 fn draw_client_distribution<B: Backend>(
     frame: &mut Frame<B>,
     area: Rect,
@@ -185,58 +244,47 @@ fn draw_client_distribution<B: Backend>(
         return;
     }
 
-    // NEW: extract raw counts and compute normalized percentages
-    let raw_counts: Vec<u64> = client_counts
-        .iter()
-        .map(|(_, c)| *c as u64)
-        .collect();
+    // -----------------------------------------------------------------------
+    // 1. Compute raw counts + normalized percentages
+    // -----------------------------------------------------------------------
+    let raw_counts: Vec<u64> = client_counts.iter().map(|(_, c)| *c as u64).collect();
 
     let pcts: Vec<u64> = normalize_percentages(&raw_counts);
 
     let mut lines: Vec<Spans> = Vec::new();
 
-    // UPDATED: zip client rows with normalized percentages
+    // -----------------------------------------------------------------------
+    // 2. Build up to 6 ASCII rows
+    // -----------------------------------------------------------------------
     for ((name, count), pct) in client_counts.iter().zip(pcts.iter()).take(6) {
-
-        // ASCII bar width
+        // Fixed width bar = 10 chars
         let bar_width = 10;
         let filled = (*pct as usize * bar_width) / 100;
         let empty = bar_width - filled;
 
-        let bar = format!(
-            "[{}{}]",
-            "=".repeat(filled),
-            " ".repeat(empty)
-        );
-        let count_span = Span::styled(
-            format!("{:>5} ", count),
-            Style::default().fg(Color::Gray),
-        );
+        let bar = format!("[{}{}]", "=".repeat(filled), " ".repeat(empty));
 
-        let dash_span = Span::styled(
-            "- ",
-            Style::default().fg(Color::DarkGray),
-        );
+        let count_span = Span::styled(format!("{:>5} ", count), Style::default().fg(Color::Gray));
 
-        let pct_span = Span::styled(
-            format!("{:>3}% ", pct),
-            Style::default().fg(Color::Gray),
-        );
+        let dash_span = Span::styled("- ", Style::default().fg(Color::DarkGray));
 
+        let pct_span =
+            Span::styled(format!("{:>3}% ", pct), Style::default().fg(Color::Gray));
+
+        // Construct final row
         lines.push(Spans::from(vec![
-            Span::styled(
-                format!("{:<10}", name),
-                Style::default().fg(Color::Cyan),
-            ),
+            Span::styled(format!("{:<10}", name), Style::default().fg(Color::Cyan)),
             count_span,
             dash_span,
             pct_span,
             Span::styled(bar, Style::default().fg(BAR_ACTIVE)),
         ]));
     }
-    // Insert a blank row at the top for vertical centering
+
+    // Place a blank spacer row at top for visual centering.
     lines.insert(0, Spans::from(" "));
-    
+
+    // Build the containing block + paragraph
     let block = Block::default()
         .title("Client Distribution")
         .borders(Borders::ALL);

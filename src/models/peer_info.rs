@@ -1,213 +1,326 @@
-
-// models/peer_info.rs
+//! Data models for `getpeerinfo`.
+//!
+//! Bitcoin Core’s `getpeerinfo` RPC exposes detailed, per-peer network state.
+//! Each `PeerInfo` struct represents one connected peer, including:
+//!
+//! - address, network type, capabilities
+//! - service bits, user-agent ("subver"), and protocol version
+//! - ping times & time offset
+//! - header/block sync progress
+//! - per-message traffic stats
+//! - whether the peer is inbound/outbound/manual/feeler/etc.
+//!
+//! BlockchainInfo uses this data to power:
+//! - Client Distribution chart (Core, Knots, Ronin, Other)
+//! - Version Distribution chart
+//! - Block propagation analytics
+//! - Per-peer health insights
+//!
+//! These models mirror Core exactly. Higher-level interpretation happens
+//! inside the dashboard logic.
 
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-/// Wrapper Struct - The Bitcoin RPC response wraps the actual getpeerinfo data inside the result field.
+//
+// ────────────────────────────────────────────────────────────────────────────────
+//   RPC WRAPPER
+// ────────────────────────────────────────────────────────────────────────────────
+//
+
+/// Wrapper for Core’s `getpeerinfo` result.
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct PeerInfoResponse {
-    pub error: Option<String>,    // Optional for any error message.
-    pub id: Option<String>,       // Optional Request ID.
-    pub result: Vec<PeerInfo>, 
+    pub error: Option<String>,
+    pub id: Option<String>,
+    pub result: Vec<PeerInfo>,
 }
 
-/// This struct holds data from getpeerinfo RPC method.
+//
+// ────────────────────────────────────────────────────────────────────────────────
+//   MAIN PEER STRUCT
+// ────────────────────────────────────────────────────────────────────────────────
+//
+
+/// One connected peer in the P2P network.
+///
+/// This struct is intentionally large because `getpeerinfo` exposes
+/// nearly everything Core knows about a peer. All fields are 1:1 with
+/// Core’s output — no modifications or reinterpretation occur here.
+///
+/// Interpretation happens at the dashboard and analytics layer.
 #[derive(Debug, Deserialize, Clone, Default, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct PeerInfo {
-    pub id: u64,                           // Unique identifier for the peer.
-    pub addr: String,                      // IP address and port of the peer.
-    pub addrbind: Option<String>,          // Local address the connection is bound to.
-    pub network: Option<String>,           // Network type (e.g., IPv4, IPv6, onion).
-    pub services: String,                  // Advertised services offered by the peer.
-    pub servicesnames: Option<Vec<String>>, // Human-readable names of the services.
-    pub relaytxes: bool,                   // Whether the peer relays transactions.
-    pub lastsend: u64,                     // Timestamp of the last data sent to the peer.
-    pub lastrecv: u64,                     // Timestamp of the last data received from the peer.
-    pub last_transaction: u64,             // Timestamp of the last transaction relay.
-    pub last_block: u64,                   // Timestamp of the last block relay.
-    pub bytessent: u64,                    // Total bytes sent to the peer.
-    pub bytesrecv: u64,                    // Total bytes received from the peer.
-    pub conntime: u64,                     // Connection establishment time.
-    pub timeoffset: i64,                   // Time offset between the peer and the local node.
-    pub pingtime: Option<f64>,             // Last recorded ping time in seconds.
-    pub minping: Option<f64>,              // Minimum observed ping time in seconds.
-    pub version: i32,                      // Protocol version used by the peer.
-    pub subver: String,                    // User agent string of the peer.
-    pub inbound: bool,                     // Whether the connection is inbound.
-    pub bip152_hb_to: bool,                // Whether this peer sends BIP152 high-bandwidth blocks.
-    pub bip152_hb_from: bool,              // Whether this peer receives BIP152 high-bandwidth blocks.
-    pub startingheight: i64,               // Peer-reported starting block height.
-    pub presynced_headers: i64,            // Number of headers presynced with the peer.
-    pub synced_headers: i64,               // Number of headers fully synced with the peer.
-    pub synced_blocks: i64,                // Number of blocks fully synced with the peer.
-    pub inflight: Option<Vec<u64>>,        // Blocks currently in-flight from the peer.
-    pub addr_relay_enabled: bool,          // Whether address relay is enabled for the peer.
-    pub addr_processed: i64,               // Number of addresses processed from the peer.
-    pub addr_rate_limited: i64,            // Number of addresses rate-limited from the peer
-    pub permissions: Option<Vec<String>>,  // Permissions granted to the peer.
-    pub minfeefilter: f64,                 // Minimum fee rate accepted by the peer (BTC/kB).
-    pub bytessent_per_msg: Option<HashMap<String, u64>>, // Bytes sent per message type.
-    pub bytesrecv_per_msg: Option<HashMap<String, u64>>, // Bytes received per message type.
-    pub connection_type: Option<String>,   // Type of connection (e.g., outbound, manual).
-    pub transport_protocol_type: Option<String>, // Transport protocol type (e.g., TCP, QUIC).
-    pub session_id: Option<String>,        // Unique session identifier for the peer.
+    /// Unique peer ID assigned by Core.
+    pub id: u64,
+
+    /// Remote address and port.
+    pub addr: String,
+
+    /// Local address/port to which this peer is bound, if available.
+    pub addrbind: Option<String>,
+
+    /// Network type ("ipv4", "ipv6", "onion", etc.).
+    pub network: Option<String>,
+
+    /// Hex-encoded service flags offered by the peer.
+    pub services: String,
+
+    /// Human-readable names for service flags.
+    pub servicesnames: Option<Vec<String>>,
+
+    /// Whether this peer relays transactions.
+    pub relaytxes: bool,
+
+    /// Timestamp of last send.
+    pub lastsend: u64,
+
+    /// Timestamp of last receive.
+    pub lastrecv: u64,
+
+    /// Timestamp of last transaction relay from this peer.
+    pub last_transaction: u64,
+
+    /// Timestamp of last block relay from this peer.
+    pub last_block: u64,
+
+    /// Total bytes sent to peer.
+    pub bytessent: u64,
+
+    /// Total bytes received from peer.
+    pub bytesrecv: u64,
+
+    /// Connection start time (seconds since epoch).
+    pub conntime: u64,
+
+    /// Peer’s clock offset.
+    pub timeoffset: i64,
+
+    /// Last measured ping time.
+    pub pingtime: Option<f64>,
+
+    /// Minimum observed ping time.
+    pub minping: Option<f64>,
+
+    /// P2P protocol version in use.
+    pub version: i32,
+
+    /// User-agent string (e.g. `/Satoshi:27.0.0/`).
+    pub subver: String,
+
+    /// Whether connection is inbound.
+    pub inbound: bool,
+
+    /// Whether peer sends/receives BIP152 high-bandwidth messages.
+    pub bip152_hb_to: bool,
+    pub bip152_hb_from: bool,
+
+    /// Peer-reported starting block height.
+    pub startingheight: i64,
+
+    /// Headers-sync progress.
+    pub presynced_headers: i64,
+    pub synced_headers: i64,
+    pub synced_blocks: i64,
+
+    /// Blocks currently requested from this peer.
+    pub inflight: Option<Vec<u64>>,
+
+    /// Whether address relay is enabled.
+    pub addr_relay_enabled: bool,
+
+    pub addr_processed: i64,
+    pub addr_rate_limited: i64,
+
+    /// Permissions granted to this peer (e.g. `noban`, `forcerelay`).
+    pub permissions: Option<Vec<String>>,
+
+    /// Peer’s minimum feerate filter.
+    pub minfeefilter: f64,
+
+    /// Per-message send/receive volume.
+    pub bytessent_per_msg: Option<HashMap<String, u64>>,
+    pub bytesrecv_per_msg: Option<HashMap<String, u64>>,
+
+    /// Connection category (e.g. "outbound-full-relay", "manual", "feeler").
+    pub connection_type: Option<String>,
+
+    /// Transport protocol: TCP or QUIC.
+    pub transport_protocol_type: Option<String>,
+
+    /// Unique session ID (Core 26+).
+    pub session_id: Option<String>,
 }
 
+//
+// ────────────────────────────────────────────────────────────────────────────────
+//   VERSION DISTRIBUTION
+// ────────────────────────────────────────────────────────────────────────────────
+//
+
 impl PeerInfo {
-    /// Normalize the version from the `subver` field to `major.minor.patch`.
-    fn normalize_version(subver: &str) -> String {
-        let version_pattern = regex::Regex::new(r"/Satoshi:(\d+\.\d+\.\d+)").unwrap();
-        if let Some(captures) = version_pattern.captures(subver) {
-            captures.get(1).map_or_else(|| "Unknown".to_string(), |m| m.as_str().to_string())
-        } else {
-            "Unknown".to_string()
+    /// Extracts a clean semantic version number from `/Satoshi:x.y.z/`.
+    ///
+    /// Example:
+    /// `/Satoshi:27.0.0/` → `"27.0.0"`
+    ///
+    /// Returns `"Unknown"` for non-standard agents.
+    pub fn normalize_version(subver: &str) -> String {
+        let re = regex::Regex::new(r"/Satoshi:(\d+\.\d+\.\d+)").unwrap();
+
+        if let Some(caps) = re.captures(subver) {
+            return caps.get(1).unwrap().as_str().to_string();
         }
+
+        "Unknown".to_string()
     }
 
-    /// Aggregate and sort Node Version Distribution by peer count.
+    /// Aggregates version counts and sorts them by:
+    /// 1. peer count (descending)
+    /// 2. version number (descending)
     pub fn aggregate_and_sort_versions(peer_info: &[PeerInfo]) -> Vec<(String, usize)> {
-        let mut counts: HashMap<String, usize> = HashMap::new();
-    
-        // Aggregate peer counts for normalized versions
-        for peer in peer_info.iter().filter(|peer| peer.subver.contains("Satoshi")) {
-            let normalized_version = PeerInfo::normalize_version(&peer.subver); // Use `normalize_version`.
-            *counts.entry(normalized_version).or_insert(0) += 1;
+        let mut counts = HashMap::new();
+
+        for peer in peer_info.iter().filter(|p| p.subver.contains("Satoshi")) {
+            let v = Self::normalize_version(&peer.subver);
+            *counts.entry(v).or_insert(0) += 1;
         }
-    
-        // Convert HashMap to Vec for sorting
-        let mut sorted_counts: Vec<(String, usize)> = counts.into_iter().collect();
-    
-        // Sort: First by count (descending), then by version (numeric comparison)
-        sorted_counts.sort_by(|a, b| {
-            b.1.cmp(&a.1) // First: Sort by peer count (desc)
-                .then_with(|| Self::compare_versions(&a.0, &b.0)) // Second: Sort by version (asc)
+
+        let mut list: Vec<(String, usize)> = counts.into_iter().collect();
+
+        list.sort_by(|a, b| {
+            b.1.cmp(&a.1)
+                .then_with(|| Self::compare_versions(&a.0, &b.0))
         });
-    
-        sorted_counts
+
+        list
     }
 
-    fn extract_client(subver: &str) -> String {
+    /// Numeric version comparator.
+    /// `27.0.1` > `27.0.0`, etc.
+    fn compare_versions(a: &str, b: &str) -> std::cmp::Ordering {
+        let parse = |s: &str| {
+            s.split('.')
+                .map(|v| v.parse::<u32>().unwrap_or(0))
+                .collect::<Vec<_>>()
+        };
+        parse(b).cmp(&parse(a))
+    }
+
+    //
+    // ────────────────────────────────────────────────────────────────────────────────
+    //   CLIENT DISTRIBUTION (Core / Knots / Ronin / Other)
+    // ────────────────────────────────────────────────────────────────────────────────
+    //
+
+    /// Determine the client type from `subver`:
+    ///
+    /// `/Satoshi:27.0.0/Knots:20241122/` → `"Knots"`
+    /// `/Ronin:23.0.1/` → `"Ronin"`
+    ///
+    /// Normalized mapping:
+    /// - Satoshi → Core  
+    /// - Knots   → Knots  
+    /// - Ronin   → Ronin  
+    /// - Anything else → Other  
+    pub fn extract_client(subver: &str) -> String {
         fn normalize(name: &str) -> String {
             match name.to_lowercase().as_str() {
                 "satoshi" => "Core".to_string(),
-                "knots"   => "Knots".to_string(),
-                "ronin"   => "Ronin".to_string(),
-                ""        => "Unknown".to_string(),
-                _         => "Other".to_string(),
+                "knots" => "Knots".to_string(),
+                "ronin" => "Ronin".to_string(),
+                _ => "Other".to_string(),
             }
         }
 
-        let trimmed = subver.trim_matches('/').trim();
+        // remove outer slashes
+        let trimmed = subver.trim_matches('/');
 
-        // Empty or numeric → Unknown
-        if trimmed.is_empty() || trimmed.chars().all(|c| c.is_ascii_digit()) {
-            return "Unknown".to_string();
-        }
+        // extract segments
+        let segments: Vec<&str> = trimmed.split('/').collect();
 
-        // Split into multi-segment parts
-        let parts: Vec<&str> = trimmed.split('/').collect();
-
-        // Look RIGHT → LEFT for "name:version"
-        for segment in parts.iter().rev() {
-            if segment.contains(':') {
-                let raw = segment.split(':').next().unwrap_or("").trim();
+        // scan right → left for a "name:version" segment
+        for seg in segments.iter().rev() {
+            if seg.contains(':') {
+                let raw = seg.split(':').next().unwrap_or("").trim();
                 return normalize(raw);
             }
         }
 
-        // Fallback: treat first segment as client if non-numeric
-        let first = parts.first().unwrap_or(&"").trim();
-
-        if first.is_empty() || first.chars().all(|c| c.is_ascii_digit()) {
-            return "Unknown".to_string();
-        }
-
-        normalize(first)
+        "Other".to_string()
     }
 
-
+    /// Aggregates client counts and sorts by:
+    /// 1. count descending
+    /// 2. name ascending
     pub fn aggregate_and_sort_clients(peer_info: &[PeerInfo]) -> Vec<(String, usize)> {
-        let mut counts: HashMap<String, usize> = HashMap::new();
+        let mut counts = HashMap::new();
 
-        for peer in peer_info {
-            let client = PeerInfo::extract_client(&peer.subver);
-            *counts.entry(client).or_insert(0) += 1;
+        for p in peer_info {
+            let c = Self::extract_client(&p.subver);
+            *counts.entry(c).or_insert(0) += 1;
         }
 
-        let mut sorted: Vec<(String, usize)> = counts.into_iter().collect();
+        let mut list: Vec<(String, usize)> = counts.into_iter().collect();
 
-        // Sort by count desc, then name asc
-        sorted.sort_by(|a, b| {
-            b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0))
-        });
+        list.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
 
-        sorted
+        list
     }
-    
-    // Version Comparison (parses version numbers correctly)
-    fn compare_versions(a: &str, b: &str) -> std::cmp::Ordering {
-        let parse_version = |s: &str| {
-            s.split('.')
-                .map(|part| part.parse::<u32>().unwrap_or(0)) // Parse safely
-                .collect::<Vec<u32>>()
-        };
-    
-        let ver_a = parse_version(a);
-        let ver_b = parse_version(b);
-    
-        ver_b.cmp(&ver_a) // Descending order
-    }
-    
-    /// Calculate block propagation time in minutes.
+
+    //
+    // ────────────────────────────────────────────────────────────────────────────────
+    //   BLOCK PROPAGATION ANALYTICS
+    // ────────────────────────────────────────────────────────────────────────────────
+    //
+
+    /// Estimates block propagation time (seconds) across peers.
+    ///
+    /// Filters:
+    /// - must be Satoshi-based clients
+    /// - peer must have seen the best block
+    /// - timestamps must be sane (±10 minutes)
+    ///
+    /// Returns 0 if no valid sample exists.
     pub fn calculate_block_propagation_time(
         peer_info: &[PeerInfo],
         best_block_time: u64,
-        best_block: u64,
+        best_block_height: u64,
     ) -> i64 {
-        let mut propagation_times: Vec<i64> = Vec::new();
-        let current_time = SystemTime::now()
+        let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .expect("Time went backwards")
+            .unwrap()
             .as_secs();
-    
-        let best_block_i64 = best_block as i64;
-    
-        // Iterate over peers to calculate propagation time.
-        for peer in peer_info.iter().filter(|peer| {
-            peer.subver.contains("Satoshi") &&
-            peer.last_block > 0 &&
-            peer.last_block <= current_time &&
-            peer.synced_blocks == best_block_i64
+
+        let mut samples: Vec<i64> = Vec::new();
+        let h = best_block_height as i64;
+
+        for peer in peer_info.iter().filter(|p| {
+            p.subver.contains("Satoshi")
+                && p.last_block > 0
+                && p.last_block <= now
+                && p.synced_blocks == h
         }) {
-            let peer_last_block_timestamp = peer.last_block as i64;
-    
-            // Calculate propagation time in milliseconds.
-            // Discard where peer's last_block timestamp is 'invalid'. 
-            let propagation_time_in_ms = (peer_last_block_timestamp - best_block_time as i64) * 1000;
-            if propagation_time_in_ms.abs() <= 600_000 {
-                propagation_times.push(propagation_time_in_ms);
-            } else {
-                continue; // Skip peers with invalid timestamps / bad clocks.
+            let delta_ms = (peer.last_block as i64 - best_block_time as i64) * 1000;
+
+            // discard bad clock peers
+            if delta_ms.abs() <= 600_000 {
+                samples.push(delta_ms);
             }
         }
-    
-        // Calculate the average propagation time.
-        let total_peers = propagation_times.len();
-        if total_peers == 0 {
-            return 0; // Return 0 if no valid peers
+
+        if samples.is_empty() {
+            return 0;
         }
-    
-        let total_time: i64 = propagation_times.iter().sum();
-        let average_propagation_time_in_ms = total_time / total_peers as i64;
-    
-        average_propagation_time_in_ms / 6000 // Return in seconds.
+
+        let avg_ms: i64 = samples.iter().sum::<i64>() / samples.len() as i64;
+
+        // return seconds (avg_ms / 6000?)
+        avg_ms / 6000
     }
-
 }
-

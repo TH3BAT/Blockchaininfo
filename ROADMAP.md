@@ -20,9 +20,9 @@ This roadmap is built on three principles:
 
 ### **Accuracy** — show what *is*, not what “should be.”
 
-### **Clarity** — every metric has purpose.
+### **Clarity** — every metric has purpose
 
-### **Sovereignty** — no APIs, no middlemen; pure RPC.
+### **Sovereignty** — no APIs, no middlemen; pure RPC
 
 ---
 

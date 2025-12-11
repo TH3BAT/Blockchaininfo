@@ -1,16 +1,53 @@
-
-// rpc/blockchain.rs
+//! Handles the `getblockchaininfo` RPC call.
+//!
+//! This RPC provides chain-wide metadata required across the dashboard:
+//! - Current chain height
+//! - Difficulty
+//! - Chainwork
+//! - Verification progress
+//! - Block/headers count
+//! - IBD (initial block download) status
+//! - Network name (main, test, regtest)
+//!
+//! This is one of the most frequently called RPCs in the application and forms
+//! the foundation for difficulty calculations, epoch analysis, and UI displays.
 
 use reqwest::Client;
 use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
+
 use crate::models::blockchain_info::{BlockchainInfoJsonWrap, BlockchainInfo};
 use crate::models::errors::MyError;
 use crate::config::RpcConfig;
+
 use std::time::Duration;
 
-// Makes an RPC request to fetch blockchain information.
+/// Fetches blockchain-wide metadata via `getblockchaininfo`.
+///
+/// ### Returns
+/// A fully typed `BlockchainInfo` struct containing:
+/// - Current block height  
+/// - Difficulty  
+/// - Chainwork  
+/// - Headers count  
+/// - IBD state  
+/// - Verification progress  
+///
+/// ### RPC Details
+/// Method: **getblockchaininfo**  
+/// Params: *none*  
+///
+/// ### Error Handling
+/// Converts underlying errors into `MyError`:
+/// - Timeout during RPC call  
+/// - Reqwest network failure  
+/// - JSON parse failure (malformed or unexpected data)  
+///
+/// This function is called continuously by the main application loop and must
+/// remain fast, stable, and predictable.
 pub async fn fetch_blockchain_info(config: &RpcConfig) -> Result<BlockchainInfo, MyError> {
+    
+    // Construct raw JSON-RPC request payload
     let json_rpc_request = json!({
         "jsonrpc": "1.0",
         "id": "1",
@@ -18,11 +55,13 @@ pub async fn fetch_blockchain_info(config: &RpcConfig) -> Result<BlockchainInfo,
         "params": []
     });
 
+    // Configure lightweight RPC client with tight timeouts for TUI responsiveness
     let client = Client::builder()
-        .timeout(Duration::from_secs(10))
-        .connect_timeout(Duration::from_secs(5))
+        .timeout(Duration::from_secs(10))        // entire request timeout
+        .connect_timeout(Duration::from_secs(5)) // TCP handshake timeout
         .build()?;
 
+    // Execute request
     let response = client
         .post(&config.address)
         .basic_auth(&config.username, Some(&config.password))
@@ -31,6 +70,7 @@ pub async fn fetch_blockchain_info(config: &RpcConfig) -> Result<BlockchainInfo,
         .send()
         .await
         .map_err(|e| {
+            // Distinguish timeout from other network errors
             if e.is_timeout() {
                 MyError::TimeoutError(format!(
                     "Request to {} timed out for method 'getblockchaininfo'",
@@ -40,6 +80,7 @@ pub async fn fetch_blockchain_info(config: &RpcConfig) -> Result<BlockchainInfo,
                 MyError::Reqwest(e)
             }
         })?
+        // Deserialize into wrapper type containing a `result: BlockchainInfo`
         .json::<BlockchainInfoJsonWrap>()
         .await
         .map_err(|_e| {
