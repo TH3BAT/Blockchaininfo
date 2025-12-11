@@ -1,101 +1,195 @@
-# **ROADMAP.md**  
 
-## **Network Health Surveillance: RBF & Mempool Integrity**  
+# **🚀 ROADMAP.md — 2025 Sovereign Edition**
 
-**🔍 Our Mission**  
-Unlike generic mempool trackers, we monitor **Bitcoin’s security and decentralization in real-time**—exposing stealth RBF, miner frontrunning, and mempool anomalies that others miss.  
-
-**🛡️ How We Differ From mempool.space**  
-
-| Feature | mempool.space | **Our Tool** |  
-|---------|--------------|-------------|  
-| **RBF Monitoring** | Basic opt-in RBF tracking | **Stealth RBF detection, miner replacement logs** |  
-| **Fee Analysis** | Priority fee estimates | **Dust-free, CPFP/RBF-aware fee signals** |  
-| **Focus** | General mempool visualization | **Network health & attack detection** |  
-| **Data Depth** | Standard mempool filtering | **Forensic-grade replacement logging** |  
+*A modern, accurate roadmap for BlockchainInfo, reflecting the tool as it exists today.*
 
 ---
 
-## **Core Features**  
+## **1. Philosophy of the Roadmap**
 
-### **🚨 RBF Attack Radar (Unique to Us)**  
+BlockchainInfo has evolved into a **Bitcoin telemetry instrument** —
+a sovereign, real-time observatory revealing the living patterns of:
 
-- Logs **every `getmempoolentry` error** to detect:  
-  - ✅ **Silent RBF** (replacements without opt-in flag)  
-  - ✅ **Miner frontrunning** (high-fee tx kicking out low-fee)  
-  - ✅ **Mempool censorship** (transactions mysteriously vanishing)  
-- **Friday congestion analysis** → catch weekly replacement spikes.  
+* hash power
+* consensus health
+* miner identity
+* mempool energy
+* node diversity
 
-### **📊 Clean Fee Analytics (vs. mempool.space)**  
+This roadmap is built on three principles:
 
-- **Excludes dust** (≤546 sats) for accurate fee signals.  
-- **Ancestor/descendant-aware** → reflects real mining incentives.  
-- **Modified fee tracking** → shows miner-adjusted economics.  
+### **Accuracy** — show what *is*, not what “should be.”
 
-### **⚡ Performance Optimizations**  
+### **Clarity** — every metric has purpose.
 
-- **Cached critical data** → no lag, no bloat.  
-- **Real-time updates** → no stale mempool views.  
+### **Sovereignty** — no APIs, no middlemen; pure RPC.
 
 ---
 
-## **🔜 Next Steps (Roadmap)**  
+## **2. Completed Milestones (v0.6 → v1.0 Era)**
 
-### **🛠️ Phase 1: RBF Alert System (Priority)**  
+### ✔ **Independent Async Engine**
 
-- Live alerts for **non-compliant BIP 125 replacements**.  
-- Public log of **worst offender miners/pools**.  
+All sections update independently with zero UI blocking.
 
-### **📈 Phase 2: Network Health Dashboard**  
+### ✔ **Global Cache Pattern**
 
-- **"RBF Storm" tracker** (replacement heatmaps by hour/day).  
-- **0-conf risk scoring** for merchants/exchanges.  
+Every dataset available instantly, shared across the entire app.
 
-### **🔍 Phase 3: Community Forensics**  
+### ✔ **Semaphore-Controlled Mempool Sampling**
 
-- **User-submitted tx investigations** → cross-check our logs.  
-- **Weekly reports** on mempool manipulation trends.  
+Prevents RPC overload during tx storms.
+
+### ✔ **TX Lookup Popup**
+
+Instant search via RPC, paste detection, backspace-safe input.
+
+### ✔ **Help Panel**
+
+Minimal, clean, self-documenting UX.
+
+### ✔ **Hash Phase System**
+
+Live visualization of miner progress inside the 2016-block difficulty epoch.
+
+### ✔ **Miner Identity via `miners.json`**
+
+Human-readable pool identification for every new block.
+
+### ✔ **Consensus Fork Monitoring**
+
+Active + stale branches shown in real time.
+
+### ✔ **⭐ Consensus Alerts v2 (Completed)**
+
+Popup triggers when any fork reaches **length ≥ 2**, warning the user of:
+
+* potential reorg
+* chain instability
+* miner conflict
+* consensus turbulence
+
+Includes cooldown to prevent spam.
+This is a flagship BlockchainInfo innovation.
+
+### ✔ **Dust-Free Fee Signal**
+
+Pure mempool analytics, undistorted by spam, dust, or non-minable tx.
 
 ---
 
-## **Why This Matters**  
+## **3. Upcoming Enhancements (v1.0 → v1.2)**
 
-We’re not just another fee tracker—we’re **Bitcoin’s network watchdog**. While others show the mempool, we expose **its hidden battles**.  
-
-**Stay tuned. Stay paranoid.** ⚡  
+These are real ideas — not promises — designed to expand clarity without bloating the interface.
 
 ---
 
-👇 **Here's how our system stacks up against other mempool trackers…**  
+### **🔥 3.1 — Hash Phase Line Toggle**
+
+Show the last epoch’s hash rate at:
+
+* 10%
+* 25%
+* 50%
+* 75%
+* 100%
+
+A 5-point sparkline or micro-chart revealing miner momentum through the epoch.
 
 ---
 
-## **🎯 Understanding the Fee Rate Differences**  
+### **🔥 3.2 — Miner Region Classification**
 
-Our mempool distribution provides a **clean, dust-free signal** of transaction activity, while platforms like **mempool.info** calculate priority fees differently.  
+`miners.json` expansion:
 
-### **Key Differences:**  
+* pool name
+* region/country
+* wallet cluster
+* optional anonymity flags
 
-🚫 **Dust-Free Transactions:**  
+Allows small, optional region distribution displays.
 
-- We **exclude dust transactions** (546 sats or less), which often sit in the mempool for **hours or days** without getting mined.  
-- This prevents **low-fee TXs from skewing the average fee rate downward.**  
+---
 
-📊 **Comprehensive Fee Calculation:**  
+### **🔥 3.3 — Bandwidth Sparkline**
 
-- Our approach considers **all relevant fee metrics**:  
-  ✅ **Base Fee** (what the TX pays directly)  
-  ✅ **Ancestor & Descendant Fees** (impact of CPFP & RBF strategies)  
-  ✅ **Modified Fees** (miner-adjusted incentives)  
-- This provides a **more accurate representation** of what transactions actually pay.  
+Based on net totals:
 
-⚡ **Mempool.info’s Priority Fee vs. Our Average Fee Rate:**  
+* live inbound/outbound bytes
+* optional toggle
+* minimal footprint
 
-- **Mempool.info estimates the *lowest* fee rate** needed to get into the next block.  
-- **Our average fee rate (e.g., 7.65 sat/vB)** shows the **actual fees being paid across active transactions**, free from dust and noise.  
+---
 
-💡 **Applying These Insights:**  
-✅ **Need the minimum fee to be mined soon?** → Refer to **mempool.info’s priority fees.**  
-✅ **Want to understand real transaction behavior?** → Use our **mempool distribution data.**  
+### **🔥 3.4 — Blockchain Snapshot Export (Text)**
 
-By keeping **dust where it belongs** and ensuring **pure signal**, our mempool insights provide a **more reliable view of network conditions.**  
+Single key → exports:
+
+* block height
+* hash phase
+* mempool state
+* network stats
+* fork status
+* miner identity
+
+A simple archival feature for node operators.
+
+---
+
+## **4. Longer-Term Concepts (Fantasy Stage)**
+
+### **🌱 Node-to-Node Dashboard Sync**
+
+Instances mirroring each other over LAN.
+A sovereign “observer cluster.”
+
+### **🌱 User-Defined Plugins**
+
+Let advanced users add custom RPC queries to display.
+
+### **🌱 Hash Phase Animation Pack**
+
+Flip-dot inspired graphics, or more cinematic toggles.
+
+---
+
+## **5. Removed / Deprecated Ideas**
+
+The original roadmap included explorations around:
+
+* RBF manipulation logs
+* mempool forensics
+* miner censorship detection
+* replacement storms
+* priority fee comparisons
+
+These are no longer aligned with the direction of BlockchainInfo.
+
+The tool has matured into a **clarity instrument**, not a forensics engine.
+
+---
+
+## **6. Go-Forward Rules for All Features**
+
+### **No clutter**
+
+Every new toggle must earn its space.
+
+### **No external dependencies**
+
+RPC-only, trust-minimized.
+
+### **No UI noise**
+
+If it distracts from the signal, it doesn’t ship.
+
+### **Always async, always smooth**
+
+The UI must remain alive — never waiting on RPC.
+
+---
+
+## **7. The Spirit of BlockchainInfo**
+
+This roadmap represents a tool built with care, precision, and intention —
+designed to be the clearest window into Bitcoin’s heartbeat.
