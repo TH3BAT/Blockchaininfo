@@ -1,84 +1,61 @@
-# [v0.3.1] - 2025-03-24
+# Changelog
 
-Added
+All notable changes to this project will be documented in this file.
 
-- **Memory Efficiency Improvements**:
-  - `Arc<str>` usage for miner data in BlockHistory and distribution functions
-  - Optimized cache update logic with change detection
-- **Performance Enhancements**:
-  - Improved spawn logic to skip redundant operations
-  - Streamlined block number/propagation time handling
-
-Changed
-
-- Updated `tokio` to v1.44.1
-- Updated `reqwest` to v0.12.15
-- Narrowed Version Distribution chart bars for better terminal compatibility
-
-Fixed
-
-- Improved error messaging for missing miners.json
-- Removed redundant conversions and improved type safety
-- Optimized PeerInfo cache updates to reuse allocations
+This project adheres to [Semantic Versioning](https://semver.org/).  
+v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
-[v3.0.0] - 2025-03-10
+## [1.0.0] – 2025-12-11
 
-Added
+### Sovereign Release
 
-- **Last Miner in Best Block View**:
-  - Display the last miner in the best block view for better insights.
-- **Hash Rate Distribution Chart**:
-  - A new toggleable chart showing the distribution of hash rate over the past 24 hours.
-  - Toggle between the original metrics and the chart using the `h` key.
-  - Displays up to the **Top 8 miners** of x rewarded in the past 144 blocks.
-  - Tracks data from the moment the dashboard loads (no historical data is loaded).
-- **miners.json Support**:
-  - A new file to map coinbase wallet addresses to miner names.
-  - Loaded at runtime and can be maintained by end-users.
-  - File must be placed in the same folder as the executable (default location if running from the Blockchaininfo parent folder).
+### Added
 
-Changed
+- **Full inline documentation (Hybrid Mode)** across all modules  
+  (RPC, display, models, utils, run loop).
+- **Consensus Security Panel** with fork detection and stale-branch warnings.
+- **Hashrate Distribution Overlay** (toggle: `H`) with miner attribution.
+- **Dust-Free Mempool Filtering** (toggle: `D`) with optimized distribution sampling.
+- **Client ↔ Version Toggle** (Network Panel) for improved node diversity insight.
+- **Graceful Shutdown Flow** with last-frame rendering.
+- **Popup System Enhancements**:
+  - Transaction Lookup (TxID validation, paste detection)
+  - Help Panel
+  - Consensus Warning Dialog
+- **Propagation Time Tracking Enhancements** with block-change detection.
+- **Dynamic Async Polling Intervals** for optimal UI smoothness.
 
-- Updated `serde` to v1.0.219.
-- Updated `once_cell` to v1.21.0.
+### Changed
 
-Fixed
+- Improved UI consistency across all panels with unified toggle styling.
+- Refined layout for Blockchain, Mempool, Network, and Consensus sections.
+- Optimized cache update strategy to avoid redundant writes.
+- Cleaned concurrency logic to reduce lock contention.
+- Consolidated and clarified miner distribution tracking in `BLOCK_HISTORY`.
 
-- Improved handling of miner data to ensure accurate display in the Hash Distribution Chart.
+### Fixed
 
----
-
-[v0.2.12] - 2025-03-08
-
-Added
-
-- Paste detection to handle large chunks of text gracefully.
-- Neutral UI message ("Press Enter to validate TxID") while typing or pasting.
-
-Changed
-
-- Delayed TxID validation until Enter is pressed, eliminating red text flashes.
-
-Fixed
-
-- Prevented accidental app quit during pasting (thanks, bumper sticker manifesto 🚗).
-- Ensured invalid TxID message only appears after Enter is pressed.
+- Stabilized safe indexing throughout UI rendering paths.
+- Eliminated intermittent stale-data issues in async polling tasks.
+- Corrected handling of chain tip responses.
+- Improved paste behavior within the Tx Lookup popup.
+- Resolved minor timing jitter during redraw cycles.
 
 ---
 
-[v0.2.11] - 2025-03-06
+## Past Versions (Pre-Stable Series)
 
-Added
+Prior versions represent the experimental, pre-1.0 development phase.  
+Highlights included early dashboard rendering, miner distribution prototypes, propagation-time logic, and initial TUI features.
 
-- Input validation for transaction IDs.
-- User-friendly error messages for invalid inputs.
+For historical context, previous entries remain below:
 
-Changed
+<details>
+<summary>Show Pre-1.0.0 History</summary>
 
-- Optimized `LOGGED_TXS` to use `Arc<String>` for memory efficiency.
+### [0.6.3], [0.3.1], [0.2.12], [0.2.11], and
 
-Fixed
-
-- Fixed a crash caused by invalid input in the transaction lookup function.
+others  
+*(Full historical*
