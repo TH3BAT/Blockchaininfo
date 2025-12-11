@@ -1,34 +1,85 @@
 
-# Blockchaininfo
+# 🌐 Blockchaininfo
 
-![Rust][rust-badge] ![Uptime][uptime-badge]  
+**A Real-Time Bitcoin Network Observatory — Built in Rust**
+
+![Rust][rust-badge] ![Uptime][uptime-badge]
 
 [rust-badge]: https://img.shields.io/badge/Rust-1.70+-orange
 [uptime-badge]: https://img.shields.io/badge/Uptime-60_days-brightgreen
+
 ![BlockchainInfo Avatar](https://image.nostr.build/98d63043b0980b9b5ffcb5c0aeb904a69e4054f432736f07b159411db669500f.jpg)
+
+---
 
 ## Overview
 
-**Blockchaininfo** is your gateway to understanding the **heartbeat of the Bitcoin network**. Built in **Rust** for speed and reliability, this application connects seamlessly to your Bitcoin node via RPC, offering **real-time, detailed insights** into the blockchain, mempool, and overall network health.
+**Blockchaininfo** is a high-performance, real-time terminal dashboard that reveals the **true heartbeat of the Bitcoin network**.
+Built in **Rust** for safety and speed, it connects directly to your Bitcoin Knots/Core RPC and delivers:
 
-### Why Blockchaininfo?
+* live blockchain metrics
+* mempool analytics
+* network decentralization health
+* consensus security / fork monitoring
+* transaction lookup
+* and more
 
-In a world where decentralization and security are paramount, Blockchaininfo is designed to **monitor and showcase the state of Bitcoin's decentralization**, providing actionable insights to ensure the network remains robust and resistant to centralized control. It serves as a vital tool for tracking the **health and integrity of the blockchain**, offering a comprehensive view of node version distribution, network security metrics, and mempool activity.
+All packaged in a clean, color-coded TUI.
 
-### Key Features
+This is a tool built for those who care about **decentralization**, **sovereignty**, and the **integrity of Bitcoin’s proof-of-work network**.
 
-- **Real-Time Data:** Stay up-to-date with live blockchain and mempool metrics, ensuring you always have the latest pulse of the network.
-- **Decentralization Monitoring:** Analyze node version distribution to assess the diversity and resilience of the network.
-- **User-Friendly Dashboard:** A **live terminal interface** delivers formatted, color-coded output, making complex data intuitive and actionable.
-- **Rust-Powered Efficiency:** Leverage Rust’s performance and reliability for seamless and responsive interaction with your Bitcoin node.
+---
 
-Whether you're a developer, node operator, or Bitcoin enthusiast, Blockchaininfo empowers you with the tools to monitor, analyze, and protect the decentralized future of Bitcoin. 🚀
+## Why Blockchaininfo Exists
 
-### Reliability  
+Bitcoin is decentralized — but **only if the network stays diverse and transparent**.
 
-- **60-day continuous uptime** on Linux/macOS (Rust’s zero-cost abstractions FTW)  
-- Zero unexpected RPC crashes (RPC conflicts handled gracefully)  
-- Memory-safe even during mempool spam storms  
+Blockchaininfo monitors:
+
+* which versions are running
+* how healthy mempool activity is
+* how distributed the hash rate is
+* whether forks appear
+* how nodes behave across the network
+
+It offers a **real-time lens** into the state of Bitcoin’s decentralization — something no block explorer or web UI can deliver with this immediacy, clarity, and local privacy.
+
+---
+
+## Key Features
+
+### ⚡ **Real-Time Insights**
+
+Every section updates independently using asynchronous tasks and global caches — ensuring smooth, flicker-free updates.
+
+### 🧠 **Decentralization Monitoring**
+
+Track node version diversity and client distribution to identify centralizing trends.
+
+### 🔥 **Consensus Security**
+
+Live fork monitoring displays active chain vs stale forks — with an automatic warning popup when a fork grows long.
+
+### 🧩 **Mempool Distribution**
+
+Custom mempool sampling logic (backed by semaphore concurrency + atomic dust filters) surfaces real-world fee pressure and distribution patterns.
+
+### 🎛️ **Interactive Toggles**
+
+Switch views instantly:
+
+* Hashrate Distribution
+* Dust-Free mempool view
+* Version vs Client distribution
+* Transaction lookup
+* Help panel
+
+### 🦀 **Rust-Powered Reliability**
+
+* Memory-safe
+* Panic-free
+* Concurrency tuned
+* 60+ day uptime proven
 
 ---
 
@@ -37,86 +88,42 @@ Whether you're a developer, node operator, or Bitcoin enthusiast, Blockchaininfo
 ```plaintext
 .
 ├── benches/
-│   └── benchmark.rs          # For bench testing.
-├── cargo.toml                # Package information and dependencies
-├── miners.json               # Miners and known coinbase wallet(s) for hash distribution and best block Miner.
+├── cargo.toml
+├── miners.json
 └── src/
-    ├── config.rs             # Configuration loading and validation.
+    ├── config.rs
     ├── display/
-    │   ├── display_blockchain_info.rs      # Displays blockchain data.
-    │   ├── display_mempool_info.rs         # Displays mempool data.
-    │   ├── display_network_info.rs         # Displays network data.
-    │   ├── display_consensus_security_info.rs  # Displays consensus security data.
-    ├── display.rs             # Aggregates display modules.
-    ├── lib.rs                 # For testing.
-    ├── main.rs                # Application entry point.
-    ├── models/                # Data and error handling modules.
-    │   ├── block_info.rs           # Block data structures.
-    │   ├── blockchain_info.rs      # Blockchain data structures and implementations.
-    │   ├── mempool_info.rs         # Mempool data structures and implementations.
-    │   ├── network_info.rs         # Network data structures.
-    │   ├── network_totals.rs       # Network data structures (bytes reveived & sent).
-    │   ├── peer_info.rs            # Peers data structures and implementations.
-    │   ├── consensus_security.rs   # Consensus security data structures.
-    │   ├── flashing_text.rs        # Data structure and implementation to flash a metric.
-    │   ├── transaction_info.rs     # Raw transaction data structures and implementations.
-    │   └── errors.rs               # Error handling sata structures and implementations.
-    ├── models.rs              # Aggregates Data and Error modules.
-    ├── rpc/                   # RPC modules for interacting with the Bitcoin node.
-    │   ├── block.rs           # Block data fetching.
-    │   ├── blockchain.rs      # Blockchain data fetching.
-    │   ├── mempool.rs         # Mempool data fetching.
-    │   ├── network.rs         # Network data fetching.
-    │   ├── network_peers.rs   # Peers data model.
-    │   ├── network_totals.rs  # Network data fetching (bytes reveived & sent).
-    │   ├── mempool_distro.rs  # Fetches the sampled tx IDs for distribution metrics.
-    │   ├── transaction.rs     # Fetches Transaction for lookup.
-    │   └── chain_tips.rs      # Fetches chain tips for consensus monitoring.
-    ├── rpc.rs                 # Aggregates RPC modules.
-    ├── runapp.rs              # Handles TUI terminal setup and main application flow.
-    └── utils.rs               # Utility functions (e.g., data formatting).
+    ├── models/
+    ├── rpc/
+    ├── runapp.rs
+    ├── utils.rs
+    └── main.rs
 ```
 
----
+Each folder has a clear role:
 
-## Requirements
-
-### **Configuration**
-
-The application requires Bitcoin Knots or Core RPC credentials to function properly. These credentials can be provided in one of the following ways:
-
----
-
-### **1. Automatic Failsafe Mode (No Setup Required)** 🚀
-
-If **no configuration is found**, the application will **prompt the user** to enter their Bitcoin Core RPC credentials **interactively** and will **automatically generate** a `config.toml` file. This ensures that first-time users can get started **immediately** without manual setup.
-
-- The generated `config.toml` will be saved at:
-
-  ```plaintext
-  ./target/release/config.toml 
-  ```
-
-- After initial setup, the application will load credentials from this file on future runs.
-
-**You can still override this behavior** using a custom config path (see below).
+* **display/** → TUI rendering
+* **rpc/** → Bitcoin RPC operations
+* **models/** → local data structures (no external Bitcoin crates)
+* **runapp.rs** → async orchestration & global cache system
 
 ---
 
-### **2. `config.toml` File (Recommended for Customization)**
+## Configuration
 
-If `config.toml` exists, the application will **load credentials from it automatically**.
+The app supports multiple configuration paths, from zero-setup to hardened security.
 
-By default, `blockchaininfo` looks for this file in:
+### **1. Automatic Failsafe Mode (Zero Setup)**
 
-- `./target/release/config.toml` (default location)
+If no config exists, Blockchaininfo prompts for RPC credentials and auto-creates:
 
-You can **specify a custom location** using:
+``` Rust
+./target/release/config.toml
+```
 
-- **CLI flag:** `--config /path/to/config.toml`
-- **Environment variable:** `BLOCKCHAININFO_CONFIG=/path/to/config.toml`
+### **2. config.toml File**
 
-#### **Example `config.toml` file:**
+Preferred for custom setups.
 
 ```toml
 [bitcoin_rpc]
@@ -125,121 +132,87 @@ password = "your_password"
 address = "http://127.0.0.1:8332"
 ```
 
-Replace the values with your actual Bitcoin Knots or Core RPC credentials.
-
----
-
-### **3. Environment Variables (Alternative Method)**
-
-If `config.toml` is **not found**, and the user **does not enter credentials manually**, the application will look for the following environment variables:
-
-| Variable         | Description |
-|-----------------|------------|
-| `RPC_USER`      | Your Bitcoin Core RPC username |
-| `RPC_PASSWORD`  | Your Bitcoin Core RPC password |
-| `RPC_ADDRESS`   | The Bitcoin Core RPC server address (e.g., `http://127.0.0.1:8332`, `https://your-node.local`) |
-
-Set them in your terminal before running:
+### **3. Environment Variables**
 
 ```bash
-export RPC_USER="your_username"
-export RPC_PASSWORD="your_password"
+export RPC_USER="user"
+export RPC_PASSWORD="password"
 export RPC_ADDRESS="http://127.0.0.1:8332"
 ```
 
----
+### **4. macOS Keychain Support**
 
-### **4. macOS Keychain (Recommended for macOS Security)** 🔒
+Secure password retrieval:
 
-On macOS, you can securely store the RPC password in the system Keychain. This is the most secure and recommended method. To set it up:
+```bash
+security add-generic-password -a bitcoin -s rpc-password -w "your_password"
+```
 
-- Add the password to your Keychain:
+### **Priority Order**
 
-  ```bash
-  security add-generic-password -a bitcoin -s rpc-password -w "your_password"
-  ```
-
-- The program will automatically retrieve the password using the Keychain during runtime.  
-  **Ensure `RPC_USER` and `RPC_ADDRESS` are set** in either:
-  - `config.toml`
-  - Environment variables (`RPC_USER`, `RPC_ADDRESS`)
-
----
-
-### **4. Priority Order (How the App Decides Which Config to Use)**
-
-The application loads configuration in the following order:
-
-1️⃣ **CLI Flag (`--config /path/to/config.toml`)** → **Highest priority**  
-2️⃣ **Environment Variable (`BLOCKCHAININFO_CONFIG`)** → If no CLI flag is set  
-3️⃣ **Default File Path (`./target/release/config.toml`)** → If no custom path is provided  
-4️⃣ **Environment Variables (`RPC_USER`, `RPC_PASSWORD`, `RPC_ADDRESS`)** → If no config file is found  
-5️⃣ **macOS Keychain** → If running on macOS & `RPC_PASSWORD` is missing  
-
-🚀 **This ensures maximum flexibility while keeping a secure & seamless setup!**
-
-### **5. Rust (Stable)**
-
-- Install Rust via [rustup.rs](https://rustup.rs/).  
+1. CLI flag (`--config`)
+2. Env var (`BLOCKCHAININFO_CONFIG`)
+3. Default path
+4. Env variables (`RPC_*`)
+5. macOS Keychain
 
 ---
 
 ## Installation
 
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/TH3BAT/Blockchaininfo.git
-   cd Blockchaininfo
-   ```
-
-2. Build the project:
-
-   ```bash
-   cargo build --release
-   ```
+```bash
+git clone https://github.com/TH3BAT/Blockchaininfo.git
+cd Blockchaininfo
+cargo build --release
+```
 
 ---
 
 ## Usage
 
-1. Ensure your Bitcoin node is running with RPC enabled.
-2. Run the application:
+```bash
+./target/release/blockchaininfo
+```
 
-   ```bash
-   ./target/release/blockchaininfo
-   ```
+Requires a running Bitcoin Knots/Core node with RPC enabled.
 
 ---
 
 ## Demo Video
 
-A 1:36 live demonstration of BlockchainInfo — showcasing all panels, toggles, and real-time updates — is available in the **Releases** section (v0.6.0).
+A full demonstration video (`BlockChainInfoLiveDemo.mov`) is available in the Releases section.
 
-➡️ Download `BlockChainInfoLiveDemo.mov` from the latest release.
+Shows:
+
+* Hash Phase flip
+* Mempool distribution
+* Node version/client charts
+* Fork monitoring
+* All toggles in action
 
 ---
 
 ## Error Handling
 
-The program includes robust error handling:
+Blockchaininfo is built to survive:
 
-- **Configuration Errors**: Ensures `config.toml` or environment variables contains valid credentials and address.
-- **RPC Communication Errors**: Handles failures in connecting to the Bitcoin node.  
-- **Data Parsing Errors**: Identifies and reports issues with parsing the JSON response.
+* RPC timeouts
+* invalid responses
+* json parsing failures
+* node restarts
+* mempool storms
+
+Errors are logged, not fatal.
 
 ---
 
 ## Contributions
 
-We welcome contributions! To get involved:
-
-1. Fork the repository.
-2. Create a feature branch.
-3. Open a pull request with a clear description.
+PRs welcome!
+Fork → branch → PR.
 
 ---
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+MIT — do whatever your sovereign soul wants.
