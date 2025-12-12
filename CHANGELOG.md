@@ -7,6 +7,28 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
+## v1.0.1 — Stability & Foundations (2025-12-11)
+
+### Fixes & Internal Improvements
+
+- Corrected the first hash-phase threshold (0.10 → 10.0) to accurately represent the 10% phase change.
+- Removed unintended `[dev-dependencies]` self-referencing path to prevent Rust Analyzer cyclic dependency warnings.
+- Updated toolchain expectations to Rust 1.90+ for compatibility with recent rust-analyzer behavior.
+- Resolved various analyzer warnings and ensured smoother development environment behavior.
+
+### Documentation
+
+- Introduced `docs/FGMO.md` — Photo-BIP for the **Floating Global Mesh Observer**, outlining the conceptual
+  architecture for an optional, sovereign, global operator observability mesh.
+
+### Notes
+
+This release does not modify runtime behavior of the dashboard.
+It consolidates correctness, improves developer environment stability, and
+anchors a new conceptual direction for future Layer-3 observability features.
+
+---
+
 ## [1.0.0] – 2025-12-11
 
 ### Sovereign Release

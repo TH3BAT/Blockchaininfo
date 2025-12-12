@@ -1,6 +1,6 @@
 [package]
 name = "blockchaininfo"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 description = "Live terminal dashboard tracking critical Bitcoin metrics."
 readme = "README.md"
@@ -32,7 +32,7 @@ name = "benchmark"
 harness = false
 
 [dev-dependencies]
-blockchaininfo = { path = "." }
+# blockchaininfo = { path = "." }
 criterion = "0.7.0"
 
 [dependencies]

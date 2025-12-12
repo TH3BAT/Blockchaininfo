@@ -1,4 +1,3 @@
-
 //! Shared utilities for BlockchainInfo.
 //!
 //! This module provides:
@@ -231,7 +230,8 @@ pub fn render_header(percent: f64) -> Paragraph<'static> {
         "◕"
     };
 
-    let color = if percent < 0.10 { DarkGray } else { Yellow };
+    // We want the first phase change to be at 10%, and the percent is passed already converted.
+    let color = if percent < 10.0 { DarkGray } else { Yellow };
 
     Paragraph::new(vec![
         Spans::from(vec![
