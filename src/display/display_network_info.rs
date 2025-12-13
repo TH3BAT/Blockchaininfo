@@ -15,7 +15,7 @@
 
 use tui::{
     backend::Backend,
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Layout, Rect, Alignment},
     style::{Color, Style},
     text::{Span, Spans},
     widgets::{BarChart, Block, Borders, Paragraph, Sparkline},
@@ -45,6 +45,7 @@ pub fn display_network_info<B: Backend>(
     avg_block_propagate_time: &i64,
     propagation_times: &VecDeque<i64>,
     show_client_distribution: bool,
+    show_propagation_avg: bool,
     area: Rect,
 ) -> Result<(), MyError> {
     
@@ -204,9 +205,18 @@ pub fn display_network_info<B: Backend>(
     }
 
     // -----------------------------------------------------------------------
-    // 7. RIGHT SIDE: SPARKLINE OF BLOCK PROPAGATION TIMES
+    // 7. RIGHT SIDE: AVERAGE OR SPARKLINE OF BLOCK PROPAGATION TIMES
     // -----------------------------------------------------------------------
-    if !propagation_times.is_empty() {
+    if show_propagation_avg {
+        let avg_secs: i64 = if !propagation_times.is_empty() {
+            propagation_times.iter().sum::<i64>() / propagation_times.len() as i64
+        } else {
+            0
+        };
+
+        draw_propagation_avg(frame, sub_chunks[1], avg_secs, propagation_times.len() as i64)
+    } 
+    else if !propagation_times.is_empty() {
         // Convert from VecDeque<i64> → Vec<u64> (unsigned)
         let propagation_data: Vec<u64> = propagation_times
             .iter()
@@ -290,6 +300,38 @@ fn draw_client_distribution<B: Backend>(
         .borders(Borders::ALL);
 
     let paragraph = Paragraph::new(lines).block(block);
+
+    frame.render_widget(paragraph, area);
+}
+
+/// Draws the average block propagation time panel.
+///
+/// Displays the signed average propagation delay (in seconds) computed
+/// over the last 20 blocks. This view provides a quick, numerical anchor
+/// for network synchronization health, complementing the sparkline view
+/// which emphasizes variance and shape rather than direction.
+///
+/// The value is intentionally rendered as whole seconds to keep the signal
+/// calm, readable, and free of visual noise.
+pub fn draw_propagation_avg<B: Backend>(
+    frame: &mut Frame<B>,
+    area: Rect,
+    avg_secs: i64,
+    propagation_len: i64,
+) {
+    let content = format!(
+        "\n\nAvg ({} blocks): {}s\n",
+        propagation_len,
+        avg_secs
+    );
+
+    let paragraph = Paragraph::new(content)
+        .alignment(Alignment::Center)
+        .block(
+            Block::default()
+                .title("Propagation Avg")
+                .borders(Borders::ALL),
+        );
 
     frame.render_widget(paragraph, area);
 }

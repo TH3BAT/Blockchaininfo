@@ -122,6 +122,7 @@ struct App {
     dust_free: Arc<AtomicBool>,  // Toggle: Dust filtering for mempool distro
     show_client_distribution: bool, // NEW toggle: Version vs Client view
     last_fork_alert_height: Option<u64>, // For deduping fork warning popups
+    show_propagation_avg: bool, // NEW toggle: Propagation average over 20 block period
 }
 
 impl App {
@@ -137,6 +138,7 @@ impl App {
             dust_free: Arc::new(AtomicBool::new(true)), // dust-free enabled by default
             show_client_distribution: false,            // default: show Version view
             last_fork_alert_height: None,
+            show_propagation_avg: false,                //default: show sparkline view
         }
     }
 }
@@ -803,6 +805,10 @@ loop {
                     app.show_client_distribution = !app.show_client_distribution;
                 }
 
+                 // Propagation sparkline <-> average toggle
+                KeyCode::Char('p') => {
+                    app.show_propagation_avg = !app.show_propagation_avg;
+                }
                 // If a non-character key is pressed during paste, end paste mode.
                 _ => {
                     if app.is_pasting {
@@ -946,10 +952,17 @@ loop {
         // -----------------------------------------------------------------------------------------
 
         // Label describing what pressing 'c' will toggle TO
-        let toggle_label = if app.show_client_distribution {
+        let cv_label = if app.show_client_distribution {
             "(c→Version)"
         } else {
             "(c→Client)"
+        };
+        
+        // Label describing what pressing 'p' will toggle TO
+        let prop_label = if app.show_propagation_avg {
+            "(p→Spark)"
+        } else {
+            "(p→Avg)"
         };
 
         let block_network = Block::default()
@@ -958,7 +971,7 @@ loop {
             .border_type(BorderType::Rounded)
             .title(
                 Span::styled(
-                    format!("[Network] {}", toggle_label),
+                    format!("[Network] {} {}", cv_label, prop_label),
                     Style::default()
                         .fg(Color::DarkGray)
                         .add_modifier(Modifier::BOLD),
@@ -977,6 +990,7 @@ loop {
             &avg_block_propagate_time,
             &propagation_times,
             app.show_client_distribution,
+            app.show_propagation_avg,
             chunks[3],
         );
         // -----------------------------------------------------------------------------------------

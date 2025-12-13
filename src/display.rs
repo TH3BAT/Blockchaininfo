@@ -117,6 +117,7 @@ pub fn display_network_info<B: Backend>(
     avg_block_propagate_time: &i64,
     propagation_times: &VecDeque<i64>,
     show_client_distribution: bool,
+    show_propagation_avg: bool,
     area: Rect,
 ) {
     let _ = display_network_info::display_network_info(
@@ -128,6 +129,7 @@ pub fn display_network_info<B: Backend>(
         avg_block_propagate_time,
         propagation_times,
         show_client_distribution,
+        show_propagation_avg,
         area,
     );
 }
