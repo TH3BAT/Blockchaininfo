@@ -152,14 +152,13 @@ pub async fn fetch_mempool_info(
     // ─────────────────────────────────────────────────────────────
     MEMPOOL_CACHE.clear();
 
-    for txid in raw_mempool_response.result {
-        if let Some(txid_bytes) = txid_hex_to_bytes(&txid) {
+    raw_mempool_response
+        .result
+        .iter()
+        .filter_map(|txid| txid_hex_to_bytes(txid))
+        .for_each(|txid_bytes| {
             MEMPOOL_CACHE.insert(txid_bytes);
-        } else {
-            // Optional: increment a counter or log once
-            // dropped_invalid_txids.fetch_add(1, Ordering::Relaxed);
-        }
-    }
+        });
 
     // Return the parsed mempool info struct
     Ok(mempoolinfo_response.result)
