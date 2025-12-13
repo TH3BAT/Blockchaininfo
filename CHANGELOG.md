@@ -7,6 +7,20 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
+## v1.0.2 – Optimize mempool TXID 2015-12-13
+
+### Improved
+
+- Reduced mempool memory usage by switching TXID storage from hex strings to fixed-size byte arrays (`[u8; 32]`)
+- Improved DashMap key efficiency under high mempool churn
+- Lower allocator pressure during sustained congestion
+
+### Internal
+
+- Refactored mempool hot path to enforce byte-native TXID handling
+
+---
+
 ## v1.0.1 — Stability & Foundations (2025-12-11)
 
 ### Fixes & Internal Improvements

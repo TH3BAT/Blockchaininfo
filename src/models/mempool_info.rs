@@ -66,7 +66,7 @@ impl MempoolDistribution {
     ///
     /// Assumes the caller has already filtered out dust if needed.
     /// This function is intentionally CPU-light; it should run every refresh cycle.
-    pub fn update_metrics(&mut self, cache: &DashMap<String, MempoolEntry>) {
+    pub fn update_metrics(&mut self, cache: &DashMap<[u8; 32], MempoolEntry>) {
         let mut small = 0;
         let mut medium = 0;
         let mut large = 0;

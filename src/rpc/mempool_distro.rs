@@ -41,6 +41,7 @@ use std::sync::Arc;
 use tokio::sync::Semaphore;
 use tokio::task;
 use std::time::Duration;
+use hex::ToHex;
 
 /// The dust threshold (546 sats), expressed in BTC.
 /// Any TX with fees below this threshold is considered "dust" when filtering.
@@ -58,7 +59,7 @@ const MAX_TX_CACHE_SIZE: usize = 250_000;
 /// - Backed by `DashMap` for thread-safe concurrent read/write
 /// - Initialized lazily
 /// - Used by the "Dust-Free" toggle and distribution metrics
-static TX_CACHE: Lazy<Arc<DashMap<String, MempoolEntry>>> =
+static TX_CACHE: Lazy<Arc<DashMap<[u8; 32], MempoolEntry>>> =
     Lazy::new(|| Arc::new(DashMap::with_capacity(250_000)));
 
 /// Main entry point for computing mempool distribution.
@@ -106,10 +107,11 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig, dust_free: bool) -> 
     }
 
     // Identify TXIDs that require fetching
-    let new_tx_ids: Vec<String> = MEMPOOL_CACHE.iter()
-        .filter(|txid| !TX_CACHE.contains_key(txid.as_str()))
-        .map(|txid| txid.clone())
+    let new_tx_ids: Vec<[u8; 32]> = MEMPOOL_CACHE.iter()
+       .filter(|txid| !TX_CACHE.contains_key(&**txid))
+        .map(|txid| *txid)
         .collect();
+
 
     // ─────────────────────────────────────────────────────────────
     // Step 1: RPC fetch with concurrency control
@@ -118,7 +120,8 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig, dust_free: bool) -> 
     let semaphore = Arc::new(Semaphore::new(10)); // Limit: 10 concurrent RPCs
     let mut tasks = Vec::new();
 
-    for tx_id in new_tx_ids {
+    for tx_id_bytes in new_tx_ids {
+        let tx_id_hex = tx_id_bytes.encode_hex::<String>();
         let permit = semaphore.clone().acquire_owned().await?;
         let client = client.clone();
         let config = config.clone();
@@ -132,7 +135,7 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig, dust_free: bool) -> 
                 "jsonrpc": "1.0",
                 "id": "1",
                 "method": "getmempoolentry",
-                "params": [tx_id]
+                "params": [tx_id_hex]
             });
 
             // Execute request and attempt to parse entry
@@ -149,17 +152,17 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig, dust_free: bool) -> 
                             config.address
                         ))
                     } else {
-                        MyError::RpcRequestError(tx_id.clone(), e.to_string())
+                        MyError::RpcRequestError(tx_id_hex.clone(), e.to_string())
                     }
                 })?
                 .json::<MempoolEntryJsonWrap>()
                 .await
-                .map_err(|e| MyError::JsonParsingError(tx_id.clone(), e.to_string()))
-                .map(|wrap| (tx_id.clone(), wrap.result));
+                .map_err(|e| MyError::JsonParsingError(tx_id_hex.clone(), e.to_string()))
+                .map(|wrap| wrap.result);
 
             match result {
-                Ok((tx_id, mempool_entry)) => {
-
+                Ok(mempool_entry) => {
+                    
                     // Evict oldest entry if cache is full
                     if TX_CACHE.len() == MAX_TX_CACHE_SIZE {
                         let mut keys: Vec<_> = TX_CACHE.iter().map(|entry| entry.key().clone()).collect();
@@ -174,7 +177,7 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig, dust_free: bool) -> 
                     // Dust-Free mode: retain only entries >= dust threshold
                     if dust_free {
                         if mempool_entry.fees.base >= DUST_THRESHOLD {
-                            TX_CACHE.insert(tx_id.clone(), mempool_entry);
+                            TX_CACHE.insert(tx_id_bytes.clone(), mempool_entry);
                         }
 
                         // prune any lingering dust
@@ -182,7 +185,7 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig, dust_free: bool) -> 
 
                     } else {
                         // Full mode: store everything
-                        TX_CACHE.insert(tx_id.clone(), mempool_entry);
+                        TX_CACHE.insert(tx_id_bytes.clone(), mempool_entry);
                     }
 
                     Ok(())
@@ -190,7 +193,7 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig, dust_free: bool) -> 
 
                 Err(e) => {
                     // Propagate RPC error with transaction context
-                    Err(MyError::RpcRequestError(tx_id.clone(), e.to_string()))
+                    Err(MyError::RpcRequestError(tx_id_hex.clone(), e.to_string()))
                 }
             }
         }));

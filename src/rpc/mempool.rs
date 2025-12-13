@@ -24,6 +24,7 @@ use std::sync::Arc;
 use dashmap::DashSet;
 use once_cell::sync::Lazy;
 use std::time::Duration;
+use hex::FromHex;
 
 /// Global mempool TXID cache.
 ///
@@ -36,7 +37,7 @@ use std::time::Duration;
 ///
 /// This cache is **rebuilt** on every call to `fetch_mempool_info`
 /// to ensure it reflects the latest state from the node.
-pub static MEMPOOL_CACHE: Lazy<Arc<DashSet<String>>> =
+pub static MEMPOOL_CACHE: Lazy<Arc<DashSet<[u8; 32]>>> =
     Lazy::new(|| Arc::new(DashSet::new()));
 
 /// Fetches mempool statistics and the full list of mempool transaction IDs.
@@ -152,9 +153,23 @@ pub async fn fetch_mempool_info(
     MEMPOOL_CACHE.clear();
 
     for txid in raw_mempool_response.result {
-        MEMPOOL_CACHE.insert(txid);
+        if let Some(txid_bytes) = txid_hex_to_bytes(&txid) {
+            MEMPOOL_CACHE.insert(txid_bytes);
+        } else {
+            // Optional: increment a counter or log once
+            // dropped_invalid_txids.fetch_add(1, Ordering::Relaxed);
+        }
     }
 
     // Return the parsed mempool info struct
     Ok(mempoolinfo_response.result)
+}
+
+
+
+fn txid_hex_to_bytes(txid: &str) -> Option<[u8; 32]> {
+    let vec = Vec::from_hex(txid).ok()?;
+    let mut arr = [0u8; 32];
+    arr.copy_from_slice(&vec);
+    Some(arr)
 }
