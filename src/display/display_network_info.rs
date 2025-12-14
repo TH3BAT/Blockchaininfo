@@ -320,7 +320,7 @@ pub fn draw_propagation_avg<B: Backend>(
     propagation_len: i64,
 ) {
     let content = format!(
-        "\n\nAvg ({} blocks): {}s\n",
+        "\n\nAvg ({} blks): {}s\n",
         propagation_len,
         avg_secs
     );

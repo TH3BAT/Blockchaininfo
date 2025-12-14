@@ -13,7 +13,6 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 - Added a toggleable average block propagation view to the Network panel, providing a clear numerical anchor alongside the existing sparkline for improved network health interpretation.
 
-
 ---
 
 ## v1.0.2 – Optimize mempool TXID (2025-12-13)

@@ -253,7 +253,11 @@ pub struct MempoolEntry {
     pub ancestorsize: u64,
     pub wtxid: String,
     pub fees: Fees,
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub depends: Option<Vec<String>>,
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub spentby: Option<Vec<String>>,
 
     #[serde(rename = "bip125-replaceable")]
