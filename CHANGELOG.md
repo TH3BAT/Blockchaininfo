@@ -7,6 +7,16 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
+## v1.1.1
+
+- Satoshi: Oopsie — trim Keychain stdout before parsing RPC password
+- Satoshi: Add 5-block propagation slices to observe network drift
+- Satoshi: skip unused mempool dependency fields
+    Mark depends/spentby with serde::skip to reduce memory usage.
+- UI: shorten label for narrow terminal support
+
+---
+
 ## v1.1.0 – Network Observability Refinement
 
 ### Added

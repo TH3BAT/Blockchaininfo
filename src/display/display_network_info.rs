@@ -208,13 +208,46 @@ pub fn display_network_info<B: Backend>(
     // 7. RIGHT SIDE: AVERAGE OR SPARKLINE OF BLOCK PROPAGATION TIMES
     // -----------------------------------------------------------------------
     if show_propagation_avg {
-        let avg_secs: i64 = if !propagation_times.is_empty() {
-            propagation_times.iter().sum::<i64>() / propagation_times.len() as i64
+        let total_len = propagation_times.len();
+
+        let overall_avg = if total_len > 0 {
+            propagation_times.iter().sum::<i64>() / total_len as i64
         } else {
             0
         };
 
-        draw_propagation_avg(frame, sub_chunks[1], avg_secs, propagation_times.len() as i64)
+        // Oldest 5 (only after 10+)
+        let oldest_5_avg = if total_len >= 10 {
+            Some(
+                propagation_times.iter().take(5).sum::<i64>() / 5
+            )
+        } else {
+            None
+        };
+
+        // Newest 5 (only when buffer is full)
+        let newest_5_avg = if total_len == 20 {
+        let sum: i64 = propagation_times
+            .iter()
+            .skip(15)
+            .take(5)
+            .sum();
+
+        Some(sum / 5)
+
+        } else {
+            None
+        };
+
+        draw_propagation_avg(
+            frame,
+            sub_chunks[1],
+            overall_avg,
+            total_len as i64,
+            oldest_5_avg,
+            newest_5_avg,
+        );
+
     } 
     else if !propagation_times.is_empty() {
         // Convert from VecDeque<i64> → Vec<u64> (unsigned)
@@ -316,14 +349,36 @@ fn draw_client_distribution<B: Backend>(
 pub fn draw_propagation_avg<B: Backend>(
     frame: &mut Frame<B>,
     area: Rect,
-    avg_secs: i64,
+    overall_avg: i64,
     propagation_len: i64,
+    oldest_5_avg: Option<i64>,
+    newest_5_avg: Option<i64>,
 ) {
-    let content = format!(
-        "\n\nAvg ({} blks): {}s\n",
+
+    let mut lines = Vec::new();
+
+    lines.push(format!(
+        "Avg ({} blks): {}s",
         propagation_len,
-        avg_secs
-    );
+        overall_avg
+    ));
+
+    if let Some(avg) = oldest_5_avg {
+        lines.push(format!(
+            "Oldest 5: {}s",
+            avg
+        ));
+    }
+
+    if let Some(avg) = newest_5_avg {
+        lines.push(format!(
+            "Latest 5: {}s",
+            avg
+        ));
+    }
+
+    let content = format!("\n{}\n", lines.join("\n"));
+
 
     let paragraph = Paragraph::new(content)
         .alignment(Alignment::Center)
@@ -334,4 +389,5 @@ pub fn draw_propagation_avg<B: Backend>(
         );
 
     frame.render_widget(paragraph, area);
+
 }

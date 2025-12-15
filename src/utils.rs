@@ -151,7 +151,16 @@ pub fn get_rpc_password_from_keychain() -> Result<String, MyError> {
         .map_err(|e| MyError::Keychain(format!("Keychain retrieval failed: {}", e)))?;
 
     if output.status.success() {
-        Ok(String::from_utf8_lossy(&output.stdout).to_string())
+        let password = String::from_utf8_lossy(&output.stdout)
+            .trim()
+            .to_string();
+
+        if password.is_empty() {
+            Err(MyError::Keychain("Password retrieved but empty".into()))
+        } else {
+            Ok(password)
+        }
+
     } else {
         Err(MyError::Keychain(
             format!("Password not found: {}", String::from_utf8_lossy(&output.stderr)),
