@@ -45,6 +45,8 @@ pub struct BlockchainInfo {
     pub chain: String,
     pub chainwork: String,
     pub difficulty: f64,
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub headers: u64,
     pub initialblockdownload: bool,
     pub mediantime: u64,
@@ -52,6 +54,8 @@ pub struct BlockchainInfo {
     pub size_on_disk: u64,
     pub time: u64,
     pub verificationprogress: f64,
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub warnings: String,
 }
 

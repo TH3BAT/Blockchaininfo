@@ -42,13 +42,19 @@ pub struct NetworkInfo {
     pub subversion: String,
 
     /// P2P protocol version in use.
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub protocolversion: u32,
 
     /// Bitfield representing service flags (in hex).
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub localservices: String,
 
     /// Human-readable names of services offered by this node.
     /// Example: ["NETWORK", "WITNESS", "COMPACT_FILTERS"]
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub localservicesnames: Vec<String>,
 
     /// Whether this node relays transactions to peers.
@@ -70,18 +76,28 @@ pub struct NetworkInfo {
     pub connections_out: u32,
 
     /// Detailed view of reachability for each network type (IPv4/IPv6/Onion/etc.).
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub networks: Vec<Network>,
 
     /// Relay fee (BTC/kB). Core will not relay transactions below this value.
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub relayfee: f64,
 
     /// Minimum incremental fee (BTC/kB) used in fee bumping logic.
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub incrementalfee: f64,
 
     /// Local addresses this node advertises to peers.
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub localaddresses: Vec<LocalAddress>,
 
     /// Core warnings (issues, alerts, or conditions requiring attention).
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub warnings: String,
 }
 

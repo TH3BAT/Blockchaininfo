@@ -29,13 +29,23 @@ use std::str;
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
 pub struct GetRawTransactionResponse {
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub hex: String,
+    
     pub txid: String,
+    
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub hash: String,
+
     pub size: u32,
     pub vsize: u32,
     pub weight: u32,
     pub version: u32,
+    
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub locktime: u32,
 
     /// Transaction inputs.
@@ -114,12 +124,16 @@ pub struct TxIn {
 
     /// ScriptSig for legacy inputs.
     #[serde(rename = "scriptSig")]
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub script_sig: Option<ScriptSig>,
 
     /// Sequence number.
     pub sequence: u32,
 
     /// Optional witness stack for segwit inputs.
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub txinwitness: Option<Vec<String>>,
 }
 

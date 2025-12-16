@@ -36,6 +36,9 @@ use crate::models::flashing_text::TRANSACTION_TEXT;
 static SPINNER_INDEX: AtomicUsize = AtomicUsize::new(0);
 const SPINNER_FRAMES: [&str; 4] = ["|", "/", "-", "\\"];
 
+const SATS_PER_BTC: f64 = 100_000_000.0;
+
+
 /// Displays the mempool information in a `tui` terminal.
 ///
 /// This function:
@@ -452,7 +455,7 @@ pub fn display_mempool_info<B: Backend>(
                 Style::default().fg(Color::Yellow),
             ),
             Span::styled(
-                format!("{:.8}", distribution.average_fee),
+                format!("{:.8}", distribution.average_fee as f64 / SATS_PER_BTC),
                 Style::default().fg(Color::Gray),
             ),
         ]),
@@ -462,7 +465,7 @@ pub fn display_mempool_info<B: Backend>(
                 Style::default().fg(Color::Yellow),
             ),
             Span::styled(
-                format!("{:.8}", distribution.median_fee),
+                format!("{:.8}", distribution.median_fee as f64 / SATS_PER_BTC),
                 Style::default().fg(Color::Gray),
             ),
         ]),

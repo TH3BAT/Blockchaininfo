@@ -39,6 +39,12 @@ pub struct PeerInfoResponse {
     pub result: Vec<PeerInfo>,
 }
 
+/// Use in propagation storage logic (runapp.rs)
+pub struct NetworkState {
+    pub last_propagation_index: Option<usize>,
+    pub last_block_seen: u64,
+}
+
 //
 // ────────────────────────────────────────────────────────────────────────────────
 //   MAIN PEER STRUCT
@@ -102,9 +108,13 @@ pub struct PeerInfo {
     pub timeoffset: i64,
 
     /// Last measured ping time.
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub pingtime: Option<f64>,
 
     /// Minimum observed ping time.
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub minping: Option<f64>,
 
     /// P2P protocol version in use.
@@ -129,31 +139,46 @@ pub struct PeerInfo {
     pub synced_blocks: i64,
 
     /// Blocks currently requested from this peer.
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub inflight: Option<Vec<u64>>,
 
     /// Whether address relay is enabled.
     pub addr_relay_enabled: bool,
-
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub addr_processed: i64,
     pub addr_rate_limited: i64,
 
     /// Permissions granted to this peer (e.g. `noban`, `forcerelay`).
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub permissions: Option<Vec<String>>,
 
     /// Peer’s minimum feerate filter.
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub minfeefilter: f64,
 
     /// Per-message send/receive volume.
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub bytessent_per_msg: Option<HashMap<String, u64>>,
     pub bytesrecv_per_msg: Option<HashMap<String, u64>>,
 
     /// Connection category (e.g. "outbound-full-relay", "manual", "feeler").
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub connection_type: Option<String>,
 
     /// Transport protocol: TCP or QUIC.
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub transport_protocol_type: Option<String>,
 
     /// Unique session ID (Core 26+).
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub session_id: Option<String>,
 }
 
@@ -272,7 +297,6 @@ impl PeerInfo {
 
         list
     }
-
     //
     // ────────────────────────────────────────────────────────────────────────────────
     //   BLOCK PROPAGATION ANALYTICS

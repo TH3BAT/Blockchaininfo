@@ -20,7 +20,7 @@
 //!
 //! Core philosophy: keep raw RPC models pure, push "interpretation" upward.
 
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 use dashmap::DashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -53,12 +53,12 @@ pub struct MempoolDistribution {
     pub rbf_count: usize,
     pub non_rbf_count: usize,
 
-    pub average_fee: f64,
-    pub median_fee: f64,
+    pub average_fee: u64,
+    pub median_fee: u64,
 
     /// Fee rate estimate: (total fees / total vsize)
     /// Expressed as sats/vB.
-    pub average_fee_rate: f64,
+    pub average_fee_rate: u64,
 }
 
 impl MempoolDistribution {
@@ -78,11 +78,12 @@ impl MempoolDistribution {
         let mut rbf_count = 0;
         let mut non_rbf_count = 0;
 
-        let mut total_fee = 0.0;
+        let mut total_fee = 0;
         let mut total_vsize = 0;
         let mut count = 0;
 
-        let mut fees: Vec<f64> = Vec::new();
+        // let mut fees: Vec<f64> = Vec::new();
+        let mut fees: Vec<u64> = Vec::new();
 
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -115,7 +116,10 @@ impl MempoolDistribution {
             }
 
             // Fee aggregation
-            let fee = e.fees.base + e.fees.ancestor + e.fees.modified + e.fees.descendant;
+            let fee = (e.fees.base * 100_000_000.0).round() as u64 
+                + (e.fees.ancestor * 100_000_000.0).round() as u64 
+                + (e.fees.modified * 100_000_000.0).round() as u64 
+                + (e.fees.descendant * 100_000_000.0).round() as u64;
             total_fee += fee;
             total_vsize += e.vsize;
             fees.push(fee);
@@ -135,26 +139,27 @@ impl MempoolDistribution {
         self.rbf_count = rbf_count;
         self.non_rbf_count = non_rbf_count;
 
-        self.average_fee = if count > 0 { total_fee / count as f64 } else { 0.0 };
+        self.average_fee = if count > 0 { total_fee / count as u64 } else { 0 };
 
         // Median fee
         self.median_fee = if !fees.is_empty() {
             fees.sort_by(|a, b| a.partial_cmp(b).unwrap());
             let mid = fees.len() / 2;
             if fees.len() % 2 == 0 {
-                (fees[mid - 1] + fees[mid]) / 2.0
+                (fees[mid - 1] + fees[mid]) / 2
             } else {
                 fees[mid]
             }
         } else {
-            0.0
+            0
         };
 
         // sats/vB (Core fee fields are denominated in BTC, not sats.)
         self.average_fee_rate = if total_vsize > 0 {
-            (total_fee * 100_000_000.0) / total_vsize as f64
+            total_fee / total_vsize as u64
+            // (total_fee * 100_000_000.0) / total_vsize as f64
         } else {
-            0.0
+            0
         };
     }
 }
@@ -251,7 +256,10 @@ pub struct MempoolEntry {
     pub descendantsize: u64,
     pub ancestorcount: u64,
     pub ancestorsize: u64,
-    pub wtxid: String,
+
+    #[serde(deserialize_with = "deserialize_wtxid")]
+    pub wtxid: [u8; 32],
+    
     pub fees: Fees,
     #[serde(skip)]
     #[allow(dead_code)]
@@ -275,4 +283,21 @@ pub struct Fees {
     pub modified: f64,
     pub ancestor: f64,
     pub descendant: f64,
+}
+
+
+fn deserialize_wtxid<'de, D>(deserializer: D) -> Result<[u8; 32], D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s: &str = Deserialize::deserialize(deserializer)?;
+    let bytes = hex::decode(s).map_err(serde::de::Error::custom)?;
+
+    if bytes.len() != 32 {
+        return Err(serde::de::Error::custom("wtxid must be 32 bytes"));
+    }
+
+    let mut arr = [0u8; 32];
+    arr.copy_from_slice(&bytes);
+    Ok(arr)
 }

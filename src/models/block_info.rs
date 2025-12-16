@@ -59,7 +59,11 @@ pub struct BlockInfo {
     pub chainwork: String,
     #[serde(rename = "nTx")]
     pub n_tx: u32,
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub previousblockhash: Option<String>,
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub nextblockhash: Option<String>,
     pub strippedsize: u64,
     pub size: u64,
@@ -95,7 +99,11 @@ pub struct BlockInfoFull {
     pub chainwork: String,
     #[serde(rename = "nTx")]
     pub n_tx: u32,
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub previousblockhash: Option<String>,
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub nextblockhash: Option<String>,
     pub strippedsize: u64,
     pub size: u32, // Bitcoin Core returns size as u32 in verbose=2, so we mirror this
@@ -170,6 +178,8 @@ pub struct TxIn {
     #[serde(rename = "scriptSig")]
     pub script_sig: Option<ScriptSig>,
     #[serde(default)]
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub txinwitness: Option<Vec<String>>,
     pub sequence: u32,
 }

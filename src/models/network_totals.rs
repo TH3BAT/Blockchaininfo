@@ -40,9 +40,13 @@ pub struct NetTotals {
     pub totalbytessent: u64,
 
     /// Current node system time in milliseconds.
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub timemillis: u64,
 
     /// Upload-target state describing bandwidth throttling behavior.
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub uploadtarget: UploadTarget,
 }
 

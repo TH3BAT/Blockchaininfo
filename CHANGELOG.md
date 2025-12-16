@@ -7,7 +7,16 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
-## v1.1.1
+## v1.1.2 (2025-12-16)
+
+Fix: Replaced positional assumptions with block-anchored propagation slots
+Fix: Grounded fee metrics in integer sats; floats used only at render time
+Docs: Reduce model memory usage by skipping unused RPC fields with serde
+
+
+---
+
+## v1.1.1 (2025-12-14)
 
 - Satoshi: Oopsie — trim Keychain stdout before parsing RPC password
 - Satoshi: Add 5-block propagation slices to observe network drift
@@ -17,7 +26,7 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
-## v1.1.0 – Network Observability Refinement
+## v1.1.0 – Network Observability Refinement (2025-12-14)
 
 ### Added
 

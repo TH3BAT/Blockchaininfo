@@ -1,6 +1,6 @@
 [package]
 name = "blockchaininfo"
-version = "1.1.1"
+version = "1.1.2"
 edition = "2021"
 description = "Live terminal dashboard tracking critical Bitcoin metrics."
 readme = "README.md"
@@ -14,9 +14,6 @@ keywords = [
   "bitcoin",
   "full-node",
 ]
-
-# Optional homepage field (recommended for GitHub-hosted crates)
-# homepage = "https://github.com/TH3BAT/Blockchaininfo"
 
 [[bin]]
 name = "blockchaininfo"
@@ -32,7 +29,6 @@ name = "benchmark"
 harness = false
 
 [dev-dependencies]
-# blockchaininfo = { path = "." }
 criterion = "0.7.0"
 
 [dependencies]

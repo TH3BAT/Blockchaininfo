@@ -49,7 +49,7 @@ use crate::display::{
 use crate::utils::{render_header, render_footer, load_miners_data, BLOCK_HISTORY};
 
 // For peer aggregation functions (versions, clients, etc.)
-use crate::models::peer_info::PeerInfo;
+use crate::models::peer_info::{PeerInfo, NetworkState};
 
 // TUI dependencies
 use tui::{
@@ -194,6 +194,13 @@ pub async fn run_app<B: Backend>(
 
     // Shared default miner string for fallback cases.
     let default_miner = "Unknown".to_string();
+
+    // Stores block-anchored propagation slots
+    let mut network_state = NetworkState {
+        last_propagation_index: None,
+        last_block_seen: 0,
+    };
+
 
     // Draw initial "Initializing…" screen.
     terminal.draw(|frame| {
@@ -623,19 +630,27 @@ loop {
             propagation_times.pop_front();
         }
         propagation_times.push_back(avg_block_propagate_time);
-
-        // Also fetch miner attribution for the new block.
-        if let Err(e) = fetch_miner(&config, &miners_data, &blockchain_info.blocks).await {
-            eprintln!("Error in fetch_miner: {}", e);
-        }
+        network_state.last_propagation_index = Some(propagation_times.len() - 1);
+        network_state.last_block_seen = blockchain_info.blocks;
 
         LAST_BLOCK_NUMBER.clear();
-        LAST_BLOCK_NUMBER.insert(blockchain_info.blocks);
+        LAST_BLOCK_NUMBER.insert(network_state.last_block_seen);
+
+        // Also fetch miner attribution for the new block.
+        let block = network_state.last_block_seen;
+
+        if let Err(e) = fetch_miner(&config, &miners_data, &block).await {
+            eprintln!("Error in fetch_miner: {}", e);
+        }
     } else {
         // Same block — but propagation estimate changed.
-        if let Some(last_value) = propagation_times.back_mut() {
-            if *last_value != avg_block_propagate_time {
-                *last_value = avg_block_propagate_time;
+        if network_state.last_block_seen == blockchain_info.blocks {
+            if let Some(idx) = network_state.last_propagation_index {
+                if let Some(val) = propagation_times.get_mut(idx) {
+                    if *val != avg_block_propagate_time {
+                        *val = avg_block_propagate_time;
+                    }
+                }
             }
         }
     }
