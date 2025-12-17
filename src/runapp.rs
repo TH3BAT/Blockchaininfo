@@ -980,13 +980,26 @@ loop {
             "(p→Avg)"
         };
 
+        // If node is absent populate with micro-glyph for Network title header.
+        let network_absence = if network_info.connections_out == 0 &&
+            network_info.connections_in == 0 {
+                Some("∅")
+        } else {
+                None
+        };
+
+        let title = match network_absence {
+            Some(glyph) => format!("[Network] {} {}  {}", cv_label, prop_label, glyph),
+            None => format!("[Network] {} {}", cv_label, prop_label),
+        };
+
         let block_network = Block::default()
             .borders(Borders::ALL)
             .border_style(Style::default().fg(Color::DarkGray))
             .border_type(BorderType::Rounded)
             .title(
                 Span::styled(
-                    format!("[Network] {} {}", cv_label, prop_label),
+                    title,
                     Style::default()
                         .fg(Color::DarkGray)
                         .add_modifier(Modifier::BOLD),
