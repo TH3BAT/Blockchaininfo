@@ -344,7 +344,16 @@ impl PeerInfo {
 
         let avg_ms: i64 = samples.iter().sum::<i64>() / samples.len() as i64;
 
-        // return seconds (avg_ms / 6000?)
+        // Peer timestamps are UNIX seconds and may differ significantly due to clock skew.
+        // Dividing by 1000 yields raw seconds, which often appear misleadingly large
+        // (minutes) despite normal network behavior.
+        //
+        // We normalize average skew into 6-second units to:
+        // - reduce clock jitter
+        // - avoid exaggerating harmless peer drift
+        // - better reflect perceived network health
+        //
+        // This keeps values human-scale while preserving direction and magnitude.
         avg_ms / 6000
     }
 }
