@@ -29,7 +29,7 @@ use crate::models::errors::MyError;
 use chrono::{DateTime, Utc};
 
 use crate::models::transaction_info::GetRawTransactionResponse;
-use crate::models::mempool_info::MempoolEntry;
+use crate::models::mempool_info::MempoolEntryJsonWrap;
 
 use std::time::Duration;
 
@@ -135,30 +135,20 @@ pub async fn fetch_transaction(config: &RpcConfig, txid: &str) -> Result<String,
         "method": "getmempoolentry",
         "params": [txid]
     });
-
-    let mempool_response = client
+  
+    let wrap = client
         .post(&config.address)
         .basic_auth(&config.username, Some(&config.password))
         .header(CONTENT_TYPE, "application/json")
         .json(&mempool_request)
         .send()
         .await
-        .map_err(|e| {
-            if e.is_timeout() {
-                MyError::TimeoutError(format!(
-                    "Request to {} timed out for method 'getmempoolentry'",
-                    config.address
-                ))
-            } else {
-                MyError::Reqwest(e)
-            }
-        })?
-        .json::<serde_json::Value>()
-        .await?;
+        .map_err(|e| MyError::RpcRequestError(txid.to_string(), e.to_string()))?
+        .json::<MempoolEntryJsonWrap>()
+        .await
+        .map_err(|e| MyError::JsonParsingError(txid.to_string(), e.to_string()))?;
 
-    // Deserialize mempool entry
-    let mempool_entry: MempoolEntry = serde_json::from_value(mempool_response["result"].clone())
-        .map_err(|_e| MyError::CustomError("Transaction not found".to_string()))?;
+    let mempool_entry = wrap.result;
 
     // Convert mempool timestamp (if available)
     let datetime = if mempool_entry.time > 0 {

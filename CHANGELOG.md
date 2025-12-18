@@ -7,6 +7,18 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
+## v1.1.3
+
+### Fixed
+
+- Fixed unconfirmed transaction lookup in mempool by deserializing the full
+  JSON-RPC response envelope instead of directly slicing the `result` field.
+  This aligns `fetch_transaction` with the existing mempool distribution logic
+  and prevents false "Transaction not found" errors caused by strict
+  deserialization and masked RPC context.
+
+---
+
 ## v1.1.2 (2025-12-16)
 
 Fix: Replaced positional assumptions with block-anchored propagation slots
