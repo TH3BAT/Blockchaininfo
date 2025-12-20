@@ -36,7 +36,7 @@ use once_cell::sync::Lazy;
 
 use crate::models::blockchain_info::BlockchainInfo;
 use crate::models::block_info::BlockInfo;
-use crate::models::chaintips_info::ChainTipsResponse;
+use crate::models::chaintips_info::ChainTipsJsonWrap;
 use crate::models::mempool_info::{MempoolDistribution, MempoolInfo};
 use crate::models::peer_info::PeerInfo;
 use crate::models::network_info::NetworkInfo;
@@ -113,8 +113,8 @@ pub static BLOCK_INFO_CACHE: Lazy<Arc<RwLock<Vec<BlockInfo>>>> =
 pub static BLOCK24_INFO_CACHE: Lazy<Arc<RwLock<Vec<BlockInfo>>>> =
     Lazy::new(|| Arc::new(RwLock::new(Vec::new())));
 
-pub static CHAIN_TIP_CACHE: Lazy<Arc<RwLock<ChainTipsResponse>>> =
-    Lazy::new(|| Arc::new(RwLock::new(ChainTipsResponse::default())));
+pub static CHAIN_TIP_CACHE: Lazy<Arc<RwLock<ChainTipsJsonWrap>>> =
+    Lazy::new(|| Arc::new(RwLock::new(ChainTipsJsonWrap::default())));
 
 pub static MEMPOOL_DISTRIBUTION_CACHE: Lazy<Arc<RwLock<MempoolDistribution>>> =
     Lazy::new(|| Arc::new(RwLock::new(MempoolDistribution::default())));

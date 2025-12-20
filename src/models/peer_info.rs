@@ -33,7 +33,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
-pub struct PeerInfoResponse {
+pub struct PeerInfoJsonWrap {
     pub error: Option<String>,
     pub id: Option<String>,
     pub result: Vec<PeerInfo>,

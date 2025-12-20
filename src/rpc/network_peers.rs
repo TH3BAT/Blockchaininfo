@@ -15,7 +15,7 @@
 //! Because `getpeerinfo` can return a large array depending on the node,
 //! this module uses strict timeouts to ensure UI responsiveness.
 
-use crate::models::peer_info::{PeerInfo, PeerInfoResponse};
+use crate::models::peer_info::{PeerInfo, PeerInfoJsonWrap};
 use crate::config::RpcConfig;
 use crate::models::errors::MyError;
 
@@ -83,7 +83,7 @@ pub async fn fetch_peer_info(config: &RpcConfig) -> Result<Vec<PeerInfo>, MyErro
             }
         })?
         // Deserialize into wrapper struct containing `result: Vec<PeerInfo>`
-        .json::<PeerInfoResponse>()
+        .json::<PeerInfoJsonWrap>()
         .await
         .map_err(|_e| {
             MyError::CustomError("JSON Parsing error for getpeerinfo.".to_string())

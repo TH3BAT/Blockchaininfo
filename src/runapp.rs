@@ -76,7 +76,7 @@ use tokio::time::{sleep, Duration, Instant};
 
 use blockchaininfo::utils::log_error;
 
-use crate::models::chaintips_info::ChainTipsResponse;
+use crate::models::chaintips_info::ChainTipsJsonWrap;
 
 // DashSet is used for tracking unique block numbers (propagation-time updates)
 use dashmap::DashSet;
@@ -438,7 +438,7 @@ tokio::spawn({
                     let mut cache = CHAIN_TIP_CACHE.write().await;
 
                     // Wrap tips in the full RPC-style response struct.
-                    let new_response = ChainTipsResponse {
+                    let new_response = ChainTipsJsonWrap {
                         error: None,
                         id: None,
                         result: new_data,

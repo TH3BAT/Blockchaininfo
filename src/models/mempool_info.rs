@@ -20,7 +20,7 @@
 //!
 //! Core philosophy: keep raw RPC models pure, push "interpretation" upward.
 
-use serde::{Deserialize, Deserializer};
+use serde::Deserialize;
 use dashmap::DashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -256,8 +256,12 @@ pub struct MempoolEntry {
     pub descendantsize: u64,
     pub ancestorcount: u64,
     pub ancestorsize: u64,
-
-    #[serde(deserialize_with = "deserialize_wtxid")]
+    
+    #[serde(skip)]
+    #[allow(dead_code)]
+    // #[serde(deserialize_with = "deserialize_wtxid")]
+    // It is redundant to store wtxid. TX_CACHE stores tx_id from MEMPOOL_CACHE.
+    // transaction.rs uses the operator passed txid for output.
     pub wtxid: [u8; 32],
     
     pub fees: Fees,
@@ -285,7 +289,12 @@ pub struct Fees {
     pub descendant: f64,
 }
 
-
+// NOTE:
+// This deserializer was originally used to convert wtxid hex strings into
+// fixed-size byte arrays. It is currently unused because wtxid storage was
+// removed to reduce memory overhead and redundancy. Kept here for reference
+// and potential future use.
+/*  
 fn deserialize_wtxid<'de, D>(deserializer: D) -> Result<[u8; 32], D::Error>
 where
     D: Deserializer<'de>,
@@ -301,3 +310,4 @@ where
     arr.copy_from_slice(&bytes);
     Ok(arr)
 }
+*/

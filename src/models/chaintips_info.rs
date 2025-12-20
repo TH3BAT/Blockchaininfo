@@ -22,7 +22,7 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize, Default, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[allow(dead_code)]
-pub struct ChainTipsResponse {
+pub struct ChainTipsJsonWrap {
     pub error: Option<String>,
     pub id: Option<String>,
     pub result: Vec<ChainTip>,

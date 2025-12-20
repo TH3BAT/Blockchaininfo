@@ -7,7 +7,33 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
-## v1.1.3
+## v1.1.4 — Refinements, Consistency, and Block-Native Hash-Rate Window (2025-12-19)
+
+This release focuses on structural clarity, documentation improvements, and aligning UI output with Bitcoin’s block-driven reality. No new features — just meaningful refinements across several modules.
+
+Changed
+
+- Renamed ChainTipsResponse → ChainTipsJsonWrap and
+  PeerInfoResponse → PeerInfoJsonWrap
+  to maintain consistent naming across all JsonWrap structs.
+- Hash-Rate panel title now displays the actual block window (derived from miner distribution counts)
+  instead of a static “24 hrs” placeholder.
+  This clarifies sampling scope and better reflects Bitcoin’s block-time cadence.
+
+Improved
+
+- Added documentation and preserved (commented-out) deserialize_wtxid for educational reference and
+  potential future use.
+- Marked wtxid with serde(skip) in MempoolEntry, removing redundant data and reducing memory +
+  deserialization overhead.
+
+Notes
+This update completes the intended refinements for the v1.1.x line.
+The codebase is now in a clean, consistent state ahead of introducing new views and toggles planned in the upcoming roadmap.
+
+---
+
+## v1.1.3 (2025-12-17)
 
 ### Fixed
 
@@ -23,7 +49,6 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 Fix: Replaced positional assumptions with block-anchored propagation slots
 Fix: Grounded fee metrics in integer sats; floats used only at render time
 Docs: Reduce model memory usage by skipping unused RPC fields with serde
-
 
 ---
 

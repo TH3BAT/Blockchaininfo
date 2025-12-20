@@ -20,7 +20,7 @@ use reqwest::Client;
 use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
 
-use crate::models::chaintips_info::{ChainTip, ChainTipsResponse};
+use crate::models::chaintips_info::{ChainTip, ChainTipsJsonWrap};
 use crate::models::errors::MyError;
 use crate::config::RpcConfig;
 
@@ -83,7 +83,7 @@ pub async fn fetch_chain_tips(config: &RpcConfig) -> Result<Vec<ChainTip>, MyErr
             }
         })?
         // Deserialize into wrapper struct with `result: Vec<ChainTip>`
-        .json::<ChainTipsResponse>()
+        .json::<ChainTipsJsonWrap>()
         .await
         .map_err(|_e| {
             MyError::CustomError("JSON Parsing error for getchaintips.".to_string())

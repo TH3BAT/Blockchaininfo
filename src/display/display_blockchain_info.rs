@@ -252,6 +252,14 @@ pub fn render_hashrate_distribution_chart<B: Backend>(
     area: Rect,
 ) -> Result<(), MyError> {
 
+    // Use to show block representation that replaces static '24 hrs' time.
+    let window_blocks: u64 = distribution.iter().map(|entry| entry.1).sum();
+    let window_display = if window_blocks < 144 {
+        format!("{}/144 blks", window_blocks)
+    } else {
+        "144 blks".to_string()
+    };
+
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
@@ -285,8 +293,8 @@ pub fn render_hashrate_distribution_chart<B: Backend>(
         .block(
             Block::default()
                 .title(format!(
-                    "Hash Rate Distribution Top {} of {} 🌐 (24 hrs)",
-                    top8_dist, total_miners
+                    "Hash Rate Distribution Top {} of {} 🌐 ({})",
+                    top8_dist, total_miners, window_display
                 ))
                 .borders(Borders::ALL),
         )
