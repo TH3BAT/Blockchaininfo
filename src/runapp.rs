@@ -75,6 +75,7 @@ use std::sync::Arc;
 use tokio::time::{sleep, Duration, Instant};
 
 use blockchaininfo::utils::log_error;
+use crate::ui::colors::*;
 
 use crate::models::chaintips_info::ChainTipsJsonWrap;
 
@@ -876,10 +877,10 @@ loop {
         let hrd_label = if app.show_hash_distribution {
             Span::styled(
                 "[H] HRD",
-                Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
+                Style::default().fg(C_KEYTOGGLE_HIGHLIGHT).add_modifier(Modifier::BOLD),
             )
         } else {
-            Span::styled("[H] HRD", Style::default().fg(Color::DarkGray))
+            Span::styled("[H] HRD", Style::default().fg(C_KEYTOGGLE_DIM))
         };
 
         // Full title for Blockchain block
@@ -887,7 +888,7 @@ loop {
             Span::styled(
                 "[Blockchain] ",
                 Style::default()
-                    .fg(Color::DarkGray)
+                    .fg(C_SECTION_LABELS)
                     .add_modifier(Modifier::BOLD),
             ),
             hrd_label,
@@ -895,7 +896,7 @@ loop {
 
         let block_blockchain = Block::default()
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(Color::DarkGray))
+            .border_style(Style::default().fg(C_BLOCKCHAIN_BORDER))
             .border_type(BorderType::Rounded)
             .title(blockchain_title);
 
@@ -929,18 +930,18 @@ loop {
             Span::styled(
                 " [D] DUST-FREE",
                 Style::default()
-                    .fg(Color::Yellow)
+                    .fg(C_KEYTOGGLE_HIGHLIGHT)
                     .add_modifier(Modifier::BOLD),
             )
         } else {
-            Span::styled(" [D] ALL TX", Style::default().fg(Color::DarkGray))
+            Span::styled(" [D] ALL TX", Style::default().fg(C_KEYTOGGLE_DIM))
         };
 
         let mempool_title = Spans(vec![
             Span::styled(
                 "[Mempool]",
                 Style::default()
-                    .fg(Color::DarkGray)
+                    .fg(C_SECTION_LABELS)
                     .add_modifier(Modifier::BOLD),
             ),
             dust_label,
@@ -948,7 +949,7 @@ loop {
 
         let block_mempool = Block::default()
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(Color::DarkGray))
+            .border_style(Style::default().fg(C_MEMPOOL_BORDER))
             .border_type(BorderType::Rounded)
             .title(mempool_title);
 
@@ -995,13 +996,13 @@ loop {
 
         let block_network = Block::default()
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(Color::DarkGray))
+            .border_style(Style::default().fg(C_NETWORK_BORDER))
             .border_type(BorderType::Rounded)
             .title(
                 Span::styled(
                     title,
                     Style::default()
-                        .fg(Color::DarkGray)
+                        .fg(C_SECTION_LABELS)
                         .add_modifier(Modifier::BOLD),
                 )
             );
@@ -1027,13 +1028,13 @@ loop {
         {
             let consensus_block = Block::default()
                 .borders(Borders::ALL)
-                .border_style(Style::default().fg(Color::DarkGray))
+                .border_style(Style::default().fg(C_CONSENSUS_BORDER))
                 .border_type(BorderType::Rounded)
                 .title(
                     Span::styled(
                         "[Consensus Security]",
                         Style::default()
-                            .fg(Color::DarkGray)
+                            .fg(C_SECTION_LABELS)
                             .add_modifier(Modifier::BOLD),
                     )
                 );

@@ -27,7 +27,8 @@ use crate::models::block_info::{
     BlockInfoFullJsonWrap,
 };
 
-use crate::utils::{DIFFICULTY_ADJUSTMENT_INTERVAL, BLOCK_HISTORY};
+use crate::utils::BLOCK_HISTORY;
+use crate::consensus::satoshi_math::*;
 use std::time::Duration;
 
 /// Fetch block information at a specific height using `getblock` with verbose=1.

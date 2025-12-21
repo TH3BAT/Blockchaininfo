@@ -25,7 +25,8 @@ use tui::{
 use num_format::{Locale, ToFormattedString};
 use crate::{
     models::mempool_info::{MempoolDistribution, MempoolInfo},
-    utils::{format_size, normalize_percentages, BAR_ACTIVE},
+    utils::{format_size, normalize_percentages},
+    ui::colors::*,
 };
 use crate::models::errors::MyError;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -181,7 +182,7 @@ pub fn display_mempool_info<B: Backend>(
     // Build the "📊 Transactions: N" line.
     // Optional dust-free decoration is appended if the toggle is ON.
     let mut spans: Vec<Span> = vec![
-        Span::styled("📊 Transactions: ", Style::default().fg(Color::Gray)),
+        Span::styled("📊 Transactions: ", Style::default().fg(C_MAIN_LABELS)),
         Span::styled(
             mempool_info.size.to_formatted_string(&Locale::en),
             transaction_style,
@@ -190,16 +191,16 @@ pub fn display_mempool_info<B: Backend>(
 
     // Only show dust-free metrics if toggle is ON.
     if dust_free {
-        spans.push(Span::styled(" | ", Style::default().fg(Color::DarkGray)));
+        spans.push(Span::styled(" | ", Style::default().fg(C_SEPARATORS)));
         spans.push(Span::styled(
             format!("{} ", formatted_dust_free),
-            Style::default().fg(Color::Gray),
+            Style::default().fg(C_DUST_FREE_PCT),
         ));
         spans.push(
             Span::styled(
                 "dᵤₛₜ₋fᵣₑₑ",
                 Style::default()
-                    .fg(Color::DarkGray)
+                    .fg(C_DUST_FREE_LABEL)
                     .add_modifier(Modifier::ITALIC),
             ),
         );
@@ -240,7 +241,7 @@ pub fn display_mempool_info<B: Backend>(
     // Shows mempool usage as a percentage of maxmempool, with a labeled border.
     let mempool_gauge = Gauge::default()
         .block(Block::default().title("Mempool Usage").borders(Borders::ALL))
-        .gauge_style(Style::default().fg(Color::DarkGray).bg(Color::Black))
+        .gauge_style(Style::default().fg(C_MEMPOOL_USAGE_GAUGE_FG).bg(C_MEMPOOL_USAGE_GAUGE_BG))
         .percent(mempool_usage_percent as u16);
     frame.render_widget(mempool_gauge, chunks[1]);
 
@@ -254,41 +255,41 @@ pub fn display_mempool_info<B: Backend>(
 
         // Memory usage breakdown: current vs max.
         Spans::from(vec![
-            Span::styled("💾 Memory: ", Style::default().fg(Color::Gray)),
+            Span::styled("💾 Memory: ", Style::default().fg(C_MAIN_LABELS)),
             Span::styled(
                 format!("{} ", mempool_size_in_memory),
                 mempool_size_in_memory_color,
             ),
             Span::styled(
                 format!("/ {}", max_mempool_size_in_memory),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(C_MEMPOOL_VALUES),
             ),
         ]),
 
         // Total fees currently sitting in the mempool (BTC).
         Spans::from(vec![
-            Span::styled("💰 Total Fees: ", Style::default().fg(Color::Gray)),
+            Span::styled("💰 Total Fees: ", Style::default().fg(C_MAIN_LABELS)),
             Span::styled(
                 format!("{:.8}", mempool_info.total_fee),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(C_MEMPOOL_VALUES),
             ),
         ]),
 
         // Local node minimum relay fee (vsats/vByte).
         Spans::from(vec![
-            Span::styled("⚖️ Min Transaction Fee: ", Style::default().fg(Color::Gray)),
+            Span::styled("⚖️ Min Transaction Fee: ", Style::default().fg(C_MAIN_LABELS)),
             Span::styled(
                 min_relay_fee_vsats.to_formatted_string(&Locale::en),
                 Style::default().fg(Color::Yellow),
             ),
-            Span::styled(" vSats/vByte", Style::default().fg(Color::Gray)),
+            Span::styled(" vSats/vByte", Style::default().fg(C_MAIN_LABELS)),
         ]),
 
         // -------------------------------------------------------------------
         // SIZE DISTRIBUTION
         // -------------------------------------------------------------------
         Spans::from(vec![
-            Span::styled("📏 Size Distribution ", Style::default().fg(Color::Gray)),
+            Span::styled("📏 Size Distribution ", Style::default().fg(C_MAIN_LABELS)),
             // Optional "dust-free" tag is commented out here; preserved for future use.
             // Span::styled("dᵤₛₜ₋fᵣₑₑ", Style::default().fg(Color::DarkGray)
             //    .add_modifier(Modifier::ITALIC)),
@@ -296,46 +297,46 @@ pub fn display_mempool_info<B: Backend>(
         Spans::from(vec![
             Span::styled(
                 "  🔹 Small (< 250 vBytes)     ",
-                Style::default().fg(Color::Yellow),
+                Style::default().fg(C_MEMPOOL_DIST_LABELS),
             ),
             Span::styled(
                 format!("{:>7}", (distribution.small).to_formatted_string(&Locale::en)),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(C_MEMPOOL_VALUES),
             ),
-            Span::styled(" - ", Style::default().fg(Color::DarkGray)),
+            Span::styled(" - ", Style::default().fg(C_SEPARATORS)),
             Span::styled(
                 format!("{:>3}% {}", small_pct, small_prog_bar),
-                Style::default().fg(BAR_ACTIVE),
+                Style::default().fg(C_HORIZONTAL_ASCII_BAR),
             ),
         ]),
         Spans::from(vec![
             Span::styled(
                 "  🔸 Medium (250-1000 vBytes) ",
-                Style::default().fg(Color::Yellow),
+                Style::default().fg(C_MEMPOOL_DIST_LABELS),
             ),
             Span::styled(
                 format!("{:>7}", (distribution.medium).to_formatted_string(&Locale::en)),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(C_MEMPOOL_VALUES),
             ),
             Span::styled(" - ", Style::default().fg(Color::DarkGray)),
             Span::styled(
                 format!("{:>3}% {}", medium_pct, medium_prog_bar),
-                Style::default().fg(BAR_ACTIVE),
+                Style::default().fg(C_HORIZONTAL_ASCII_BAR),
             ),
         ]),
         Spans::from(vec![
             Span::styled(
                 "  🔳 Large (> 1000 vBytes)    ",
-                Style::default().fg(Color::Yellow),
+                Style::default().fg(C_MEMPOOL_DIST_LABELS),
             ),
             Span::styled(
                 format!("{:>7}", (distribution.large).to_formatted_string(&Locale::en)),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(C_MEMPOOL_VALUES),
             ),
-            Span::styled(" - ", Style::default().fg(Color::DarkGray)),
+            Span::styled(" - ", Style::default().fg(C_SEPARATORS)),
             Span::styled(
                 format!("{:>3}% {}", large_pct, large_prog_bar),
-                Style::default().fg(BAR_ACTIVE),
+                Style::default().fg(C_HORIZONTAL_ASCII_BAR),
             ),
         ]),
 
@@ -343,56 +344,56 @@ pub fn display_mempool_info<B: Backend>(
         // AGE DISTRIBUTION
         // -------------------------------------------------------------------
         Spans::from(vec![
-            Span::styled("⏳ Age Distribution ", Style::default().fg(Color::Gray)),
+            Span::styled("⏳ Age Distribution ", Style::default().fg(C_MAIN_LABELS)),
             //Span::styled("dᵤₛₜ₋fᵣₑₑ", Style::default().fg(Color::DarkGray)
             //    .add_modifier(Modifier::ITALIC)),
         ]),
         Spans::from(vec![
             Span::styled(
                 "  🟢 Young (< 5 min)          ",
-                Style::default().fg(Color::Yellow),
+                Style::default().fg(C_MEMPOOL_DIST_LABELS),
             ),
             Span::styled(
                 format!("{:>7}", (distribution.young).to_formatted_string(&Locale::en)),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(C_MEMPOOL_VALUES),
             ),
-            Span::styled(" - ", Style::default().fg(Color::DarkGray)),
+            Span::styled(" - ", Style::default().fg(C_SEPARATORS)),
             Span::styled(
                 format!("{:>3}% {}", young_pct, young_prog_bar),
-                Style::default().fg(BAR_ACTIVE),
+                Style::default().fg(C_HORIZONTAL_ASCII_BAR),
             ),
         ]),
         Spans::from(vec![
             Span::styled(
                 "  🟡 Moderate (5 min - 1 hr)  ",
-                Style::default().fg(Color::Yellow),
+                Style::default().fg(C_MEMPOOL_DIST_LABELS),
             ),
             Span::styled(
                 format!(
                     "{:>7}",
                     (distribution.moderate).to_formatted_string(&Locale::en)
                 ),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(C_MEMPOOL_VALUES),
             ),
-            Span::styled(" - ", Style::default().fg(Color::DarkGray)),
+            Span::styled(" - ", Style::default().fg(C_SEPARATORS)),
             Span::styled(
                 format!("{:>3}% {}", moderate_pct, moderate_prog_bar),
-                Style::default().fg(BAR_ACTIVE),
+                Style::default().fg(C_HORIZONTAL_ASCII_BAR),
             ),
         ]),
         Spans::from(vec![
             Span::styled(
                 "  🔴 Old (> 1 hr)             ",
-                Style::default().fg(Color::Yellow),
+                Style::default().fg(C_MEMPOOL_DIST_LABELS),
             ),
             Span::styled(
                 format!("{:>7}", (distribution.old).to_formatted_string(&Locale::en)),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(C_MEMPOOL_VALUES),
             ),
-            Span::styled(" - ", Style::default().fg(Color::DarkGray)),
+            Span::styled(" - ", Style::default().fg(C_SEPARATORS)),
             Span::styled(
                 format!("{:>3}% {}", old_pct, old_prog_bar),
-                Style::default().fg(BAR_ACTIVE),
+                Style::default().fg(C_HORIZONTAL_ASCII_BAR),
             ),
         ]),
 
@@ -400,44 +401,44 @@ pub fn display_mempool_info<B: Backend>(
         // RBF DISTRIBUTION
         // -------------------------------------------------------------------
         Spans::from(vec![
-            Span::styled("♻️ RBF Distribution ", Style::default().fg(Color::Gray)),
+            Span::styled("♻️ RBF Distribution ", Style::default().fg(C_MAIN_LABELS)),
             //Span::styled("dᵤₛₜ₋fᵣₑₑ", Style::default().fg(Color::DarkGray)
             //    .add_modifier(Modifier::ITALIC)),
         ]),
         Spans::from(vec![
             Span::styled(
                 "  🔄 RBF Transactions         ",
-                Style::default().fg(Color::Yellow),
+                Style::default().fg(C_MEMPOOL_DIST_LABELS),
             ),
             Span::styled(
                 format!(
                     "{:>7}",
                     (distribution.rbf_count).to_formatted_string(&Locale::en)
                 ),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(C_MEMPOOL_VALUES),
             ),
-            Span::styled(" - ", Style::default().fg(Color::DarkGray)),
+            Span::styled(" - ", Style::default().fg(C_SEPARATORS)),
             Span::styled(
                 format!("{:>3}% {}", rbf_pct, rbf_prog_bar),
-                Style::default().fg(BAR_ACTIVE),
+                Style::default().fg(C_HORIZONTAL_ASCII_BAR),
             ),
         ]),
         Spans::from(vec![
             Span::styled(
                 "  ✅ Non-RBF Transactions     ",
-                Style::default().fg(Color::Yellow),
+                Style::default().fg(C_MEMPOOL_DIST_LABELS),
             ),
             Span::styled(
                 format!(
                     "{:>7}",
                     (distribution.non_rbf_count).to_formatted_string(&Locale::en)
                 ),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(C_MEMPOOL_VALUES),
             ),
-            Span::styled(" - ", Style::default().fg(Color::DarkGray)),
+            Span::styled(" - ", Style::default().fg(C_SEPARATORS)),
             Span::styled(
                 format!("{:>3}% {}", non_rbf_pct, non_rbf_prog_bar),
-                Style::default().fg(BAR_ACTIVE),
+                Style::default().fg(C_HORIZONTAL_ASCII_BAR),
             ),
         ]),
 
@@ -445,38 +446,36 @@ pub fn display_mempool_info<B: Backend>(
         // FEE METRICS
         // -------------------------------------------------------------------
         Spans::from(vec![
-            Span::styled("📉 Fee Metrics ", Style::default().fg(Color::Gray)),
-            //Span::styled("dᵤₛₜ₋fᵣₑₑ", Style::default().fg(Color::DarkGray)
-            //    .add_modifier(Modifier::ITALIC)),
+            Span::styled("📉 Fee Metrics ", Style::default().fg(C_MAIN_LABELS)),
         ]),
         Spans::from(vec![
             Span::styled(
                 "  📊 Average Fee (BTC): ",
-                Style::default().fg(Color::Yellow),
+                Style::default().fg(C_MEMPOOL_DIST_LABELS),
             ),
             Span::styled(
                 format!("{:.8}", distribution.average_fee as f64 / SATS_PER_BTC),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(C_MEMPOOL_VALUES),
             ),
         ]),
         Spans::from(vec![
             Span::styled(
                 "  📊 Median Fee (BTC) : ",
-                Style::default().fg(Color::Yellow),
+                Style::default().fg(C_MEMPOOL_DIST_LABELS),
             ),
             Span::styled(
                 format!("{:.8}", distribution.median_fee as f64 / SATS_PER_BTC),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(C_MEMPOOL_VALUES),
             ),
         ]),
         Spans::from(vec![
             Span::styled(
                 "  🎯 Average Fee Rate (sats/vByte): ",
-                Style::default().fg(Color::Yellow),
+                Style::default().fg(C_MEMPOOL_DIST_LABELS),
             ),
             Span::styled(
                 format!("{:.2}", distribution.average_fee_rate),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(C_MEMPOOL_VALUES),
             ),
         ]),
     ];

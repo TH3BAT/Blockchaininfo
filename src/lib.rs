@@ -32,3 +32,9 @@ pub mod rpc;
 
 /// TUI rendering system: tables, charts, panels, interactive views, etc.
 pub mod display;
+
+/// Consensus timing constants expressed in Satoshi-style formulas.
+pub mod consensus;
+
+/// tui Color assignments
+pub mod ui;

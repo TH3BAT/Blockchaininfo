@@ -15,11 +15,10 @@
 use crate::models::errors::MyError;
 use tui::widgets::{Block, Borders, Paragraph};
 use tui::text::{Span, Spans};
-use tui::style::{Color, Style, Modifier};
+use tui::style::{Style, Modifier};
 use tui::layout::{Rect, Alignment};
 use tui::Frame;
 use tui::backend::Backend;
-use tui::style::Color::{DarkGray, Yellow};
 
 use std::fs::{OpenOptions, metadata, rename};
 use std::fs;
@@ -42,6 +41,8 @@ use crate::models::peer_info::PeerInfo;
 use crate::models::network_info::NetworkInfo;
 use crate::models::network_totals::NetTotals;
 use crate::models::block_info::{BlockHistory, MinersData};
+use crate::consensus::satoshi_math::*;
+use crate::ui::colors::*;
 
 //
 // ────────────────────────────────────────────────────────────────────────────────
@@ -53,9 +54,6 @@ const KB: u64 = 1024;
 const MB: u64 = KB * 1024;
 const GB: u64 = MB * 1024;
 const TB: u64 = GB * 1024;
-
-// For ASCII bar charts.
-pub const BAR_ACTIVE: Color = Color::Gray;
 
 /// Convert raw bytes into human-readable units.
 ///
@@ -189,9 +187,6 @@ pub fn get_rpc_password_from_keychain() -> Result<String, MyError> {
 // ────────────────────────────────────────────────────────────────────────────────
 //
 
-pub const DIFFICULTY_ADJUSTMENT_INTERVAL: u64 = 2016;
-pub const BLOCK_TIME_SECONDS: u64 = 600;
-
 /// Estimate % difficulty change for the *current epoch*.
 pub fn estimate_difficulty_change(
     current_block_height: u64,
@@ -240,16 +235,16 @@ pub fn render_header(percent: f64) -> Paragraph<'static> {
     };
 
     // We want the first phase change to be at 10%, and the percent is passed already converted.
-    let color = if percent < 10.0 { DarkGray } else { Yellow };
+    let color = if percent < 10.0 { C_HASH_PHASE_NEW } else { C_HASH_PHASE };
 
     Paragraph::new(vec![
         Spans::from(vec![
-            Span::styled("₿lockChainInfo ", Style::default().fg(Color::Cyan)),
+            Span::styled("₿lockChainInfo ", Style::default().fg(C_APP_TITLE)),
             Span::styled(dot, Style::default().fg(color)),
         ]),
         Spans::from(Span::styled(
             format!("v{}", APP_VERSION),
-            Style::default().fg(Color::DarkGray).add_modifier(Modifier::ITALIC),
+            Style::default().fg(C_APP_VERSION).add_modifier(Modifier::ITALIC),
         )),
     ])
     .alignment(Alignment::Center)
@@ -260,7 +255,7 @@ pub fn render_header(percent: f64) -> Paragraph<'static> {
 pub fn render_footer<B: Backend>(f: &mut Frame<B>, area: Rect, message: &str) {
     let footer = Paragraph::new(vec![Spans::from(Span::styled(
         message,
-        Style::default().fg(Color::Gray),
+        Style::default().fg(C_FOOTER_DISPLAY),
     ))])
     .alignment(Alignment::Center)
     .block(Block::default().borders(Borders::NONE));

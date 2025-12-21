@@ -15,7 +15,7 @@ use tui::{
     widgets::{Block, Borders, Paragraph},
     layout::{Constraint, Direction, Layout},
 };
-use crate::models::chaintips_info::ChainTip;
+use crate::{models::chaintips_info::ChainTip, ui::colors::{C_CONSENSUS_STATUS_SECTION, C_MAIN_LABELS}};
 use crate::models::errors::MyError;
 
 /// Draws the Consensus Security panel.
@@ -65,7 +65,7 @@ pub fn display_consensus_security_info<B: tui::backend::Backend>(
     lines.push(Spans::from(vec![
         Span::styled(
             "🌲 Fork Monitoring:",
-            Style::default().fg(Color::Gray),
+            Style::default().fg(C_MAIN_LABELS),
         ),
     ]));
 
@@ -108,17 +108,17 @@ pub fn display_consensus_security_info<B: tui::backend::Backend>(
         let line = Spans::from(vec![
             Span::styled(
                 format!("🌳 Height: {:>7}", tip.height),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(C_MAIN_LABELS),
             ),
             Span::raw(" | "),
             Span::styled(
                 format!("Status: {:<14}", status),
-                Style::default().fg(Color::Yellow),
+                Style::default().fg(C_CONSENSUS_STATUS_SECTION),
             ),
             Span::raw(" | "),
             Span::styled(
                 format!("📏 Length: {:>2}", tip.branchlen),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(C_MAIN_LABELS),
             ),
         ]);
 

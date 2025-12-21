@@ -19,6 +19,7 @@ use num_format::{Locale, ToFormattedString};
 use crate::{
     models::{block_info::BlockInfo, blockchain_info::BlockchainInfo},
     utils::{estimate_difficulty_change, estimate_24h_difficulty_change, format_size},
+    ui::colors::*
 };
 use crate::models::errors::MyError;
 use crate::models::flashing_text::{BEST_BLOCK_TEXT, MINER_TEXT};
@@ -72,11 +73,11 @@ pub fn display_blockchain_info<B: Backend>(
 
     // Difficulty estimate shown only after block 5 of the epoch.
     let difficulty_change_display = if blocks_into_epoch < 5 {
-        Span::styled(" N/A ", Style::default().fg(Color::Gray))
+        Span::styled(" N/A ", Style::default().fg(C_MAIN_LABELS))
     } else {
         Span::styled(
             format!(" {:.2}% ", estimate_difficulty_chng.abs()),
-            Style::default().fg(Color::Gray),
+            Style::default().fg(C_MAIN_LABELS),
         )
     };
 
@@ -111,38 +112,38 @@ pub fn display_blockchain_info<B: Backend>(
 
     // Build the "Best Block | Miner" line with dynamic flashing styles.
     let best_block_spans = Spans::from(vec![
-        Span::styled("🏆 Best Block: ", Style::default().fg(Color::Gray)),
+        Span::styled("🏆 Best Block: ", Style::default().fg(C_MAIN_LABELS)),
         Span::styled(
             blockchain_info.blocks.to_formatted_string(&Locale::en),
             best_block_style,
         ),
-        Span::styled(" | ", Style::default().fg(Color::DarkGray)),
-        Span::styled("⛏️ Miner: ", Style::default().fg(Color::Gray)),
+        Span::styled(" | ", Style::default().fg(C_SEPARATORS)),
+        Span::styled("⛏️ Miner: ", Style::default().fg(C_MAIN_LABELS)),
         Span::styled(format!("{}", last_miner), last_miner_style),
     ]);
 
     // Build every display line in a Vec<Spans>.
     let blockchain_info_text = vec![
         Spans::from(vec![
-            Span::styled("🔗 Chain: ", Style::default().fg(Color::Gray)),
-            Span::styled(blockchain_info.chain.clone(), Style::default().fg(Color::Yellow)),
+            Span::styled("🔗 Chain: ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled(blockchain_info.chain.clone(), Style::default().fg(C_CHAIN)),
         ]),
 
         best_block_spans, // Flashing block + miner line
 
         Spans::from(vec![
-            Span::styled("  ⏳ Time since block: ", Style::default().fg(Color::Gray)),
-            Span::styled(time_since_block, Style::default().fg(Color::Red)),
+            Span::styled("  ⏳ Time since block: ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled(time_since_block, Style::default().fg(C_TIME_SINCE_BLOCK)),
         ]),
 
         Spans::from(vec![
-            Span::styled("🎯 Difficulty: ", Style::default().fg(Color::Gray)),
-            Span::styled(formatted_difficulty, Style::default().fg(Color::LightRed)),
+            Span::styled("🎯 Difficulty: ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled(formatted_difficulty, Style::default().fg(C_DIFFICULTY)),
         ]),
 
         // Remaining blocks in difficulty epoch.
         Spans::from(vec![
-            Span::styled("     Blocks until adjustment: ", Style::default().fg(Color::Gray)),
+            Span::styled("     Blocks until adjustment: ", Style::default().fg(C_MAIN_LABELS)),
             match blockchain_info.display_blocks_until_difficulty_adjustment() {
                 Ok((block_text, block_color)) =>
                     Span::styled(block_text, Style::default().fg(block_color)),
@@ -153,61 +154,61 @@ pub fn display_blockchain_info<B: Backend>(
 
         // Difficulty projections block (epoch + 24hr).
         Spans::from(vec![
-            Span::styled("  📉 Estimated change: ", Style::default().fg(Color::Gray)),
+            Span::styled("  📉 Estimated change: ", Style::default().fg(C_MAIN_LABELS)),
 
             // Epoch arrow
             Span::styled(
                 difficulty_arrow,
-                Style::default().fg(if estimate_difficulty_chng > 0.0 { Color::Green } else { Color::Red }),
+                Style::default().fg(if estimate_difficulty_chng > 0.0 { C_ESTIMATE_POS } else { C_ESTIMATE_NEG }),
             ),
             difficulty_change_display,
 
             Span::styled("(epoch)", Style::default().fg(Color::DarkGray).add_modifier(Modifier::ITALIC)),
-            Span::styled(" | ", Style::default().fg(Color::DarkGray)),
+            Span::styled(" | ", Style::default().fg(C_SEPARATORS)),
 
             // 24h arrow
             Span::styled(
                 difficulty_arrow_24h,
-                Style::default().fg(if estimate_24h_difficulty_chng > 0.0 { Color::Green } else { Color::Red }),
+                Style::default().fg(if estimate_24h_difficulty_chng > 0.0 { C_ESTIMATE_POS } else { C_ESTIMATE_NEG }),
             ),
             Span::styled(
                 format!(" {:.2}% ", estimate_24h_difficulty_chng.abs()),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(C_MAIN_LABELS),
             ),
             Span::styled("(24hrs)", Style::default().fg(Color::DarkGray).add_modifier(Modifier::ITALIC)),
         ]),
 
         // Chainwork line
         Spans::from(vec![
-            Span::styled("   Chainwork: ", Style::default().fg(Color::Gray)),
-            Span::styled(formatted_chainwork_bits, Style::default().fg(Color::LightYellow)),
+            Span::styled("   Chainwork: ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled(formatted_chainwork_bits, Style::default().fg(C_CHAINWORK)),
         ]),
 
         // Verification progress
         Spans::from(vec![
-            Span::styled("📡 Verification progress: ", Style::default().fg(Color::Gray)),
+            Span::styled("📡 Verification progress: ", Style::default().fg(C_MAIN_LABELS)),
             Span::styled(
                 format!("{:.4}%", blockchain_info.verificationprogress * 100.0),
-                Style::default().fg(Color::Yellow),
+                Style::default().fg(C_VERIFICATION),
             ),
         ]),
 
         // Disk size
         Spans::from(vec![
-            Span::styled("💾 Size on Disk: ", Style::default().fg(Color::Gray)),
-            Span::styled(formatted_size_on_disk, Style::default().fg(Color::Gray)),
+            Span::styled("💾 Size on Disk: ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled(formatted_size_on_disk, Style::default().fg(C_MAIN_LABELS)),
         ]),
 
         // Median time
         Spans::from(vec![
-            Span::styled("   Median Time: ", Style::default().fg(Color::Gray)),
-            Span::styled(mediantime, Style::default().fg(Color::Gray)),
+            Span::styled("   Median Time: ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled(mediantime, Style::default().fg(C_MAIN_LABELS)),
         ]),
 
         // Block time
         Spans::from(vec![
-            Span::styled("⏰ Block Time : ", Style::default().fg(Color::Gray)),
-            Span::styled(time, Style::default().fg(Color::Gray)),
+            Span::styled("⏰ Block Time : ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled(time, Style::default().fg(C_MAIN_LABELS)),
         ]),
     ];
 
@@ -301,8 +302,8 @@ pub fn render_hashrate_distribution_chart<B: Backend>(
         .data(&top_8_distribution_ref)
         .bar_width(7)
         .bar_gap(1)
-        .bar_style(Style::default().fg(Color::DarkGray))
-        .value_style(Style::default().fg(Color::White));
+        .bar_style(Style::default().fg(C_HASHRATE_CHART_BARS))
+        .value_style(Style::default().fg(C_HASHRATE_CHART_VALUES));
 
     frame.render_widget(barchart, chunks[1]);
 

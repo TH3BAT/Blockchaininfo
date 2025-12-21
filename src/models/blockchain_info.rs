@@ -18,7 +18,7 @@ use serde::Deserialize;
 use chrono::{TimeZone, Utc};
 use crate::models::errors::MyError;
 use tui::style::Color;
-use crate::utils::DIFFICULTY_ADJUSTMENT_INTERVAL;
+use crate::consensus::satoshi_math::*;
 
 /// Wrapper for the response to `getblockchaininfo`.
 ///

@@ -21,6 +21,8 @@ mod models;
 mod utils;
 mod display;
 mod runapp;
+mod consensus;
+mod ui;
 
 use config::load_config;
 use models::errors::MyError;

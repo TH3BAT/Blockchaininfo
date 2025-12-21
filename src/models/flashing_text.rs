@@ -13,7 +13,8 @@
 use lazy_static::lazy_static;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
-use tui::style::{Style, Color};
+use tui::style::Style;
+use crate::ui::colors::*;
 
 // Global flash tracker for the Best Block height.
 // Updated whenever a new block is detected.
@@ -76,10 +77,10 @@ impl FlashingText {
     pub fn style(&self) -> Style {
         if let Some(flash_until) = self.flash_until {
             if Instant::now() < flash_until {
-                return Style::default().fg(Color::White); // Highlight style
+                return Style::default().fg(C_FLASH); // Highlight style
             }
         }
-        Style::default().fg(Color::Green) // Default style
+        Style::default().fg(C_PREFLASH) // Default style
     }
 }
 
@@ -118,9 +119,9 @@ impl FlashingMiner {
     pub fn style(&self) -> Style {
         if let Some(flash_until) = self.flash_until {
             if Instant::now() < flash_until {
-                return Style::default().fg(Color::LightYellow); // Highlight
+                return Style::default().fg(C_MINER_FLASH); // Highlight
             }
         }
-        Style::default().fg(Color::Yellow) // Default
+        Style::default().fg(C_MINER) // Default
     }
 }

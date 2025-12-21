@@ -22,7 +22,8 @@ use tui::{
     Frame,
 };
 use crate::models::{errors::MyError, network_info::NetworkInfo, network_totals::NetTotals};
-use crate::utils::{format_size, normalize_percentages, BAR_ACTIVE};
+use crate::utils::{format_size, normalize_percentages};
+use crate::ui::colors::*;
 use std::collections::VecDeque;
 use crate::models::flashing_text::CONNECTIONS_IN_TEXT;
 
@@ -57,11 +58,11 @@ pub fn display_network_info<B: Backend>(
     //   < 60 seconds     → Caution (Yellow)
     //   >= 60 seconds    → Critical (Red)
     let color = if avg_block_propagate_time.abs() < 3 {
-        Color::Green
+        C_STATUS_LOW
     } else if avg_block_propagate_time.abs() < 60 {
-        Color::Yellow
+        C_STATUS_MED
     } else {
-        Color::Red
+        C_STATUS_HIGH
     };
     let abpt_text = "seconds";
 
@@ -78,7 +79,7 @@ pub fn display_network_info<B: Backend>(
     let connections_in_style = CONNECTIONS_IN_TEXT.lock().unwrap().style();
 
     let connections_in_spans = Spans::from(vec![
-        Span::styled("🔌 Connections in: ", Style::default().fg(Color::Gray)),
+        Span::styled("🔌 Connections in: ", Style::default().fg(C_MAIN_LABELS)),
         Span::styled(network_info.connections_in.to_string(), connections_in_style),
     ]);
 
@@ -116,33 +117,33 @@ pub fn display_network_info<B: Backend>(
         connections_in_spans,
 
         Spans::from(vec![
-            Span::styled("🔗 Connections out: ", Style::default().fg(Color::Gray)),
+            Span::styled("🔗 Connections out: ", Style::default().fg(C_MAIN_LABELS)),
             Span::styled(
                 network_info.connections_out.to_string(),
-                Style::default().fg(Color::Yellow),
+                Style::default().fg(C_CONNECTIONS_OUT),
             ),
         ]),
 
         Spans::from(vec![
-            Span::styled("⬇️ Total Bytes Received: ", Style::default().fg(Color::Gray)),
+            Span::styled("⬇️ Total Bytes Received: ", Style::default().fg(C_MAIN_LABELS)),
             Span::styled(
                 format_size(net_totals.totalbytesrecv).to_string(),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(C_MAIN_LABELS),
             ),
         ]),
 
         Spans::from(vec![
-            Span::styled("⬆️ Total Bytes Sent: ", Style::default().fg(Color::Gray)),
+            Span::styled("⬆️ Total Bytes Sent: ", Style::default().fg(C_MAIN_LABELS)),
             Span::styled(
                 format_size(net_totals.totalbytessent).to_string(),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(C_MAIN_LABELS),
             ),
         ]),
 
         Spans::from(vec![
             Span::styled(
                 "⏱️ Average Block Propagation Time: ",
-                Style::default().fg(Color::Gray),
+                Style::default().fg(C_MAIN_LABELS),
             ),
             Span::styled(
                 format!("{:.0} {}", avg_block_propagate_time, abpt_text),
@@ -197,8 +198,8 @@ pub fn display_network_info<B: Backend>(
                 .data(&data)
                 .bar_width(7)
                 .bar_gap(1)
-                .bar_style(Style::default().fg(Color::DarkGray))
-                .value_style(Style::default().fg(Color::White));
+                .bar_style(Style::default().fg(C_VERSION_CHART_BARS))
+                .value_style(Style::default().fg(C_VERSION_CHART_VALUES));
 
             frame.render_widget(barchart, sub_chunks[0]);
         }
@@ -263,7 +264,7 @@ pub fn display_network_info<B: Backend>(
                     .borders(Borders::ALL),
             )
             .data(&propagation_data)
-            .style(Style::default().fg(Color::DarkGray));
+            .style(Style::default().fg(C_SPARKLINE));
 
         frame.render_widget(sparkline, sub_chunks[1]);
     }
@@ -309,18 +310,18 @@ fn draw_client_distribution<B: Backend>(
 
         let count_span = Span::styled(format!("{:>5} ", count), Style::default().fg(Color::Gray));
 
-        let dash_span = Span::styled("- ", Style::default().fg(Color::DarkGray));
+        let dash_span = Span::styled("- ", Style::default().fg(C_SEPARATORS));
 
         let pct_span =
             Span::styled(format!("{:>3}% ", pct), Style::default().fg(Color::Gray));
 
         // Construct final row
         lines.push(Spans::from(vec![
-            Span::styled(format!("{:<10}", name), Style::default().fg(Color::Cyan)),
+            Span::styled(format!("{:<10}", name), Style::default().fg(C_CLIENT_DIST_MINER_LABEL)),
             count_span,
             dash_span,
             pct_span,
-            Span::styled(bar, Style::default().fg(BAR_ACTIVE)),
+            Span::styled(bar, Style::default().fg(C_HORIZONTAL_ASCII_BAR)),
         ]));
     }
 
