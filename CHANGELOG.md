@@ -9,7 +9,17 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ## v1.1.5 — Centralize reqwest client construction (proxy-ready) (2025-12-22)
 
-Added / Changed
+Changed
+
+Improved RPC client handling for high-latency connections by adjusting timeouts when a proxy is in use.
+Stabilized background RPC jobs (e.g. miner detection) when accessing nodes over Tor/onion services.
+
+Notes
+
+When using Start9 onion RPC interfaces, be sure to include the explicit RPC port (:8332) at the end of the onion address.
+Initial loads over Tor (e.g. mempool and transaction-related views) may take longer than LAN connections due to network latency.
+
+Added / Changed (Original commit)
 
 * Centralized RPC client construction behind a single builder function.
 * Unified timeout and connection behavior across all RPC modules.
