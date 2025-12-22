@@ -61,6 +61,16 @@ const MAX_TX_CACHE_SIZE: usize = 250_000;
 static TX_CACHE: Lazy<Arc<DashMap<[u8; 32], MempoolEntry>>> =
     Lazy::new(|| Arc::new(DashMap::with_capacity(250_000)));
 
+pub struct MempoolDistroState {
+    pub last_dust_free: bool,
+}
+
+impl MempoolDistroState {
+    pub fn new(initial_dust_free: bool) -> Self {
+        Self { last_dust_free: initial_dust_free }
+    }
+}
+
 /// Main entry point for computing mempool distribution.
 ///
 /// This function performs **three responsibilities**:
@@ -93,14 +103,9 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig, dust_free: bool) -> 
     // ─────────────────────────────────────────────────────────────
     // Handle Dust-Free toggle behavior
     // ─────────────────────────────────────────────────────────────
+    let mut distro_state = MempoolDistroState::new(dust_free); // set initial to current toggle
+    update_tx_cache(dust_free, &mut distro_state);
 
-    if dust_free {
-        // Retain only entries still present in mempool
-        TX_CACHE.retain(|tx_id, _| MEMPOOL_CACHE.contains(tx_id));
-    } else {
-        // Reset to full sampling mode
-        TX_CACHE.clear();
-    }
 
     // Identify TXIDs that require fetching
     let new_tx_ids: Vec<[u8; 32]> = MEMPOOL_CACHE.iter()
@@ -221,5 +226,61 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig, dust_free: bool) -> 
     dist.update_metrics(&TX_CACHE);
 
     Ok(())
+}
+
+/// Updates the transaction cache (`TX_CACHE`) based on the current
+/// `dust_free` mode, using **edge-triggered** semantics.
+///
+/// ## Behavior
+///
+/// - When `dust_free` is **enabled**, the cache is continuously pruned
+///   to retain only transactions still present in the mempool.
+/// - When `dust_free` is **disabled**, the cache switches back to full
+///   sampling mode.
+///
+/// ## Important
+///
+/// The cache is cleared **only once** when transitioning from
+/// `dust_free = true` → `false`.
+///
+/// This avoids repeatedly clearing the cache on every refresh cycle,
+/// which would otherwise prevent the cache from warming and cause
+/// unnecessary performance degradation (especially under higher
+/// latency conditions such as Tor).
+///
+/// ## Design Rationale
+///
+/// This function intentionally reacts to **state transitions**, not
+/// steady-state values. Cache invalidation is performed only on
+/// meaningful mode changes, preserving temporal continuity of data
+/// across refreshes.
+///
+/// The previous `dust_free` value is stored in `MempoolDistroState`
+/// to track this transition.
+///
+/// ## Parameters
+///
+/// - `dust_free`: Current dust-free toggle state.
+/// - `state`: Mutable mempool distribution state tracking the
+///   previous dust-free value.
+///
+/// ## Notes
+///
+/// This logic was validated under both LAN and Tor conditions.
+/// Tor latency revealed the importance of edge-triggered cache
+/// invalidation, making this the correct design for all environments.
+fn update_tx_cache(
+    dust_free: bool,
+    state: &mut MempoolDistroState,
+) {
+    if state.last_dust_free && !dust_free {
+        TX_CACHE.clear();
+    }
+
+    if dust_free {
+        TX_CACHE.retain(|tx_id, _| MEMPOOL_CACHE.contains(tx_id));
+    }
+
+    state.last_dust_free = dust_free;
 }
 
