@@ -241,10 +241,10 @@ pub async fn run_app<B: Backend>(
                         }
                     }
                     Err(e) => {
-                        if let Err(log_err) =
+                        if let Err(_log_err) =
                             log_error(&format!("Blockchain Info failed: {}", e))
                         {
-                            eprintln!("Failed to log error: {}", log_err);
+                            // eprintln!("Failed to log error: {}", log_err);
                         }
                         sleep(Duration::from_secs(2)).await;
                         continue;
@@ -640,9 +640,8 @@ loop {
         // Also fetch miner attribution for the new block.
         let block = network_state.last_block_seen;
 
-        if let Err(e) = fetch_miner(&config, &miners_data, &block).await {
-            eprintln!("Error in fetch_miner: {}", e);
-        }
+        let _ = fetch_miner(&config, &miners_data, &block).await;
+
     } else {
         // Same block — but propagation estimate changed.
         if network_state.last_block_seen == blockchain_info.blocks {
