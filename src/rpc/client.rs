@@ -6,13 +6,13 @@ pub fn build_rpc_client() -> Result<Client, reqwest::Error> {
     let is_proxied = std::env::var("BCI_RPC_PROXY").is_ok();
 
     let timeout = if is_proxied {
-        Duration::from_secs(30)   // Tor breathing room
+        Duration::from_secs(60)   // Tor breathing room
     } else {
         Duration::from_secs(10)   // LAN / local
     };
 
     let connect_timeout = if is_proxied {
-        Duration::from_secs(15)
+        Duration::from_secs(30)
     } else {
         Duration::from_secs(5)
     };
