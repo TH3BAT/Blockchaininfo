@@ -7,7 +7,7 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
-## v1.1.5 — Refinements, Consistency, and Block-Native Hash-Rate Window (2025-12-22)
+## v1.1.5 — Centralize reqwest client construction (proxy-ready) (2025-12-22)
 
 Added / Changed
 
