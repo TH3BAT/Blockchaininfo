@@ -148,13 +148,24 @@ Secure password retrieval:
 security add-generic-password -a bitcoin -s rpc-password -w "your_password"
 ```
 
+### **5. Optional SOCKS Proxy (Tor / Onion RPC)**
+
+Blockchaininfo supports routing RPC traffic through a SOCKS proxy (e.g. Tor) 
+by setting an environment variable.
+This enables access to RPC endpoints exposed over .onion services.
+
+```bash
+export BCI_RPC_PROXY="socks5h://127.0.0.1:9050"
+```
+
 ### **Priority Order**
 
 1. CLI flag (`--config`)
 2. Env var (`BLOCKCHAININFO_CONFIG`)
 3. Default path
 4. Env variables (`RPC_*`)
-5. macOS Keychain
+5. Optional SOCKS proxy (`BCI_RPC_PROXY`)
+6. macOS Keychain
 
 ---
 
