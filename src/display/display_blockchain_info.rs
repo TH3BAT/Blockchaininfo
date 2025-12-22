@@ -23,6 +23,7 @@ use crate::{
 };
 use crate::models::errors::MyError;
 use crate::models::flashing_text::{BEST_BLOCK_TEXT, MINER_TEXT};
+use crate::consensus::satoshi_math::*;
 use std::sync::Arc;
 
 
@@ -69,7 +70,7 @@ pub fn display_blockchain_info<B: Backend>(
     // Determine how deep we are into the current difficulty epoch.
     // (epoch = 2016 blocks)
     let height = blockchain_info.blocks;
-    let blocks_into_epoch = height % 2016;
+    let blocks_into_epoch = height % DIFFICULTY_ADJUSTMENT_INTERVAL;
 
     // Difficulty estimate shown only after block 5 of the epoch.
     let difficulty_change_display = if blocks_into_epoch < 5 {
