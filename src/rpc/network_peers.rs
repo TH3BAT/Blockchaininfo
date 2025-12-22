@@ -18,10 +18,10 @@
 use crate::models::peer_info::{PeerInfo, PeerInfoJsonWrap};
 use crate::config::RpcConfig;
 use crate::models::errors::MyError;
+use crate::rpc::client::build_rpc_client;
 
-use reqwest::{Client, header::CONTENT_TYPE};
+use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
-use std::time::Duration;
 
 /// Fetch peer metadata using `getpeerinfo`.
 ///
@@ -59,10 +59,7 @@ pub async fn fetch_peer_info(config: &RpcConfig) -> Result<Vec<PeerInfo>, MyErro
     });
 
     // Lightweight RPC client with conservative timeouts
-    let client = Client::builder()
-        .timeout(Duration::from_secs(10))        // Entire RPC must finish within 10s
-        .connect_timeout(Duration::from_secs(5)) // Avoid hanging on connection attempts
-        .build()?;
+    let client = build_rpc_client()?;
 
     // Send request
     let response = client

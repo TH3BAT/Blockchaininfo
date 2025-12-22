@@ -16,15 +16,13 @@
 //! The dashboard displays chain tips so operators can visually confirm
 //! the health of the active chain and spot anomalies in real time.
 
-use reqwest::Client;
 use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
 
 use crate::models::chaintips_info::{ChainTip, ChainTipsJsonWrap};
 use crate::models::errors::MyError;
 use crate::config::RpcConfig;
-
-use std::time::Duration;
+use crate::rpc::client::build_rpc_client;
 
 /// Fetch the list of known chain tips via `getchaintips`.
 ///
@@ -59,10 +57,7 @@ pub async fn fetch_chain_tips(config: &RpcConfig) -> Result<Vec<ChainTip>, MyErr
     });
 
     // Build HTTP client with conservative timeouts for fast refresh cycles
-    let client = Client::builder()
-        .timeout(Duration::from_secs(10))        // Limit total request time
-        .connect_timeout(Duration::from_secs(5)) // Prevent hanging TCP handshakes
-        .build()?;
+    let client = build_rpc_client()?;
 
     // Send request
     let response = client

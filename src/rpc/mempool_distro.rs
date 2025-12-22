@@ -18,13 +18,13 @@
 //! 4. Maintain a rolling TX cache with a fixed max size
 //! 5. Update global `MempoolDistribution` metrics
 
-use reqwest::Client;
 use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
 
 use crate::models::errors::MyError;
 use crate::config::RpcConfig;
 use crate::models::mempool_info::{MempoolEntryJsonWrap, MempoolEntry};
+use crate::rpc::client::build_rpc_client;
 
 use rand::rngs::StdRng;
 use rand::SeedableRng; 
@@ -40,7 +40,6 @@ use dashmap::DashMap;
 use std::sync::Arc;
 use tokio::sync::Semaphore;
 use tokio::task;
-use std::time::Duration;
 use hex::ToHex;
 
 /// The dust threshold (546 sats), expressed in BTC.
@@ -89,10 +88,7 @@ static TX_CACHE: Lazy<Arc<DashMap<[u8; 32], MempoolEntry>>> =
 pub async fn fetch_mempool_distribution(config: &RpcConfig, dust_free: bool) -> Result<(), MyError> {
 
     // Build lightweight RPC client
-    let client = Client::builder()
-        .timeout(Duration::from_secs(10))
-        .connect_timeout(Duration::from_secs(5))
-        .build()?;
+    let client = build_rpc_client()?;
 
     // ─────────────────────────────────────────────────────────────
     // Handle Dust-Free toggle behavior

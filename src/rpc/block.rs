@@ -11,12 +11,12 @@
 //! powering epoch calculations, 24h difficulty drift, miner extraction,
 //! and the UI’s block/txid displays.
 
-use reqwest::Client;
 use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
 
 use crate::models::errors::MyError;
 use crate::config::RpcConfig;
+use crate::rpc::client::build_rpc_client;
 
 use crate::models::block_info::{
     BlockHash,
@@ -29,7 +29,6 @@ use crate::models::block_info::{
 
 use crate::utils::BLOCK_HISTORY;
 use crate::consensus::satoshi_math::*;
-use std::time::Duration;
 
 /// Fetch block information at a specific height using `getblock` with verbose=1.
 ///
@@ -73,10 +72,7 @@ pub async fn fetch_block_data_by_height(
     };
 
     // RPC client with timeouts tailored for TUI responsiveness
-    let client = Client::builder()
-        .timeout(Duration::from_secs(10))
-        .connect_timeout(Duration::from_secs(5))
-        .build()?;
+    let client = build_rpc_client()?;
 
     // ──────────────────────────────
     // Step 1: getblockhash
@@ -163,10 +159,7 @@ async fn fetch_full_block_data_by_height(
     blocks: &u64,
 ) -> Result<BlockInfoFull, MyError> {
 
-    let client = Client::builder()
-        .timeout(Duration::from_secs(10))
-        .connect_timeout(Duration::from_secs(5))
-        .build()?;
+    let client = build_rpc_client()?;
 
     // ──────────────────────────────
     // Step 1: getblockhash

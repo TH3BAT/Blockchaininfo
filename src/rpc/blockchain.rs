@@ -12,15 +12,13 @@
 //! This is one of the most frequently called RPCs in the application and forms
 //! the foundation for difficulty calculations, epoch analysis, and UI displays.
 
-use reqwest::Client;
 use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
 
 use crate::models::blockchain_info::{BlockchainInfoJsonWrap, BlockchainInfo};
 use crate::models::errors::MyError;
 use crate::config::RpcConfig;
-
-use std::time::Duration;
+use crate::rpc::client::build_rpc_client;
 
 /// Fetches blockchain-wide metadata via `getblockchaininfo`.
 ///
@@ -56,10 +54,7 @@ pub async fn fetch_blockchain_info(config: &RpcConfig) -> Result<BlockchainInfo,
     });
 
     // Configure lightweight RPC client with tight timeouts for TUI responsiveness
-    let client = Client::builder()
-        .timeout(Duration::from_secs(10))        // entire request timeout
-        .connect_timeout(Duration::from_secs(5)) // TCP handshake timeout
-        .build()?;
+    let client = build_rpc_client()?;
 
     // Execute request
     let response = client

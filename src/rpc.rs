@@ -42,6 +42,9 @@ mod mempool_distro;
 /// Handles RPC calls for `getrawtransaction` and optional mempool lookups.
 mod transaction;
 
+/// Handles building the client for all RPC modules.
+mod client;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Imports for returned model types.
 // ─────────────────────────────────────────────────────────────────────────────

@@ -13,15 +13,13 @@
 //! The dashboard uses this information to populate the **Network** section
 //! and to give insight into how the node is configured and operating.
 
-use reqwest::Client;
 use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
 
 use crate::models::network_info::{NetworkInfoJsonWrap, NetworkInfo};
 use crate::models::errors::MyError;
 use crate::config::RpcConfig;
-
-use std::time::Duration;
+use crate::rpc::client::build_rpc_client;
 
 /// Fetch high-level network metadata using `getnetworkinfo`.
 ///
@@ -58,10 +56,7 @@ pub async fn fetch_network_info(config: &RpcConfig) -> Result<NetworkInfo, MyErr
     });
 
     // Build HTTP client with tight timeouts for TUI responsiveness
-    let client = Client::builder()
-        .timeout(Duration::from_secs(10))        // entire RPC timeout
-        .connect_timeout(Duration::from_secs(5)) // TCP handshake timeout
-        .build()?;
+    let client = build_rpc_client()?;
 
     // Execute RPC
     let response = client

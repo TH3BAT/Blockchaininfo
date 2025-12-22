@@ -19,7 +19,6 @@
 //!
 //! Any failure to parse either response returns `"Transaction not found"`.
 
-use reqwest::Client;
 use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
 
@@ -30,8 +29,7 @@ use chrono::{DateTime, Utc};
 
 use crate::models::transaction_info::GetRawTransactionResponse;
 use crate::models::mempool_info::MempoolEntryJsonWrap;
-
-use std::time::Duration;
+use crate::rpc::client::build_rpc_client;
 
 /// Fetch transaction details from either:
 /// - The blockchain (confirmed)  
@@ -71,10 +69,8 @@ pub async fn fetch_transaction(config: &RpcConfig, txid: &str) -> Result<String,
         "params": [txid, true]  // Fetch verbose details (vout, vin, blocktime, etc.)
     });
 
-    let client = Client::builder()
-        .timeout(Duration::from_secs(10))        // Full RPC timeout
-        .connect_timeout(Duration::from_secs(5)) // TCP handshake timeout
-        .build()?;
+    // Build HTTP client with tight timeouts for TUI responsiveness
+    let client = build_rpc_client()?;
 
     // Execute getrawtransaction
     let response = client

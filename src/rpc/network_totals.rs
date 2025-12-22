@@ -14,15 +14,13 @@
 //! The dashboard uses these values in the **Network** section to display
 //! aggregated bandwidth behavior over time.
 
-use reqwest::Client;
 use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
 
 use crate::models::network_totals::{NetTotalsJsonWrap, NetTotals};
 use crate::models::errors::MyError;
 use crate::config::RpcConfig;
-
-use std::time::Duration;
+use crate::rpc::client::build_rpc_client;
 
 /// Fetch total network byte counts using `getnettotals`.
 ///
@@ -54,10 +52,7 @@ pub async fn fetch_net_totals(config: &RpcConfig) -> Result<NetTotals, MyError> 
     });
 
     // Build HTTP client with sane timeouts
-    let client = Client::builder()
-        .timeout(Duration::from_secs(10))        // Max time for full RPC
-        .connect_timeout(Duration::from_secs(5)) // Protect against stalled connections
-        .build()?;
+    let client = build_rpc_client()?;
 
     // Execute RPC call
     let response = client

@@ -7,24 +7,40 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
+## v1.1.5 — Refinements, Consistency, and Block-Native Hash-Rate Window (2025-12-22)
+
+Added / Changed
+
+* Centralized RPC client construction behind a single builder function.
+* Unified timeout and connection behavior across all RPC modules.
+* Added optional SOCKS proxy support for RPC connections (env-driven).
+* Laid groundwork for future Tor/onion RPC access where supported by the node environment.
+
+Notes
+
+* Onion RPC support depends on upstream node/platform exposure and policies.
+* Refactor provides immediate benefits even when using LAN or clearnet RPC.
+
+---
+
 ## v1.1.4 — Refinements, Consistency, and Block-Native Hash-Rate Window (2025-12-19)
 
 This release focuses on structural clarity, documentation improvements, and aligning UI output with Bitcoin’s block-driven reality. No new features — just meaningful refinements across several modules.
 
 Changed
 
-- Renamed ChainTipsResponse → ChainTipsJsonWrap and
+* Renamed ChainTipsResponse → ChainTipsJsonWrap and
   PeerInfoResponse → PeerInfoJsonWrap
   to maintain consistent naming across all JsonWrap structs.
-- Hash-Rate panel title now displays the actual block window (derived from miner distribution counts)
+* Hash-Rate panel title now displays the actual block window (derived from miner distribution counts)
   instead of a static “24 hrs” placeholder.
   This clarifies sampling scope and better reflects Bitcoin’s block-time cadence.
 
 Improved
 
-- Added documentation and preserved (commented-out) deserialize_wtxid for educational reference and
+* Added documentation and preserved (commented-out) deserialize_wtxid for educational reference and
   potential future use.
-- Marked wtxid with serde(skip) in MempoolEntry, removing redundant data and reducing memory +
+* Marked wtxid with serde(skip) in MempoolEntry, removing redundant data and reducing memory +
   deserialization overhead.
 
 Notes
@@ -37,7 +53,7 @@ The codebase is now in a clean, consistent state ahead of introducing new views 
 
 ### Fixed
 
-- Corrected mempool transaction lookup to deserialize the full JSON-RPC response,
+* Corrected mempool transaction lookup to deserialize the full JSON-RPC response,
   matching the mempool distribution path. This replaces older result-only
   deserialization which could incorrectly surface "Transaction not found"
   despite successful RPC responses.
@@ -54,11 +70,11 @@ Docs: Reduce model memory usage by skipping unused RPC fields with serde
 
 ## v1.1.1 (2025-12-14)
 
-- Satoshi: Oopsie — trim Keychain stdout before parsing RPC password
-- Satoshi: Add 5-block propagation slices to observe network drift
-- Satoshi: skip unused mempool dependency fields
+* Satoshi: Oopsie — trim Keychain stdout before parsing RPC password
+* Satoshi: Add 5-block propagation slices to observe network drift
+* Satoshi: skip unused mempool dependency fields
     Mark depends/spentby with serde::skip to reduce memory usage.
-- UI: shorten label for narrow terminal support
+* UI: shorten label for narrow terminal support
 
 ---
 
@@ -66,7 +82,7 @@ Docs: Reduce model memory usage by skipping unused RPC fields with serde
 
 ### Added
 
-- Added a toggleable average block propagation view to the Network panel, providing a clear numerical anchor alongside the existing sparkline for improved network health interpretation.
+* Added a toggleable average block propagation view to the Network panel, providing a clear numerical anchor alongside the existing sparkline for improved network health interpretation.
 
 ---
 
@@ -74,13 +90,13 @@ Docs: Reduce model memory usage by skipping unused RPC fields with serde
 
 ### Improved
 
-- Reduced mempool memory usage by switching TXID storage from hex strings to fixed-size byte arrays (`[u8; 32]`)
-- Improved DashMap key efficiency under high mempool churn
-- Lower allocator pressure during sustained congestion
+* Reduced mempool memory usage by switching TXID storage from hex strings to fixed-size byte arrays (`[u8; 32]`)
+* Improved DashMap key efficiency under high mempool churn
+* Lower allocator pressure during sustained congestion
 
 ### Internal
 
-- Refactored mempool hot path to enforce byte-native TXID handling
+* Refactored mempool hot path to enforce byte-native TXID handling
 
 ---
 
@@ -88,14 +104,14 @@ Docs: Reduce model memory usage by skipping unused RPC fields with serde
 
 ### Fixes & Internal Improvements
 
-- Corrected the first hash-phase threshold (0.10 → 10.0) to accurately represent the 10% phase change.
-- Removed unintended `[dev-dependencies]` self-referencing path to prevent Rust Analyzer cyclic dependency warnings.
-- Updated toolchain expectations to Rust 1.90+ for compatibility with recent rust-analyzer behavior.
-- Resolved various analyzer warnings and ensured smoother development environment behavior.
+* Corrected the first hash-phase threshold (0.10 → 10.0) to accurately represent the 10% phase change.
+* Removed unintended `[dev-dependencies]` self-referencing path to prevent Rust Analyzer cyclic dependency warnings.
+* Updated toolchain expectations to Rust 1.90+ for compatibility with recent rust-analyzer behavior.
+* Resolved various analyzer warnings and ensured smoother development environment behavior.
 
 ### Documentation
 
-- Introduced `docs/FGMO.md` — Photo-BIP for the **Floating Global Mesh Observer**, outlining the conceptual
+* Introduced `docs/FGMO.md` — Photo-BIP for the **Floating Global Mesh Observer**, outlining the conceptual
   architecture for an optional, sovereign, global operator observability mesh.
 
 ### Notes
@@ -110,37 +126,37 @@ anchors a new conceptual direction for future Layer-3 observability features.
 
 ### Sovereign Release
 
-### Added
+Added
 
-- **Full inline documentation (Hybrid Mode)** across all modules  
+* **Full inline documentation (Hybrid Mode)** across all modules  
   (RPC, display, models, utils, run loop).
-- **Consensus Security Panel** with fork detection and stale-branch warnings.
-- **Hashrate Distribution Overlay** (toggle: `H`) with miner attribution.
-- **Dust-Free Mempool Filtering** (toggle: `D`) with optimized distribution sampling.
-- **Client ↔ Version Toggle** (Network Panel) for improved node diversity insight.
-- **Graceful Shutdown Flow** with last-frame rendering.
-- **Popup System Enhancements**:
-  - Transaction Lookup (TxID validation, paste detection)
-  - Help Panel
-  - Consensus Warning Dialog
-- **Propagation Time Tracking Enhancements** with block-change detection.
-- **Dynamic Async Polling Intervals** for optimal UI smoothness.
+* **Consensus Security Panel** with fork detection and stale-branch warnings.
+* **Hashrate Distribution Overlay** (toggle: `H`) with miner attribution.
+* **Dust-Free Mempool Filtering** (toggle: `D`) with optimized distribution sampling.
+* **Client ↔ Version Toggle** (Network Panel) for improved node diversity insight.
+* **Graceful Shutdown Flow** with last-frame rendering.
+* **Popup System Enhancements**:
+  * Transaction Lookup (TxID validation, paste detection)
+  * Help Panel
+  * Consensus Warning Dialog
+* **Propagation Time Tracking Enhancements** with block-change detection.
+* **Dynamic Async Polling Intervals** for optimal UI smoothness.
 
-### Changed
+Changed
 
-- Improved UI consistency across all panels with unified toggle styling.
-- Refined layout for Blockchain, Mempool, Network, and Consensus sections.
-- Optimized cache update strategy to avoid redundant writes.
-- Cleaned concurrency logic to reduce lock contention.
-- Consolidated and clarified miner distribution tracking in `BLOCK_HISTORY`.
+* Improved UI consistency across all panels with unified toggle styling.
+* Refined layout for Blockchain, Mempool, Network, and Consensus sections.
+* Optimized cache update strategy to avoid redundant writes.
+* Cleaned concurrency logic to reduce lock contention.
+* Consolidated and clarified miner distribution tracking in `BLOCK_HISTORY`.
 
-### Fixed
+Fixed
 
-- Stabilized safe indexing throughout UI rendering paths.
-- Eliminated intermittent stale-data issues in async polling tasks.
-- Corrected handling of chain tip responses.
-- Improved paste behavior within the Tx Lookup popup.
-- Resolved minor timing jitter during redraw cycles.
+* Stabilized safe indexing throughout UI rendering paths.
+* Eliminated intermittent stale-data issues in async polling tasks.
+* Corrected handling of chain tip responses.
+* Improved paste behavior within the Tx Lookup popup.
+* Resolved minor timing jitter during redraw cycles.
 
 ---
 

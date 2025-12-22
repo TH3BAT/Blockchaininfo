@@ -8,7 +8,6 @@
 //! The global cache is consumed by the mempool distribution system and other
 //! modules that require awareness of which transactions currently reside in the mempool.
 
-use reqwest::Client;
 use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
 
@@ -19,11 +18,11 @@ use crate::models::mempool_info::{
 };
 use crate::models::errors::MyError;
 use crate::config::RpcConfig;
+use crate::rpc::client::build_rpc_client;
 
 use std::sync::Arc;
 use dashmap::DashSet;
 use once_cell::sync::Lazy;
-use std::time::Duration;
 use hex::FromHex;
 
 /// Global mempool TXID cache.
@@ -86,10 +85,7 @@ pub async fn fetch_mempool_info(
         "params": []
     });
 
-    let client = Client::builder()
-        .timeout(Duration::from_secs(10))        // Full request timeout
-        .connect_timeout(Duration::from_secs(5)) // TCP handshake timeout
-        .build()?;
+    let client = build_rpc_client()?;
 
     let mempoolinfo_response = client
         .post(&config.address)
