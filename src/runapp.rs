@@ -99,7 +99,7 @@ use crate::utils::{
 };
 
 // Atomic flags used for toggles (no locking overhead).
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 
 /// Popup windows used in the application.
@@ -124,6 +124,7 @@ struct App {
     show_client_distribution: bool, // NEW toggle: Version vs Client view
     last_fork_alert_height: Option<u64>, // For deduping fork warning popups
     show_propagation_avg: bool, // NEW toggle: Propagation average over 20 block period
+    last_block: Arc<AtomicU64>, // last block to pass to mempool_distro
 }
 
 impl App {
@@ -140,6 +141,7 @@ impl App {
             show_client_distribution: false,            // default: show Version view
             last_fork_alert_height: None,
             show_propagation_avg: false,                //default: show sparkline view
+            last_block: Arc::new(AtomicU64::new(0)),
         }
     }
 }
@@ -514,6 +516,7 @@ tokio::spawn({
 // distribution errors no longer require granular logging.
 //
 let dust_flag = app.dust_free.clone();
+let last_block_clone = app.last_block.clone();
 
 tokio::spawn({
     let config_clone = config.clone();
@@ -522,8 +525,9 @@ tokio::spawn({
         loop {
             let start = Instant::now();
             let dust_free = dust_flag.load(Ordering::Relaxed);
+            let last_block = last_block_clone.load(Ordering::Relaxed); 
 
-            if let Err(e) = fetch_mempool_distribution(&config_clone, dust_free).await {
+            if let Err(e) = fetch_mempool_distribution(&config_clone, dust_free, last_block).await {
                 // Distribution failures are usually transient due to mempool churn.
                 let _ = &e; // intentionally unused now
             }
@@ -580,6 +584,8 @@ loop {
         MEMPOOL_DISTRIBUTION_CACHE.read(),
         CHAIN_TIP_CACHE.read(),
     );
+
+    app.last_block.store(blockchain_info.blocks, Ordering::Relaxed);
 
     // ---------------------------------------------------------------------------------------------
     // Epoch progress indicator — drives the animated header ("Flip Dot" logic).

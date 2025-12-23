@@ -42,6 +42,8 @@ use tokio::sync::Semaphore;
 use tokio::task;
 use hex::ToHex;
 
+use std::sync::{Mutex, OnceLock};
+
 /// The dust threshold (546 sats), expressed in BTC.
 /// Any TX with fees below this threshold is considered "dust" when filtering.
 const DUST_THRESHOLD: f64 = 0.00000546;
@@ -61,15 +63,13 @@ const MAX_TX_CACHE_SIZE: usize = 250_000;
 static TX_CACHE: Lazy<Arc<DashMap<[u8; 32], MempoolEntry>>> =
     Lazy::new(|| Arc::new(DashMap::with_capacity(250_000)));
 
-pub struct MempoolDistroState {
-    pub last_dust_free: bool,
+struct LastSeen {
+    dust_free: bool,
+    last_block: u64,
+    initialized: bool,
 }
 
-impl MempoolDistroState {
-    pub fn new(initial_dust_free: bool) -> Self {
-        Self { last_dust_free: initial_dust_free }
-    }
-}
+static LAST_SEEN: OnceLock<Mutex<LastSeen>> = OnceLock::new();
 
 /// Main entry point for computing mempool distribution.
 ///
@@ -95,16 +95,31 @@ impl MempoolDistroState {
 /// ### Error Behavior
 /// Errors for individual transactions do **not** stop the entire distribution process.
 /// They are logged or returned silently to avoid disruption to the UI.
-pub async fn fetch_mempool_distribution(config: &RpcConfig, dust_free: bool) -> Result<(), MyError> {
+pub async fn fetch_mempool_distribution(
+    config: &RpcConfig,
+    dust_free: bool,
+    last_block: u64,
+) -> Result<(), MyError> {
 
     // Build lightweight RPC client
     let client = build_rpc_client()?;
+    
+    let mutex = LAST_SEEN.get_or_init(|| {
+        Mutex::new(LastSeen {
+            dust_free,
+            last_block,
+            initialized: false,
+        })
+    });
 
-    // ─────────────────────────────────────────────────────────────
-    // Handle Dust-Free toggle behavior
-    // ─────────────────────────────────────────────────────────────
-    let mut distro_state = MempoolDistroState::new(dust_free); // set initial to current toggle
-    update_tx_cache(dust_free, &mut distro_state);
+    {
+        let mut state = mutex.lock().unwrap();
+
+        // ─────────────────────────────────────────────────────────────
+        // Handle Dust-Free toggle behavior
+        // ─────────────────────────────────────────────────────────────
+        update_tx_cache(dust_free, last_block, &mut *state);
+    }
 
 
     // Identify TXIDs that require fetching
@@ -271,16 +286,23 @@ pub async fn fetch_mempool_distribution(config: &RpcConfig, dust_free: bool) -> 
 /// invalidation, making this the correct design for all environments.
 fn update_tx_cache(
     dust_free: bool,
-    state: &mut MempoolDistroState,
+    last_block: u64,
+    state: &mut LastSeen,
 ) {
-    if state.last_dust_free && !dust_free {
-        TX_CACHE.clear();
+    if state.initialized {
+        if state.dust_free != dust_free || state.last_block != last_block {
+            TX_CACHE.clear();
+        }
+    } else {
+        state.initialized = true;
     }
 
+    // Retain only in dust-free mode
     if dust_free {
         TX_CACHE.retain(|tx_id, _| MEMPOOL_CACHE.contains(tx_id));
     }
 
-    state.last_dust_free = dust_free;
+    state.dust_free = dust_free;
+    state.last_block = last_block;
 }
 

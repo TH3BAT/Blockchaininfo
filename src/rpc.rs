@@ -144,8 +144,9 @@ pub async fn fetch_peer_info(config: &RpcConfig) -> Result<Vec<PeerInfo>, MyErro
 pub async fn fetch_mempool_distribution(
     config: &RpcConfig,
     dust_free: bool,
+    last_block: u64,
 ) -> Result<(), MyError> {
-    mempool_distro::fetch_mempool_distribution(config, dust_free).await
+    mempool_distro::fetch_mempool_distribution(config, dust_free, last_block).await
 }
 
 /// Fetches a transaction either by:
