@@ -62,7 +62,7 @@ pub async fn fetch_block_data_by_height(
         }
         2 => {
             // Approx. block height 24 hours ago (~144 blocks)
-            blocks.saturating_sub(143)
+            blocks.saturating_sub((BLOCKS_PER_HOUR * HOURS_PER_DAY) - 1)
         }
         _ => {
             return Err(MyError::CustomError(

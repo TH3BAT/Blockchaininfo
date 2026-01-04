@@ -18,6 +18,8 @@ use serde::Deserialize;
 use std::collections::{VecDeque, HashMap};
 use std::sync::{Mutex, Arc};
 
+use crate::consensus::satoshi_math::*;
+
 /// Wrapper for `getblockhash`.  
 /// Bitcoin Core returns `{ result: "blockhash", id, error }`.
 #[derive(Debug, Deserialize)]
@@ -218,8 +220,25 @@ impl BlockHistory {
     /// Create an empty 144-block rolling window.
     pub fn new() -> Self {
         BlockHistory {
-            blocks: Mutex::new(VecDeque::with_capacity(144)),
+            blocks: Mutex::new(VecDeque::with_capacity((BLOCKS_PER_HOUR * HOURS_PER_DAY) as usize)),
         }
+    }
+
+    /// Return up to the last `n` blocks as (height, miner).
+    /// Assumes the most recent entry corresponds to `last_block`.
+    pub fn last_n_with_heights(&self, last_block: u64, n: usize) -> Vec<(u64, Option<Arc<str>>)> {
+        let blocks = self.blocks.lock().unwrap();
+
+        // How many entries do we actually have?
+        let k = blocks.len().min(n);
+
+        // Take the last k entries (newest at the end)
+        let tail = blocks.iter().rev().take(k);
+
+        // Map index 0 => last_block, index 1 => last_block - 1, etc.
+        tail.enumerate()
+            .map(|(i, miner_opt)| (last_block.saturating_sub(i as u64), miner_opt.clone()))
+            .collect()
     }
 
     /// Returns the miner of the most recent block (if known).

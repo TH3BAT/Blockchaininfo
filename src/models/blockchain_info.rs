@@ -159,7 +159,7 @@ impl BlockchainInfo {
                     Ok(format!(
                         "{} hours, {} minutes ago",
                         duration.num_hours(),
-                        duration.num_minutes() % 60
+                        duration.num_minutes() % SECONDS_PER_MINUTE as i64
                     ))
                 },
             )

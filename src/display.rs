@@ -86,6 +86,22 @@ pub fn render_hashrate_distribution_chart<B: Backend>(
     );
 }
 
+/// Render the Last 20 Block heights and associated miners (toggled via `l`).
+///
+/// This function acts as a stable public wrapper, preventing the TUI layer
+/// from depending on internal module paths.
+pub fn draw_last20_miners<B: Backend>(
+    frame: &mut Frame<B>,
+    area: Rect,
+    rows: &[(u64, Option<Arc<str>>)],
+) {
+    let _ = display_blockchain_info::draw_last20_miners(
+        frame, 
+        area, 
+        rows,
+    );
+}
+
 /// Render the `[Mempool]` section: mempool stats, fee distribution,
 /// dust filtering mode, etc.
 ///

@@ -7,6 +7,37 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
+## v1.2.0 — Miner history panel & consensus hygiene (2026-01-03)
+
+Added
+
+New Last 20 Blocks / Miners panel in the Blockchain section.
+Displays recent block heights alongside their associated mining pools.
+Toggleable via [L], mutually exclusive with the Hash Rate Distribution view.
+Designed for quick situational awareness (newest blocks shown first).
+
+Changed
+
+Improved visual hierarchy across ASCII charts:
+Percentage values remain crisp.
+Horizontal ASCII bars are dimmed to reduce visual noise.
+Miner names in the Last 20 view are rendered with secondary emphasis for clearer pattern recognition.
+
+Improved
+
+Replaced hard-coded block and mempool constants with consensus-derived values.
+Normalized block-range calculations using saturating arithmetic for safety and clarity.
+Reduced implicit cache invalidation by correcting edge-triggered state handling.
+Improved cache stability and behavior under higher-latency environments (e.g. Tor).
+
+Notes
+
+The Last 20 Blocks / Miners panel builds on the existing rolling block history and does not introduce new RPC calls.
+Under Tor/onion access, this view provides a lightweight alternative to heavier distribution charts.
+Startup behavior gracefully fills from 1 → 20 blocks as history accumulates.
+
+---
+
 ## v1.1.5 — Centralize reqwest client construction (proxy-ready) (2025-12-22)
 
 Changed

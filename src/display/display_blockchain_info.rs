@@ -9,10 +9,10 @@
 
 use tui::{
     backend::Backend,
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Layout, Rect, Alignment},
     style::{Color, Style, Modifier},
     text::{Span, Spans},
-    widgets::{BarChart, Block, Borders, Paragraph},
+    widgets::{BarChart, Block, Borders, Paragraph, Wrap},
     Frame,
 };
 use num_format::{Locale, ToFormattedString};
@@ -71,7 +71,7 @@ pub fn display_blockchain_info<B: Backend>(
     // (epoch = 2016 blocks)
     let height = blockchain_info.blocks;
     let blocks_into_epoch = height % DIFFICULTY_ADJUSTMENT_INTERVAL;
-
+    
     // Difficulty estimate shown only after block 5 of the epoch.
     let difficulty_change_display = if blocks_into_epoch < 5 {
         Span::styled(" N/A ", Style::default().fg(C_MAIN_LABELS))
@@ -257,7 +257,7 @@ pub fn render_hashrate_distribution_chart<B: Backend>(
     // Use to show block representation that replaces static '24 hrs' time.
     let window_blocks: u64 = distribution.iter().map(|entry| entry.1).sum();
     let window_display = if window_blocks < 144 {
-        format!("{}/144 blks", window_blocks)
+        format!("{}/{} blks", window_blocks, (BLOCKS_PER_HOUR * HOURS_PER_DAY))
     } else {
         "144 blks".to_string()
     };
@@ -310,3 +310,129 @@ pub fn render_hashrate_distribution_chart<B: Backend>(
 
     Ok(())
 }
+
+/// Renders the "Last 20 Blocks / Miner" panel.
+///
+/// Displays a rolling window of the most recent block heights
+/// alongside their associated miners, using data derived from
+/// `BLOCK_HISTORY`.
+///
+/// Layout:
+/// • Two-column table (10 rows per column)
+/// • Block height aligned right
+/// • Miner label truncated to fit available width
+///
+/// Ordering:
+/// • Oldest block at the top
+/// • Newest block at the bottom
+///
+/// Behavior:
+/// • If fewer than 20 blocks are available (startup / sync),
+///   only the available rows are rendered.
+/// • Unknown or missing miner labels are shown as "Unknown".
+///
+/// Notes:
+/// • This function is render-only and performs no locking or async work.
+/// • Data preparation (including height association) must be done
+///   upstream in the async runtime before calling this function.
+/// • Designed to pair with the Blockchain panel toggle `[L] 20`.
+pub fn draw_last20_miners<B: Backend>(
+    frame: &mut Frame<B>,
+    area: Rect,
+    rows: &[(u64, Option<Arc<str>>)],
+) {
+    // Inner area (match other panels: keep it simple)
+    let inner = Rect {
+        x: area.x + 1,
+        y: area.y + 1,
+        width: area.width.saturating_sub(2),
+        height: area.height.saturating_sub(2),
+    };
+
+    // Split into header + body
+    let chunks = Layout::default()
+    .direction(Direction::Vertical)
+    .constraints([Constraint::Length(2), Constraint::Min(1)].as_ref())
+    .split(inner);
+
+    // Split body into 2 columns
+    let cols = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+        .split(chunks[1]);
+
+    // Header line
+    let header = Paragraph::new(Spans::from(vec![
+        Span::styled("Last 20 Blocks / Miners", Style::default().add_modifier(Modifier::BOLD)),
+        Span::raw("  "),
+        Span::raw("(newest at top)"),
+    ]))
+    .alignment(Alignment::Center)
+    .block(Block::default().borders(Borders::NONE))
+    .wrap(Wrap { trim: true });
+
+    frame.render_widget(header, chunks[0]);
+
+    // Helper: format a single row as "HEIGHT  MINER"
+    fn fmt_line(
+        width: u16,
+        height: u64,
+        miner: Option<&str>,
+    ) -> Spans<'static> {
+        let height_str = format!("{:>7} ", height);
+        let spacer = "  ";
+        let miner_str = miner.unwrap_or("Unknown");
+
+        let available = width as usize;
+        let mut miner_out = miner_str.to_string();
+
+        let remaining = available.saturating_sub(height_str.len()).max(1);
+        if miner_out.len() > remaining {
+            if remaining >= 2 {
+                miner_out.truncate(remaining.saturating_sub(1));
+                miner_out.push('…');
+            } else {
+                miner_out.truncate(remaining);
+            }
+        }
+
+        Spans::from(vec![
+            Span::styled(
+                height_str,
+                Style::default().fg(C_LAST20_HEIGHT_LABEL)
+                .add_modifier(Modifier::BOLD),
+            ),
+            Span::raw(spacer),
+            Span::styled(
+                miner_out,
+                Style::default().fg(C_LAST20_MINER_LABEL)
+                .add_modifier(Modifier::DIM),
+            ),
+        ])
+    }
+
+    // Split into up to 10 left + 10 right
+    let left_rows = rows.iter().take(10);
+    let right_rows = rows.iter().skip(10).take(10);
+
+    let left_text: Vec<Spans> = left_rows
+        .map(|(h, m)| fmt_line(cols[0].width, *h, m.as_deref()))
+        .collect();
+
+    let right_text: Vec<Spans> = right_rows
+        .map(|(h, m)| fmt_line(cols[1].width, *h, m.as_deref()))
+        .collect();
+
+    let left_para = Paragraph::new(left_text)
+        .block(Block::default().borders(Borders::NONE))
+        .wrap(Wrap { trim: true });
+
+    let right_para = Paragraph::new(right_text)
+        .block(Block::default().borders(Borders::NONE))
+        .wrap(Wrap { trim: true });
+
+    frame.render_widget(left_para, cols[0]);
+    frame.render_widget(right_para, cols[1]);
+}
+
+

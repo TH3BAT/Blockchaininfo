@@ -52,6 +52,9 @@ pub const C_VERIFICATION: Color = Color::Yellow;
 pub const C_HASHRATE_CHART_BARS: Color = Color::DarkGray;
 pub const C_HASHRATE_CHART_VALUES: Color = Color::White;
 
+pub const C_LAST20_HEIGHT_LABEL: Color = Color::Cyan;
+pub const C_LAST20_MINER_LABEL: Color = Color::Gray;
+
 /// Mempool
 pub const C_MEMPOOL_DIST_LABELS: Color = Color::Yellow;
 pub const C_MEMPOOL_USAGE_GAUGE_FG: Color = Color::DarkGray;
@@ -66,6 +69,8 @@ pub const C_CONNECTIONS_OUT: Color = Color::Yellow;
 pub const C_VERSION_CHART_BARS: Color = Color::DarkGray;
 pub const C_VERSION_CHART_VALUES: Color = Color::White;
 pub const C_CLIENT_DIST_MINER_LABEL: Color = Color::Cyan;
+pub const C_CLIENT_DIST_MINER_COUNT:Color = Color::Gray;
+pub const C_CLIENT_DIST_MINER_PCT:Color = Color::Gray;
 pub const C_SPARKLINE: Color = Color::DarkGray;
 
 /// Consensus

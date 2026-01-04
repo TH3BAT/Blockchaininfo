@@ -371,3 +371,16 @@ pub fn normalize_percentages(counts: &[u64]) -> Vec<u64> {
 
     floored
 }
+
+/// Helper function to create a visual progress bar used alongside percent metrics.
+///
+/// Example:
+///   percent = 40, width = 10  →  "[====      ]"
+///
+/// The bar length is fixed by `width`; the number of '=' characters is
+/// proportional to `percent` (rounded to nearest).
+pub fn create_progress_bar(percent: u64, width: u16) -> String {
+    let filled = (percent as f64 / 100.0 * width as f64).round() as usize;
+    let empty = width as usize - filled;
+    format!("[{}{}]", "=".repeat(filled), " ".repeat(empty))
+}

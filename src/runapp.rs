@@ -43,6 +43,7 @@ use crate::display::{
     display_network_info,
     display_consensus_security_info,
     render_hashrate_distribution_chart,
+    draw_last20_miners,
 };
 
 // Misc utilities: header/footer, miner loader, block history tracker.
@@ -125,6 +126,8 @@ struct App {
     last_fork_alert_height: Option<u64>, // For deduping fork warning popups
     show_propagation_avg: bool, // NEW toggle: Propagation average over 20 block period
     last_block: Arc<AtomicU64>, // last block to pass to mempool_distro
+    show_last20_miners: bool,   // Toggle: Show last 20 blocks / miners.
+    last20_miners: Vec<(u64, Option<Arc<str>>)>,
 }
 
 impl App {
@@ -142,6 +145,8 @@ impl App {
             last_fork_alert_height: None,
             show_propagation_avg: false,                //default: show sparkline view
             last_block: Arc::new(AtomicU64::new(0)),
+            show_last20_miners: false,
+            last20_miners: Vec::new(),
         }
     }
 }
@@ -686,6 +691,12 @@ loop {
         .map(|(miner, hashrate)| (Arc::from(miner.to_string()), *hashrate))
         .collect();
 
+    // Construct last 20 miners and heights vector for the Blockchain section toggle.
+    let last20_miners = {
+        let h = BLOCK_HISTORY.read().await;
+        h.last_n_with_heights(network_state.last_block_seen, 20)
+    };
+    app.last20_miners = last20_miners;
 
     // =============================================================================================
     // INPUT POLLING — Adaptive Polling Rate
@@ -766,8 +777,13 @@ loop {
                 }
 
                 // Hashrate Distribution toggle
-                KeyCode::Char('h') if app.popup == PopupType::None => {
+                KeyCode::Char('h') if app.popup == PopupType::None && !app.show_last20_miners => {
                     app.show_hash_distribution = !app.show_hash_distribution;
+                }
+
+                // Last 20 miners and heights toggle
+                KeyCode::Char('l') if app.popup == PopupType::None && !app.show_hash_distribution => {
+                    app.show_last20_miners = !app.show_last20_miners;
                 }
 
                 // CHARACTER INPUT inside Tx Lookup popup
@@ -816,7 +832,7 @@ loop {
                 }
 
                 // DUST-FREE toggle for mempool distribution
-                KeyCode::Char('d') | KeyCode::Char('D') => {
+                KeyCode::Char('d') => {
                     let old = app.dust_free.load(Ordering::Relaxed);
                     app.dust_free.store(!old, Ordering::Relaxed);
                 }
@@ -888,6 +904,16 @@ loop {
             Span::styled("[H] HRD", Style::default().fg(C_KEYTOGGLE_DIM))
         };
 
+        // Build Last20 toggle label
+        let last20_label = if app.show_last20_miners {
+            Span::styled(
+                "[L] 20",
+                Style::default().fg(C_KEYTOGGLE_HIGHLIGHT).add_modifier(Modifier::BOLD),
+            )
+        } else {
+            Span::styled("[L] 20", Style::default().fg(C_KEYTOGGLE_DIM))
+        };
+
         // Full title for Blockchain block
         let blockchain_title = Spans::from(vec![
             Span::styled(
@@ -897,6 +923,8 @@ loop {
                     .add_modifier(Modifier::BOLD),
             ),
             hrd_label,
+            Span::raw(" "), // spacing
+            last20_label,
         ]);
 
         let block_blockchain = Block::default()
@@ -910,11 +938,17 @@ loop {
         // Choose between HRD chart OR normal blockchain info
         if app.show_hash_distribution {
             render_hashrate_distribution_chart(&hash_distribution, frame, chunks[1]);
+        
+        } else if app.show_last20_miners {
+            // assuming you already computed rows in runapp and have them available here
+            // e.g., `last20_rows: &[(u64, Option<Arc<str>>)]`
+            draw_last20_miners(frame, chunks[1], &app.last20_miners);
+        
         } else {
             if !block_info.is_empty() && !block24_info.is_empty() {
                 let latest_block = &block_info[block_info.len() - 1];
                 let block24 = &block24_info[block24_info.len() - 1];
-
+        
                 display_blockchain_info(
                     &blockchain_info,
                     latest_block,
@@ -925,6 +959,7 @@ loop {
                 );
             }
         }
+        
 
         // -----------------------------------------------------------------------------------------
         // MEMPOOL SECTION

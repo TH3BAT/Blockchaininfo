@@ -16,13 +16,13 @@
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect, Alignment},
-    style::{Color, Style},
+    style::{Color, Style, Modifier},
     text::{Span, Spans},
     widgets::{BarChart, Block, Borders, Paragraph, Sparkline},
     Frame,
 };
 use crate::models::{errors::MyError, network_info::NetworkInfo, network_totals::NetTotals};
-use crate::utils::{format_size, normalize_percentages};
+use crate::utils::{format_size, normalize_percentages, create_progress_bar};
 use crate::ui::colors::*;
 use std::collections::VecDeque;
 use crate::models::flashing_text::CONNECTIONS_IN_TEXT;
@@ -302,26 +302,28 @@ fn draw_client_distribution<B: Backend>(
     // -----------------------------------------------------------------------
     for ((name, count), pct) in client_counts.iter().zip(pcts.iter()).take(6) {
         // Fixed width bar = 10 chars
-        let bar_width = 10;
-        let filled = (*pct as usize * bar_width) / 100;
-        let empty = bar_width - filled;
+        //let bar_width = 10;
+        //let filled = (*pct as usize * bar_width) / 100;
+        //let empty = bar_width - filled;
 
-        let bar = format!("[{}{}]", "=".repeat(filled), " ".repeat(empty));
+        let bar = create_progress_bar(*pct, 10);
 
-        let count_span = Span::styled(format!("{:>5} ", count), Style::default().fg(Color::Gray));
+        let count_span = Span::styled(format!("{:>5} ", count), Style::default().fg(C_CLIENT_DIST_MINER_COUNT));
 
         let dash_span = Span::styled("- ", Style::default().fg(C_SEPARATORS));
 
         let pct_span =
-            Span::styled(format!("{:>3}% ", pct), Style::default().fg(Color::Gray));
+            Span::styled(format!("{:>3}% ", pct), Style::default().fg(C_CLIENT_DIST_MINER_PCT));
 
         // Construct final row
         lines.push(Spans::from(vec![
-            Span::styled(format!("{:<10}", name), Style::default().fg(C_CLIENT_DIST_MINER_LABEL)),
+            Span::styled(format!("{:<10}", name), Style::default().fg(C_CLIENT_DIST_MINER_LABEL)
+            .add_modifier(Modifier::BOLD)),
             count_span,
             dash_span,
             pct_span,
-            Span::styled(bar, Style::default().fg(C_HORIZONTAL_ASCII_BAR)),
+            Span::styled(bar, Style::default().fg(C_HORIZONTAL_ASCII_BAR)
+            .add_modifier(Modifier::DIM)),
         ]));
     }
 

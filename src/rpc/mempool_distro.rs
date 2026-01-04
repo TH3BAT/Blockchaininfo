@@ -61,7 +61,7 @@ const MAX_TX_CACHE_SIZE: usize = 250_000;
 /// - Initialized lazily
 /// - Used by the "Dust-Free" toggle and distribution metrics
 static TX_CACHE: Lazy<Arc<DashMap<[u8; 32], MempoolEntry>>> =
-    Lazy::new(|| Arc::new(DashMap::with_capacity(250_000)));
+    Lazy::new(|| Arc::new(DashMap::with_capacity(MAX_TX_CACHE_SIZE)));
 
 struct LastSeen {
     dust_free: bool,

@@ -25,7 +25,7 @@ use tui::{
 use num_format::{Locale, ToFormattedString};
 use crate::{
     models::mempool_info::{MempoolDistribution, MempoolInfo},
-    utils::{format_size, normalize_percentages},
+    utils::{format_size, normalize_percentages, create_progress_bar},
     ui::colors::*,
 };
 use crate::models::errors::MyError;
@@ -305,8 +305,15 @@ pub fn display_mempool_info<B: Backend>(
             ),
             Span::styled(" - ", Style::default().fg(C_SEPARATORS)),
             Span::styled(
-                format!("{:>3}% {}", small_pct, small_prog_bar),
-                Style::default().fg(C_HORIZONTAL_ASCII_BAR),
+                format!("{:>3}%", small_pct),
+                Style::default().fg(C_MEMPOOL_VALUES),
+            ),
+            
+            Span::styled(
+                format!(" {}", small_prog_bar),
+                Style::default()
+                    .fg(C_HORIZONTAL_ASCII_BAR)
+                    .add_modifier(Modifier::DIM),
             ),
         ]),
         Spans::from(vec![
@@ -320,8 +327,15 @@ pub fn display_mempool_info<B: Backend>(
             ),
             Span::styled(" - ", Style::default().fg(Color::DarkGray)),
             Span::styled(
-                format!("{:>3}% {}", medium_pct, medium_prog_bar),
-                Style::default().fg(C_HORIZONTAL_ASCII_BAR),
+                format!("{:>3}%", medium_pct),
+                Style::default().fg(C_MEMPOOL_VALUES),
+            ),
+            
+            Span::styled(
+                format!(" {}", medium_prog_bar),
+                Style::default()
+                    .fg(C_HORIZONTAL_ASCII_BAR)
+                    .add_modifier(Modifier::DIM),
             ),
         ]),
         Spans::from(vec![
@@ -335,8 +349,15 @@ pub fn display_mempool_info<B: Backend>(
             ),
             Span::styled(" - ", Style::default().fg(C_SEPARATORS)),
             Span::styled(
-                format!("{:>3}% {}", large_pct, large_prog_bar),
-                Style::default().fg(C_HORIZONTAL_ASCII_BAR),
+                format!("{:>3}%", large_pct),
+                Style::default().fg(C_MEMPOOL_VALUES),
+            ),
+            
+            Span::styled(
+                format!(" {}", large_prog_bar),
+                Style::default()
+                    .fg(C_HORIZONTAL_ASCII_BAR)
+                    .add_modifier(Modifier::DIM),
             ),
         ]),
 
@@ -359,8 +380,15 @@ pub fn display_mempool_info<B: Backend>(
             ),
             Span::styled(" - ", Style::default().fg(C_SEPARATORS)),
             Span::styled(
-                format!("{:>3}% {}", young_pct, young_prog_bar),
-                Style::default().fg(C_HORIZONTAL_ASCII_BAR),
+                format!("{:>3}%", young_pct),
+                Style::default().fg(C_MEMPOOL_VALUES),
+            ),
+            
+            Span::styled(
+                format!(" {}", young_prog_bar),
+                Style::default()
+                    .fg(C_HORIZONTAL_ASCII_BAR)
+                    .add_modifier(Modifier::DIM),
             ),
         ]),
         Spans::from(vec![
@@ -377,8 +405,15 @@ pub fn display_mempool_info<B: Backend>(
             ),
             Span::styled(" - ", Style::default().fg(C_SEPARATORS)),
             Span::styled(
-                format!("{:>3}% {}", moderate_pct, moderate_prog_bar),
-                Style::default().fg(C_HORIZONTAL_ASCII_BAR),
+                format!("{:>3}%", moderate_pct),
+                Style::default().fg(C_MEMPOOL_VALUES),
+            ),
+            
+            Span::styled(
+                format!(" {}", moderate_prog_bar),
+                Style::default()
+                    .fg(C_HORIZONTAL_ASCII_BAR)
+                    .add_modifier(Modifier::DIM),
             ),
         ]),
         Spans::from(vec![
@@ -392,8 +427,15 @@ pub fn display_mempool_info<B: Backend>(
             ),
             Span::styled(" - ", Style::default().fg(C_SEPARATORS)),
             Span::styled(
-                format!("{:>3}% {}", old_pct, old_prog_bar),
-                Style::default().fg(C_HORIZONTAL_ASCII_BAR),
+                format!("{:>3}%", old_pct),
+                Style::default().fg(C_MEMPOOL_VALUES),
+            ),
+            
+            Span::styled(
+                format!(" {}", old_prog_bar),
+                Style::default()
+                    .fg(C_HORIZONTAL_ASCII_BAR)
+                    .add_modifier(Modifier::DIM),
             ),
         ]),
 
@@ -419,8 +461,15 @@ pub fn display_mempool_info<B: Backend>(
             ),
             Span::styled(" - ", Style::default().fg(C_SEPARATORS)),
             Span::styled(
-                format!("{:>3}% {}", rbf_pct, rbf_prog_bar),
-                Style::default().fg(C_HORIZONTAL_ASCII_BAR),
+                format!("{:>3}%", rbf_pct),
+                Style::default().fg(C_MEMPOOL_VALUES),
+            ),
+            
+            Span::styled(
+                format!(" {}", rbf_prog_bar),
+                Style::default()
+                    .fg(C_HORIZONTAL_ASCII_BAR)
+                    .add_modifier(Modifier::DIM),
             ),
         ]),
         Spans::from(vec![
@@ -437,9 +486,21 @@ pub fn display_mempool_info<B: Backend>(
             ),
             Span::styled(" - ", Style::default().fg(C_SEPARATORS)),
             Span::styled(
-                format!("{:>3}% {}", non_rbf_pct, non_rbf_prog_bar),
-                Style::default().fg(C_HORIZONTAL_ASCII_BAR),
+                format!("{:>3}%", non_rbf_pct),
+                Style::default().fg(C_MEMPOOL_VALUES),
             ),
+            
+            Span::styled(
+                format!(" {}", non_rbf_prog_bar),
+                Style::default()
+                    .fg(C_HORIZONTAL_ASCII_BAR)
+                    .add_modifier(Modifier::DIM),
+            ),
+            /* Span::styled(
+                format!("{:>3}% {}", non_rbf_pct, non_rbf_prog_bar),
+                Style::default().fg(C_HORIZONTAL_ASCII_BAR)
+                .add_modifier(Modifier::DIM),
+            ), */
         ]),
 
         // -------------------------------------------------------------------
@@ -489,15 +550,4 @@ pub fn display_mempool_info<B: Backend>(
     Ok(())
 }
 
-/// Helper function to create a visual progress bar used alongside percent metrics.
-///
-/// Example:
-///   percent = 40, width = 10  →  "[====      ]"
-///
-/// The bar length is fixed by `width`; the number of '=' characters is
-/// proportional to `percent` (rounded to nearest).
-fn create_progress_bar(percent: u64, width: u16) -> String {
-    let filled = (percent as f64 / 100.0 * width as f64).round() as usize;
-    let empty = width as usize - filled;
-    format!("[{}{}]", "=".repeat(filled), " ".repeat(empty))
-}
+

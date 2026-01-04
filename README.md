@@ -1,7 +1,7 @@
 
 # 🌐 Blockchaininfo
 
-**A Real-Time Bitcoin Network Observatory — Built in Rust**
+A Real-Time Bitcoin Network Observatory — Built in Rust
 
 ![Rust][rust-badge] ![Uptime][uptime-badge]
 
@@ -92,10 +92,12 @@ Switch views instantly:
 ├── miners.json
 └── src/
     ├── config.rs
+    ├── consensus/
     ├── display/
     ├── models/
     ├── rpc/
     ├── runapp.rs
+    ├── ui/
     ├── utils.rs
     └── main.rs
 ```
@@ -150,7 +152,7 @@ security add-generic-password -a bitcoin -s rpc-password -w "your_password"
 
 ### **5. Optional SOCKS Proxy (Tor / Onion RPC)**
 
-Blockchaininfo supports routing RPC traffic through a SOCKS proxy (e.g. Tor) 
+Blockchaininfo supports routing RPC traffic through a SOCKS proxy (e.g. Tor)
 by setting an environment variable.
 This enables access to RPC endpoints exposed over .onion services.
 
