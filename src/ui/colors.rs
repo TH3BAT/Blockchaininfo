@@ -80,3 +80,6 @@ pub const C_CONSENSUS_STATUS_SECTION: Color = Color::Yellow;
 pub const C_STATUS_LOW: Color = Color::Green;
 pub const C_STATUS_MED: Color = Color::Yellow;
 pub const C_STATUS_HIGH: Color = Color::Red;
+
+pub const C_TX_LOOKUP_TXT: Color = Color::Rgb(255, 165, 0);
+pub const C_HELP_TXT: Color = Color::Rgb(255, 180, 80);

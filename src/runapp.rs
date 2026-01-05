@@ -1195,7 +1195,7 @@ fn render_tx_lookup_popup<B: Backend>(frame: &mut Frame<B>, app: &mut App) {
     // RPC result rendering
     let result = match &app.tx_result {
         Some(tx) => Paragraph::new(tx.clone())
-            .style(Style::default().fg(Color::Green))
+            .style(Style::default().fg(C_TX_LOOKUP_TXT))
             .wrap(Wrap { trim: true }),
 
         None => {
@@ -1254,7 +1254,7 @@ fn render_help_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) {
 
     let paragraph = Paragraph::new(help_text.join("\n"))
         .alignment(Alignment::Left)
-        .style(Style::default().fg(Color::Green))
+        .style(Style::default().fg(C_HELP_TXT))
         .wrap(Wrap { trim: false });
 
     let block = Block::default()
