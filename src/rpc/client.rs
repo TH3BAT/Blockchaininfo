@@ -1,4 +1,8 @@
 // src/rpc/client.rs/// Builds a preconfigured JSON-RPC HTTP client for Bitcoin RPC calls.
+
+use reqwest::{Client, Proxy};
+use std::time::Duration;
+
 ///
 /// This client adapts its timeout behavior based on whether RPC traffic
 /// is routed through a proxy (e.g., Tor).
@@ -34,9 +38,6 @@
 ///
 /// Returns an error if the proxy URL is invalid or the client
 /// cannot be constructed.
-use reqwest::{Client, Proxy};
-use std::time::Duration;
-
 pub fn build_rpc_client() -> Result<Client, reqwest::Error> {
     let is_proxied = std::env::var("BCI_RPC_PROXY").is_ok();
 
