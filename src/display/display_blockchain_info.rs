@@ -256,10 +256,10 @@ pub fn render_hashrate_distribution_chart<B: Backend>(
 
     // Use to show block representation that replaces static '24 hrs' time.
     let window_blocks: u64 = distribution.iter().map(|entry| entry.1).sum();
-    let window_display = if window_blocks < 144 {
+    let window_display = if window_blocks < (BLOCKS_PER_HOUR * HOURS_PER_DAY) {
         format!("{}/{} blks", window_blocks, (BLOCKS_PER_HOUR * HOURS_PER_DAY))
     } else {
-        "144 blks".to_string()
+        format!("{} blks", (BLOCKS_PER_HOUR * HOURS_PER_DAY))
     };
 
     let chunks = Layout::default()

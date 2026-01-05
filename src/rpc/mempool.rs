@@ -161,7 +161,21 @@ pub async fn fetch_mempool_info(
 }
 
 
-
+/// Converts a hex-encoded transaction ID into its fixed-size byte form.
+///
+/// ## Purpose
+/// Bitcoin transaction IDs are often represented as 64-character hex strings
+/// for transport and display. Internally, this application operates on
+/// fixed-size `[u8; 32]` TXIDs for efficiency and correctness.
+///
+/// ## Behavior
+/// - Returns `Some([u8; 32])` if the hex string decodes cleanly.
+/// - Returns `None` if decoding fails or the length is invalid.
+///
+/// ## Notes
+/// This helper assumes canonical TXID length (32 bytes) and is intentionally
+/// strict. It is used at ingestion boundaries to normalize TXIDs into a
+/// byte-native representation.
 fn txid_hex_to_bytes(txid: &str) -> Option<[u8; 32]> {
     let vec = Vec::from_hex(txid).ok()?;
     let mut arr = [0u8; 32];
