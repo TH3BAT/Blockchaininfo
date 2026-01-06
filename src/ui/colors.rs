@@ -83,3 +83,4 @@ pub const C_STATUS_HIGH: Color = Color::Red;
 
 pub const C_TX_LOOKUP_TXT: Color = Color::Rgb(255, 165, 0);
 pub const C_HELP_TXT: Color = Color::Rgb(255, 180, 80);
+pub const C_CONSENSUS_WARNING_TXT: Color =  Color::Rgb(255, 180, 80);

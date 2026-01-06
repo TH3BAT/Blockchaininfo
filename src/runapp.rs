@@ -1295,7 +1295,7 @@ fn render_consensus_warning_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) 
 
     let paragraph = Paragraph::new(warning_text.join("\n"))
         .alignment(Alignment::Left)
-        .style(Style::default().fg(Color::Green))
+        .style(Style::default().fg(C_CONSENSUS_WARNING_TXT))
         .wrap(Wrap { trim: false });
 
     let block = Block::default()
