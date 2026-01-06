@@ -72,6 +72,7 @@ Switch views instantly:
 * Last 20 Blocks / Miners
 * Dust-Free mempool view
 * Version vs Client distribution
+* Propagation Times vs Averages
 * Transaction lookup
 * Help panel
 
@@ -206,7 +207,7 @@ export BCI_RPC_PROXY="socks5h://127.0.0.1:9050"
 3. Default path
 4. Env variables (`RPC_*`)
 5. Optional SOCKS proxy (`BCI_RPC_PROXY`)
-6. macOS Keychain
+6. macOS Keychain / Linux Password Store
 
 ---
 
