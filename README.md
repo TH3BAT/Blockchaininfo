@@ -69,6 +69,7 @@ Custom mempool sampling logic (backed by semaphore concurrency + atomic dust fil
 Switch views instantly:
 
 * Hashrate Distribution
+* Last 20 Blocks / Miners
 * Dust-Free mempool view
 * Version vs Client distribution
 * Transaction lookup
