@@ -257,20 +257,28 @@ pub async fn fetch_miner(
     let coinbase_tx_addresses = coinbase_tx.extract_wallet_addresses();
 
     // Attempt miner lookup
-    let miner = match find_miner_by_wallet(coinbase_tx_addresses, miners_data).await {
-        Some(m) => m,
-        None => {
-            // Fallback: classify from coinbase tag
-            if let Some((primary, secondary)) = classify_miner_from_coinbase(coinbase_tx) {
-                match secondary {
-                    Some(pool) => format!("{primary} (via {pool})"),
-                    None => primary,
-                }
-            } else {
-                "Unknown".to_string()
+    let wallet_miner = find_miner_by_wallet(coinbase_tx_addresses, miners_data).await;
+
+    let miner = if let Some((primary, secondary)) = classify_miner_from_coinbase(coinbase_tx) {
+        match (&wallet_miner, &secondary) {
+            // Address says pool, coinbase reveals solo miner → override
+            (Some(pool), Some(cb_pool)) if pool == cb_pool => {
+                format!("{primary} (via {cb_pool})")
             }
+
+            // Address unknown → coinbase fallback
+            (None, _) => match secondary {
+                Some(pool) => format!("{primary} (via {pool})"),
+                None => primary,
+            },
+
+            // Otherwise trust address
+            _ => wallet_miner.unwrap_or(primary),
         }
+    } else {
+        wallet_miner.unwrap_or("Unknown".to_string())
     };
+
 
     // Append into rolling history
     let block_history = BLOCK_HISTORY.write().await;
