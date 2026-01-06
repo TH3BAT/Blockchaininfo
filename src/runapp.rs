@@ -236,11 +236,10 @@ pub async fn run_app<B: Backend>(
                 // --- Step 1: Fetch blockchain_info (height, difficulty, chain, etc.) ---
                 match fetch_blockchain_info(&config_clone).await {
                     Ok(new_blockchain_info) => {
-                        let mut cache = BLOCKCHAIN_INFO_CACHE.write().await;
-
+                        if *BLOCKCHAIN_INFO_CACHE.read().await != new_blockchain_info
                         // Avoid unnecessary updates to allow the UI to stay calm.
-                        if *cache != new_blockchain_info {
-                            *cache = new_blockchain_info;
+                        {
+                            *BLOCKCHAIN_INFO_CACHE.write().await = new_blockchain_info;
                         } else {
                             // Data did not change — sleep the remainder of 2 seconds.
                             sleep(Duration::from_secs(2)).await;
@@ -267,13 +266,34 @@ pub async fn run_app<B: Backend>(
                 // --- Step 3: Fetch block data for *latest* block ---
                 match fetch_block_data_by_height(&config_clone, block_height, 1).await {
                     Ok(new_data) => {
-                        let mut cache = BLOCK_INFO_CACHE.write().await;
+                        // Decide if we need to update without taking a write lock.
+                        let needs_update = {
+                            let cache = BLOCK_INFO_CACHE.read().await;
 
-                        if cache.len() >= 1 {
-                            cache.remove(0);
+                            match cache.last() {
+                                Some(prev) => prev.hash != new_data.hash, // or prev.height != new_data.height
+                                None => true,
+                            }
+                        };
+
+                        if needs_update {
+                            let mut cache = BLOCK_INFO_CACHE.write().await;
+
+                            // Re-check under the write lock to avoid races (optional but correct).
+                            let still_needs_update = match cache.last() {
+                                Some(prev) => prev.hash != new_data.hash,
+                                None => true,
+                            };
+
+                            if still_needs_update {
+                                if cache.len() >= 1 {
+                                    cache.remove(0);
+                                }
+                                cache.push(new_data);
+                            }
                         }
-                        cache.push(new_data);
                     }
+
                     Err(e) => {
                         let _ = log_error(&format!(
                             "Block Data by Height failed at height {}: {}",
@@ -287,12 +307,30 @@ pub async fn run_app<B: Backend>(
                 // --- Step 4: Fetch the block from ~24 hours ago ---
                 match fetch_block_data_by_height(&config_clone, block_height, 2).await {
                     Ok(block24_data) => {
-                        let mut cache_24 = BLOCK24_INFO_CACHE.write().await;
+                        let needs_update = {
+                            let cache = BLOCK24_INFO_CACHE.read().await;
+                            match cache.last() {
+                                Some(prev) => prev.hash != block24_data.hash, // or height
+                                None => true,
+                            }
+                        };
 
-                        if cache_24.len() >= 1 {
-                            cache_24.remove(0);
+                        if needs_update {
+                            let mut cache = BLOCK24_INFO_CACHE.write().await;
+
+                            // Optional re-check under write lock
+                            let still_needs_update = match cache.last() {
+                                Some(prev) => prev.hash != block24_data.hash,
+                                None => true,
+                            };
+
+                            if still_needs_update {
+                                if cache.len() >= 1 {
+                                    cache.remove(0);
+                                }
+                                cache.push(block24_data);
+                            }
                         }
-                        cache_24.push(block24_data);
                     }
                     Err(e) => {
                         let _ = log_error(&format!(
@@ -329,10 +367,8 @@ pub async fn run_app<B: Backend>(
 
                 match fetch_mempool_info(&config_clone).await {
                     Ok(new_data) => {
-                        let mut cache = MEMPOOL_INFO_CACHE.write().await;
-
-                        if *cache != new_data {
-                            *cache = new_data;
+                        if *MEMPOOL_INFO_CACHE.read().await != new_data {
+                            *MEMPOOL_INFO_CACHE.write().await = new_data;
                         }
                     }
                     Err(e) => {
@@ -366,10 +402,8 @@ pub async fn run_app<B: Backend>(
 
                 match fetch_network_info(&config_clone).await {
                     Ok(new_data) => {
-                        let mut cache = NETWORK_INFO_CACHE.write().await;
-
-                        if *cache != new_data {
-                            *cache = new_data;
+                        if *NETWORK_INFO_CACHE.read().await != new_data {
+                            *NETWORK_INFO_CACHE.write().await = new_data
                         }
                     }
                     Err(e) => {
@@ -404,12 +438,20 @@ tokio::spawn({
 
             match fetch_peer_info(&config_clone).await {
                 Ok(new_data) => {
-                    let mut cache = PEER_INFO_CACHE.write().await;
+                    // Compare under a read lock first.
+                    let needs_update = {
+                        let cache = PEER_INFO_CACHE.read().await;
+                        *cache != new_data
+                    };
 
-                    // Replace wholesale to avoid stale entries from removed peers.
-                    if *cache != new_data {
-                        cache.clear();
-                        cache.extend(new_data);
+                    if needs_update {
+                        let mut cache = PEER_INFO_CACHE.write().await;
+
+                        // Optional re-check under write lock to avoid redundant swaps.
+                        if *cache != new_data {
+                            cache.clear();
+                            cache.extend(new_data);
+                        }
                     }
                 }
                 Err(e) => {
@@ -443,17 +485,26 @@ tokio::spawn({
 
             match fetch_chain_tips(&config_clone).await {
                 Ok(new_data) => {
-                    let mut cache = CHAIN_TIP_CACHE.write().await;
-
-                    // Wrap tips in the full RPC-style response struct.
+                    // Build the wrapped response outside any locks.
                     let new_response = ChainTipsJsonWrap {
                         error: None,
                         id: None,
                         result: new_data,
                     };
 
-                    if *cache != new_response {
-                        *cache = new_response;
+                    // Read-lock first to decide.
+                    let needs_update = {
+                        let cache = CHAIN_TIP_CACHE.read().await;
+                        *cache != new_response
+                    };
+
+                    if needs_update {
+                        let mut cache = CHAIN_TIP_CACHE.write().await;
+
+                        // Optional re-check under write lock.
+                        if *cache != new_response {
+                            *cache = new_response;
+                        }
                     }
                 }
                 Err(e) => {
@@ -485,10 +536,9 @@ tokio::spawn({
 
             match fetch_net_totals(&config_clone).await {
                 Ok(new_data) => {
-                    let mut cache = NET_TOTALS_CACHE.write().await;
-
-                    if *cache != new_data {
-                        *cache = new_data;
+                    if *NET_TOTALS_CACHE.read().await != new_data
+                    {
+                        *NET_TOTALS_CACHE.write().await = new_data
                     }
                 }
                 Err(e) => {
