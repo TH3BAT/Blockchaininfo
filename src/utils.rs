@@ -168,7 +168,33 @@ pub fn get_rpc_password_from_keychain() -> Result<String, MyError> {
 
 #[cfg(target_os = "linux")]
 pub fn get_rpc_password_from_keychain() -> Result<String, MyError> {
-    Err(MyError::Keychain("Linux keyring access not supported".into()))
+    use std::process::Command;
+
+    let entry = std::env::var("BCI_PASS_ENTRY").unwrap_or_else(|_| "bitcoin/rpc-password".into());
+
+    let output = Command::new("pass")
+        .arg("show")
+        .arg(&entry)
+        .output()
+        .map_err(|e| MyError::Keychain(format!("pass invocation failed: {}", e)))?;
+
+    if output.status.success() {
+        // `pass show` can output multi-line (password + metadata); first line is the secret.
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let password = stdout.lines().next().unwrap_or("").trim().to_string();
+
+        if password.is_empty() {
+            Err(MyError::Keychain("Password retrieved but empty".into()))
+        } else {
+            Ok(password)
+        }
+    } else {
+        Err(MyError::Keychain(format!(
+            "pass entry not found or inaccessible ({}): {}",
+            entry,
+            String::from_utf8_lossy(&output.stderr)
+        )))
+    }
 }
 
 #[cfg(target_os = "windows")]

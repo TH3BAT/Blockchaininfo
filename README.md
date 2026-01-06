@@ -150,7 +150,46 @@ Secure password retrieval:
 security add-generic-password -a bitcoin -s rpc-password -w "your_password"
 ```
 
-### **5. Optional SOCKS Proxy (Tor / Onion RPC)**
+Boom indeed. 💥
+Let’s extend the README cleanly and symmetrically, without overexplaining.
+
+Here’s a **drop-in Linux section** that matches the tone and minimalism of your macOS one.
+
+---
+
+### **5. Linux Password Store (`pass`) Support**
+
+Secure password retrieval using the standard Linux password manager.
+
+### **Requirements**
+
+* `pass` (Password Store)
+* `gpg` with an initialized key
+* a pinentry program (e.g. `pinentry-curses`)
+
+**Initialize `pass` (one-time setup):**
+
+```bash
+pass init <GPG_KEY_ID>
+```
+
+**Store the Bitcoin RPC password:**
+
+```bash
+pass insert bitcoin/rpc-password
+```
+
+(Only the **first line** is used as the password; additional notes are ignored.)
+
+Optional: specify a custom entry path
+
+```bash
+export BCI_PASS_ENTRY=bitcoin/rpc-password
+```
+
+BCI will automatically retrieve the RPC password from `pass` on Linux.
+
+### **6. Optional SOCKS Proxy (Tor / Onion RPC)**
 
 Blockchaininfo supports routing RPC traffic through a SOCKS proxy (e.g. Tor)
 by setting an environment variable.
