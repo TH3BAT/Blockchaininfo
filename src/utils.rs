@@ -140,29 +140,31 @@ lazy_static! {
 pub fn get_rpc_password_from_keychain() -> Result<String, MyError> {
     use std::process::Command;
 
+    // Default Keychain "service" is rpc-password, but allow override via env var.
+    // Example: export BCI_PASS_ENTRY="bitcoin/rpc-password"
+    // (On macOS this maps to `security ... -s <service>`.)
+    let service = std::env::var("BCI_PASS_ENTRY").unwrap_or_else(|_| "rpc-password".into());
+
     let output = Command::new("security")
         .arg("find-generic-password")
-        .arg("-s").arg("rpc-password")
+        .arg("-s").arg(&service)
         .arg("-a").arg("bitcoin")
         .arg("-w")
         .output()
         .map_err(|e| MyError::Keychain(format!("Keychain retrieval failed: {}", e)))?;
 
     if output.status.success() {
-        let password = String::from_utf8_lossy(&output.stdout)
-            .trim()
-            .to_string();
-
+        let password = String::from_utf8_lossy(&output.stdout).trim().to_string();
         if password.is_empty() {
             Err(MyError::Keychain("Password retrieved but empty".into()))
         } else {
             Ok(password)
         }
-
     } else {
-        Err(MyError::Keychain(
-            format!("Password not found: {}", String::from_utf8_lossy(&output.stderr)),
-        ))
+        Err(MyError::Keychain(format!(
+            "Password not found: {}",
+            String::from_utf8_lossy(&output.stderr)
+        )))
     }
 }
 

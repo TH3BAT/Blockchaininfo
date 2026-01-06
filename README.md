@@ -151,6 +151,12 @@ Secure password retrieval:
 security add-generic-password -a bitcoin -s rpc-password -w "your_password"
 ```
 
+Optional: specify a custom entry path
+
+```bash
+export BCI_PASS_ENTRY=bitcoin-nasty/rpc-password
+```
+
 ### **5. Linux Password Store (`pass`) Support**
 
 Secure password retrieval using the standard Linux password manager.
