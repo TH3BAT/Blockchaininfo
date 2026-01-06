@@ -17,7 +17,7 @@
 use serde::Deserialize;
 use std::collections::{VecDeque, HashMap};
 use std::sync::{Mutex, Arc};
-
+use crate::utils::{hex_decode, extract_ascii_runs};
 use crate::consensus::satoshi_math::*;
 
 /// Wrapper for `getblockhash`.  
@@ -143,6 +143,30 @@ impl Transaction {
             .map(|o| o.script_pub_key.address.clone())
             .collect()
     }
+
+    /// Returns coinbase scriptSig bytes (decoded from hex) if this TX is a coinbase TX.
+    /// Bitcoin Core provides `vin[0].coinbase` as hex string for coinbase transactions.
+    pub fn extract_coinbase_bytes(&self) -> Option<Vec<u8>> {
+        let vin0 = self.vin.get(0)?;
+        let hex = vin0.coinbase.as_ref()?;
+        hex_decode(hex).ok()
+    }
+
+    /// Returns coinbase scriptSig hex string, if present.
+    #[allow(dead_code)]
+    pub fn extract_coinbase_hex(&self) -> Option<&str> {
+        self.vin.get(0)?.coinbase.as_deref()
+    }
+
+    /// Extracts printable ASCII runs from the coinbase scriptSig bytes.
+    /// This is useful for miner/pool attribution when payout address lookup fails.
+    pub fn extract_coinbase_ascii_runs(&self, min_len: usize) -> Vec<String> {
+        let Some(bytes) = self.extract_coinbase_bytes() else {
+            return Vec::new();
+        };
+        extract_ascii_runs(&bytes, min_len)
+    }
+
 }
 
 /// Output data from verbose block transaction.

@@ -15,6 +15,7 @@ use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
 
 use crate::models::errors::MyError;
+use crate::models::block_info::Transaction;
 use crate::config::RpcConfig;
 use crate::rpc::client::build_rpc_client;
 
@@ -27,7 +28,7 @@ use crate::models::block_info::{
     BlockInfoFullJsonWrap,
 };
 
-use crate::utils::BLOCK_HISTORY;
+use crate::utils::{BLOCK_HISTORY, squash_alnum_lower};
 use crate::consensus::satoshi_math::*;
 
 /// Fetch block information at a specific height using `getblock` with verbose=1.
@@ -256,8 +257,20 @@ pub async fn fetch_miner(
     let coinbase_tx_addresses = coinbase_tx.extract_wallet_addresses();
 
     // Attempt miner lookup
-    let miner = find_miner_by_wallet(coinbase_tx_addresses, miners_data).await
-        .unwrap_or("Unknown".to_string());
+    let miner = match find_miner_by_wallet(coinbase_tx_addresses, miners_data).await {
+        Some(m) => m,
+        None => {
+            // Fallback: classify from coinbase tag
+            if let Some((primary, secondary)) = classify_miner_from_coinbase(coinbase_tx) {
+                match secondary {
+                    Some(pool) => format!("{primary} (via {pool})"),
+                    None => primary,
+                }
+            } else {
+                "Unknown".to_string()
+            }
+        }
+    };
 
     // Append into rolling history
     let block_history = BLOCK_HISTORY.write().await;
@@ -284,3 +297,104 @@ async fn find_miner_by_wallet(addresses: Vec<String>, miners_data: &MinersData) 
     }
     None
 }
+
+fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<String>)> {
+    let runs = tx.extract_coinbase_ascii_runs(4);
+    if runs.is_empty() {
+        return None;
+    }
+
+    let mut pool: Option<String> = None;
+    let mut best_miner: Option<String> = None;
+
+    // First pass: detect known strong signatures anywhere.
+    for r in &runs {
+        let sig = squash_alnum_lower(r);
+
+        if sig.contains("nicehash") {
+            return Some(("NiceHash".to_string(), None));
+        }
+        if sig.contains("antpool") {
+            return Some(("AntPool".to_string(), None));
+        }
+        if sig.contains("foundry") {
+            return Some(("Foundry USA".to_string(), None));
+        }
+        if sig.contains("f2pool") {
+            return Some(("F2Pool".to_string(), None));
+        }
+        if sig.contains("viabtc") {
+            return Some(("ViaBTC".to_string(), None));
+        }
+        if sig.contains("luxor") {
+            return Some(("Luxor".to_string(), None));
+        }
+        if sig.contains("braiins") || sig.contains("slush") {
+            return Some(("Braiins".to_string(), None));
+        }
+        if sig.contains("btccom") {
+            return Some(("BTC.com".to_string(), None));
+        }
+        if sig.contains("poolin") {
+            return Some(("Poolin".to_string(), None));
+        }
+        if sig.contains("binance") {
+            return Some(("Binance Pool".to_string(), None));
+        }
+
+        // Ocean is special: could contain sub-miner tags.
+        if sig.contains("oceanxyz") || sig == "ocean" {
+            pool = Some("OCEAN".to_string());
+        }
+    }
+
+    // Second pass: if Ocean present, pick best human-ish token as sub-miner.
+    if pool.is_some() {
+        for r in &runs {
+            let sig = squash_alnum_lower(r);
+
+            // Skip obvious pool token itself.
+            if sig.contains("oceanxyz") || sig == "ocean" {
+                continue;
+            }
+
+            // Skip common junk patterns
+            if sig.starts_with("mm") || sig.len() < 4 {
+                continue;
+            }
+
+            // Avoid long hex/address-like blobs
+            let looks_like_hex = sig.len() >= 32 && sig.chars().all(|c| c.is_ascii_hexdigit());
+            if looks_like_hex {
+                continue;
+            }
+
+            // Must contain at least one letter
+            if !r.chars().any(|c| c.is_ascii_alphabetic()) {
+                continue;
+            }
+
+            // Reasonable display length
+            let trimmed = r.trim();
+            if trimmed.len() > 32 {
+                continue;
+            }
+
+            best_miner = Some(trimmed.to_string());
+        }
+
+        // If we got a sub-miner, return it + pool
+        if let Some(m) = best_miner {
+            return Some((m, pool));
+        }
+
+        // Otherwise just Ocean
+        return Some(("OCEAN".to_string(), None));
+    }
+
+    // No Ocean and no strong signature: best effort return first decent run
+    runs.into_iter()
+        .find(|r| r.chars().any(|c| c.is_ascii_alphabetic()))
+        .map(|r| (r, None))
+}
+
