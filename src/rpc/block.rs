@@ -330,7 +330,7 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
             return Some(("Luxor".to_string(), None));
         }
         if sig.contains("braiins") || sig.contains("slush") {
-            return Some(("Braiins".to_string(), None));
+            return Some(("Braiins Pool".to_string(), None));
         }
         if sig.contains("btccom") {
             return Some(("BTC.com".to_string(), None));
