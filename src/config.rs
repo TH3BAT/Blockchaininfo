@@ -22,7 +22,7 @@
 use std::fs;
 use std::env;
 use std::path::Path;
-
+use std::io::{self, IsTerminal};
 use crate::models::errors::MyError;
 use crate::utils::get_rpc_password_from_keychain;
 
@@ -122,14 +122,7 @@ pub fn load_config() -> Result<RpcConfig, MyError> {
         });
 
         // RPC password (ENV → Keychain → prompt)
-        let password = env::var("RPC_PASSWORD")
-            .or_else(|_| RpcConfig::get_rpc_password_from_keychain())
-            .unwrap_or_else(|_| {
-                print!("Enter RPC Password: ");
-                let mut input = String::new();
-                std::io::stdin().read_line(&mut input).unwrap();
-                input.trim().to_string()
-            });
+        let password = resolve_rpc_password()?;
 
         // RPC address
         let address = env::var("RPC_ADDRESS").unwrap_or_else(|_| {
@@ -157,4 +150,47 @@ pub fn load_config() -> Result<RpcConfig, MyError> {
     };
 
     Ok(config)
+}
+
+fn resolve_rpc_password() -> Result<String, MyError> {
+    // 1) ENV
+    if let Ok(p) = std::env::var("RPC_PASSWORD") {
+        let p = p.trim().to_string();
+        if p.is_empty() {
+            return Err(MyError::Config("RPC_PASSWORD is empty".into()));
+        }
+        return Ok(p);
+    }
+
+    // 2) Keychain / pass (macOS/Linux)
+    match RpcConfig::get_rpc_password_from_keychain() {
+        Ok(p) => {
+            let p = p.trim().to_string();
+            if p.is_empty() {
+                Err(MyError::Keychain("Password retrieved but empty".into()))
+            } else {
+                Ok(p)
+            }
+        }
+        Err(e) => {
+            // 3) Optional interactive fallback only when stdin is a real terminal
+            if io::stdin().is_terminal() {
+                eprintln!("RPC password lookup failed: {e}");
+                eprint!("Enter RPC Password: ");
+                let mut input = String::new();
+                std::io::stdin()
+                    .read_line(&mut input)
+                    .map_err(|_| MyError::Config("Failed reading RPC password from stdin".into()))?;
+                let p = input.trim().to_string();
+                if p.is_empty() {
+                    Err(MyError::Config("RPC password cannot be empty".into()))
+                } else {
+                    Ok(p)
+                }
+            } else {
+                // Non-interactive (TUI/service): fail fast instead of hanging
+                Err(e)
+            }
+        }
+    }
 }
