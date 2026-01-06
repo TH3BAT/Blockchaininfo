@@ -349,7 +349,8 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
         if sig.contains("binance") {
             return Some(("Binance Pool".to_string(), None));
         }
-
+        // Pools that embed solo miner identifiers in coinbase tags.
+        // Currently handled explicitly to avoid false positives.
         // Ocean is special: could contain sub-miner tags.
         if sig.contains("oceanxyz") || sig == "ocean" {
             pool = Some("OCEAN".to_string());
