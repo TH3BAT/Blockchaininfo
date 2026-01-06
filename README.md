@@ -150,13 +150,6 @@ Secure password retrieval:
 security add-generic-password -a bitcoin -s rpc-password -w "your_password"
 ```
 
-Boom indeed. 💥
-Let’s extend the README cleanly and symmetrically, without overexplaining.
-
-Here’s a **drop-in Linux section** that matches the tone and minimalism of your macOS one.
-
----
-
 ### **5. Linux Password Store (`pass`) Support**
 
 Secure password retrieval using the standard Linux password manager.
