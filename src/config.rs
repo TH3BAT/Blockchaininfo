@@ -177,11 +177,13 @@ fn resolve_rpc_password() -> Result<String, MyError> {
             if io::stdin().is_terminal() {
                 eprintln!("RPC password lookup failed: {e}");
                 eprint!("Enter RPC Password: ");
-                let mut input = String::new();
-                std::io::stdin()
-                    .read_line(&mut input)
-                    .map_err(|_| MyError::Config("Failed reading RPC password from stdin".into()))?;
-                let p = input.trim().to_string();
+                let p = rpassword::read_password()
+                    .map_err(|_| MyError::Config("Failed to read RPC password".into()))?;
+
+                let p = p.trim().to_string();
+                if p.is_empty() {
+                    return Err(MyError::Config("RPC password cannot be empty".into()));
+                }
                 if p.is_empty() {
                     Err(MyError::Config("RPC password cannot be empty".into()))
                 } else {
