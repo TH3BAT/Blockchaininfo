@@ -306,18 +306,76 @@ async fn find_miner_by_wallet(addresses: Vec<String>, miners_data: &MinersData) 
     None
 }
 
+/// Classify a miner name from the coinbase transaction tag.
+///
+/// This inspects the **coinbase scriptSig hex** (txin[0].coinbase) and extracts
+/// printable ASCII “runs” (e.g., `/Foundry USA Pool/`, `Mined by AntPool`,
+/// `< OCEAN.XYZ > NiceHash`, etc.). It then applies lightweight heuristics to
+/// derive a human-readable miner label.
+///
+/// ## Return value
+/// Returns `Some((primary, secondary))` where:
+/// - `primary`: the best miner label to display (often the pool name)
+/// - `secondary`: optional pool / coordinator context when the tag contains both
+///   a pool and an upstream hash provider / sub-miner (e.g., `NiceHash (via OCEAN)`).
+///
+/// Returns `None` if the transaction has no usable coinbase tag.
+///
+/// ## Design notes
+/// - This is a **best-effort fallback**. The primary miner identification signal
+///   remains the coinbase payout address lookup (`miners.json`).
+/// - Coinbase tags are not standardized and may include arbitrary bytes, emojis,
+///   padding, or non-printable delimiters. We intentionally search for printable
+///   ASCII sequences and ignore the rest.
+/// - Some pools embed additional identifiers (e.g., OCEAN sub-miner labels).
+///   For these, we try to extract a short “human-ish” token as `primary` and
+///   return the pool name as `secondary`.
+///
+/// ## Heuristics (high-level)
+/// - Extract printable ASCII runs (min length configurable, typically 4).
+/// - Detect strong signatures for common pools (Foundry, AntPool, etc.).
+/// - Special-case pools that embed upstream/miner identifiers (e.g., OCEAN).
+/// - Filter out junk runs: very short tokens, `mm...` padding, long hex blobs,
+///   and strings without letters.
+/// - Prefer short, readable labels (<= 32 chars) to avoid UI truncation.
+///
+/// ## Caveats
+/// - A coinbase tag can lie. This is informational only.
+/// - Some tags include “Mined by …” prefixes; callers may want to normalize or
+///   prefer wallet-based identification when available.
+/// - This function performs **no** consensus-critical parsing—display use only.
+/// - This is intentionally extensible: add new signature rules conservatively to
+///   avoid false positives.
+
 fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<String>)> {
     let runs = tx.extract_coinbase_ascii_runs(4);
     if runs.is_empty() {
         return None;
     }
 
+    // Pre-scan: is Ocean present anywhere?
+    let ocean_present = runs.iter().any(|r| {
+        let sig = squash_alnum_lower(r);
+        sig.contains("oceanxyz") || sig == "ocean"
+    });
+
     let mut pool: Option<String> = None;
     let mut best_miner: Option<String> = None;
 
-    // First pass: detect known strong signatures anywhere.
+    // First pass: strong signatures (but don't short-circuit if Ocean is present)
     for r in &runs {
         let sig = squash_alnum_lower(r);
+
+        if sig.contains("oceanxyz") || sig == "ocean" {
+            pool = Some("OCEAN".to_string());
+            continue;
+        }
+
+        // If Ocean is present, we want these tokens to be candidates for sub-miner,
+        // not an immediate "primary miner" return.
+        if ocean_present {
+            continue;
+        }
 
         if sig.contains("nicehash") {
             return Some(("NiceHash".to_string(), None));
@@ -349,12 +407,6 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
         if sig.contains("binance") {
             return Some(("Binance Pool".to_string(), None));
         }
-        // Pools that embed solo miner identifiers in coinbase tags.
-        // Currently handled explicitly to avoid false positives.
-        // Ocean is special: could contain sub-miner tags.
-        if sig.contains("oceanxyz") || sig == "ocean" {
-            pool = Some("OCEAN".to_string());
-        }
     }
 
     // Second pass: if Ocean present, pick best human-ish token as sub-miner.
@@ -362,46 +414,40 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
         for r in &runs {
             let sig = squash_alnum_lower(r);
 
-            // Skip obvious pool token itself.
             if sig.contains("oceanxyz") || sig == "ocean" {
                 continue;
             }
 
-            // Skip common junk patterns
             if sig.starts_with("mm") || sig.len() < 4 {
                 continue;
             }
 
-            // Avoid long hex/address-like blobs
-            let looks_like_hex = sig.len() >= 32 && sig.chars().all(|c| c.is_ascii_hexdigit());
+            let looks_like_hex =
+                sig.len() >= 32 && sig.chars().all(|c| c.is_ascii_hexdigit());
             if looks_like_hex {
                 continue;
             }
 
-            // Must contain at least one letter
             if !r.chars().any(|c| c.is_ascii_alphabetic()) {
                 continue;
             }
 
-            // Reasonable display length
             let trimmed = r.trim();
             if trimmed.len() > 32 {
                 continue;
             }
 
             best_miner = Some(trimmed.to_string());
+            break; // <- pick first good candidate (avoid last-run wins)
         }
 
-        // If we got a sub-miner, return it + pool
         if let Some(m) = best_miner {
             return Some((m, pool));
         }
 
-        // Otherwise just Ocean
         return Some(("OCEAN".to_string(), None));
     }
 
-    // No Ocean and no strong signature: best effort return first decent run
     runs.into_iter()
         .find(|r| r.chars().any(|c| c.is_ascii_alphabetic()))
         .map(|r| (r, None))
