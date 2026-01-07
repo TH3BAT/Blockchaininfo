@@ -413,6 +413,30 @@ pub fn create_progress_bar(percent: u64, width: u16) -> String {
     format!("[{}{}]", "=".repeat(filled), " ".repeat(empty))
 }
 
+/// Decode a hexadecimal string into raw bytes.
+///
+/// Accepts a string containing ASCII hex characters (`0-9`, `a-f`, `A-F`)
+/// and converts it into a `Vec<u8>`.
+///
+/// ## Behavior
+/// - Leading and trailing whitespace is trimmed.
+/// - The input length must be even (two hex characters per byte).
+/// - Both uppercase and lowercase hex characters are accepted.
+/// - Allocation is pre-sized for efficiency.
+///
+/// ## Errors
+/// Returns `Err(())` if:
+/// - The input length is odd.
+/// - Any non-hex character is encountered.
+///
+/// ## Use cases
+/// This is intentionally minimal and allocation-safe, suitable for:
+/// - decoding coinbase hex data
+/// - parsing script or tag payloads
+/// - fast validation without external dependencies
+///
+/// This function performs no UTF-8 or semantic validation beyond
+/// hexadecimal decoding.
 pub fn hex_decode(s: &str) -> Result<Vec<u8>, ()> {
     let s = s.trim();
     if s.len() % 2 != 0 {
