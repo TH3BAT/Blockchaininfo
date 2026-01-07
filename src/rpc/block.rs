@@ -261,20 +261,24 @@ pub async fn fetch_miner(
 
     let miner = if let Some((primary, secondary)) = classify_miner_from_coinbase(coinbase_tx) {
         match (&wallet_miner, &secondary) {
-            // Address says pool, coinbase reveals solo miner → override
             (Some(pool), Some(cb_pool)) if pool == cb_pool => {
                 format!("{primary} (via {cb_pool})")
             }
 
-            // Address unknown → coinbase fallback
+           (Some(pool), None)
+                if *pool != primary && primary.chars().any(|c| c.is_ascii_alphabetic()) =>
+            {
+                format!("{primary} (via {pool})")
+            }
+
             (None, _) => match secondary {
                 Some(pool) => format!("{primary} (via {pool})"),
                 None => primary,
             },
 
-            // Otherwise trust address
             _ => wallet_miner.unwrap_or(primary),
         }
+
     } else {
         wallet_miner.unwrap_or("Unknown".to_string())
     };
