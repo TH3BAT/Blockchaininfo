@@ -459,6 +459,14 @@ fn clean_coinbase_label(s: &str) -> String {
     filtered.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
+/// Sanitize an optional secondary miner tag.
+///
+/// Applies the same normalization rules as primary coinbase labels and
+/// discards empty or placeholder values (e.g. `"0"`), which are commonly
+/// observed in coinbase data.
+///
+/// Returns `None` when the secondary tag does not provide meaningful
+/// attribution signal.
 fn clean_secondary(opt: Option<String>) -> Option<String> {
     opt.and_then(|s| {
         let s = clean_coinbase_label(&s);
@@ -466,12 +474,27 @@ fn clean_secondary(opt: Option<String>) -> Option<String> {
     })
 }
 
+
+/// Match a normalized coinbase signature against known miner tag patterns.
+///
+/// Returns the canonical miner label for the first matching entry in the
+/// tag table. Table order defines precedence when multiple patterns match.
+///
+/// This function performs no allocation and does not short-circuit on
+/// partial matches beyond substring containment.
 fn match_table(sig: &str) -> Option<&'static str> {
     PRIMARY_TAGS.iter().find_map(|e| {
         if e.pats.iter().any(|p| sig.contains(p)) { Some(e.label) } else { None }
     })
 }
 
+
+/// Determine whether a normalized coinbase signature indicates OCEAN.
+///
+/// OCEAN is treated as a special-case pool that may expose upstream
+/// hashrate sources via additional coinbase tags. Detection is kept
+/// centralized to avoid duplicated string checks.
 fn is_ocean(sig: &str) -> bool {
     OCEAN_PATS.iter().any(|p| sig.contains(p))
 }
+

@@ -62,4 +62,12 @@ pub mod transaction_info;
 /// and applies temporary highlight styles.
 pub mod flashing_text;
 
+/// Table-driven classification of miner identities from coinbase tags.
+///
+/// Known pool and miner identifiers are matched against normalized
+/// coinbase data as a fallback when wallet attribution is unavailable
+/// or when pools expose upstream hashrate sources (e.g. OCEAN).
+///
+/// This module centralizes tag patterns to reduce conditional logic
+/// and keep coinbase-based attribution explicit and maintainable.
 pub mod miner_tags;

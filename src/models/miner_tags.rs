@@ -1,3 +1,24 @@
+/// Coinbase miner tag classification and normalization.
+///
+/// This module provides a table-driven mapping of known miner and pool
+/// identifiers extracted from coinbase transaction data. Coinbase tags
+/// are treated as a *best-effort signal* and are only used when canonical
+/// wallet-based miner attribution is unavailable or when pools (such as
+/// OCEAN) intentionally expose upstream hashrate sources.
+///
+/// Design principles:
+/// - Prefer wallet address attribution as the primary source of truth.
+/// - Use coinbase tags only as a fallback or refinement signal.
+/// - Normalize inputs by collapsing to lowercase alphanumeric form
+///   to handle inconsistent casing, spacing, and branding noise.
+/// - Centralize known tag patterns to simplify maintenance and future
+///   additions without expanding conditional logic.
+///
+/// This module intentionally avoids over-interpreting arbitrary or
+/// promotional coinbase data. Unrecognized tags are allowed to pass
+/// through higher-level heuristics or be displayed in truncated form,
+/// preserving raw signal while preventing UI disruption.
+
 #[derive(Clone, Copy)]
 pub struct TagMapEntry {
     // any of these substrings match
