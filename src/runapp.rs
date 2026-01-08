@@ -263,7 +263,7 @@ pub async fn run_app<B: Backend>(
                     blockchain_info.blocks
                 };
 
-                // --- Step 3: Fetch block data for *latest* block ---
+                // --- Step 3: Fetch block data for *first* block of diff. epoch ---
                 match fetch_block_data_by_height(&config_clone, block_height, 1).await {
                     Ok(new_data) => {
                         let mut cache = BLOCK_INFO_CACHE.write().await;
@@ -288,8 +288,12 @@ pub async fn run_app<B: Backend>(
                 match fetch_block_data_by_height(&config_clone, block_height, 2).await {
                     Ok(block24_data) => {
                         let mut cache = BLOCK24_INFO_CACHE.write().await;
-                        cache.clear();
-                        cache.push(block24_data);
+
+                        let same24 = cache.first().is_some_and(|prev| prev.hash == block24_data.hash);
+                        if !same24 {
+                            cache.clear();
+                            cache.push(block24_data);
+                        }
                     }
                     Err(e) => {
                         let _ = log_error(&format!(
