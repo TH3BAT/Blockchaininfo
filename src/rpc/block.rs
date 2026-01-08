@@ -384,7 +384,7 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
         let sig = squash_alnum_lower(r);
 
         // OCEAN detection
-        if sig.contains("oceanxyz") || sig == "ocean" {
+        if is_ocean(&sig) {
             pool = Some("OCEAN".to_string());
             continue;
         }
