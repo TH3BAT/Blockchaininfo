@@ -256,33 +256,41 @@ pub async fn fetch_miner(
     let coinbase_tx = &block.tx[0];
     let coinbase_tx_addresses = coinbase_tx.extract_wallet_addresses();
 
-    // Attempt miner lookup
+    // Attempt miner lookup (wallet-based)
     let wallet_miner = find_miner_by_wallet(coinbase_tx_addresses, miners_data).await;
 
-    let miner = if let Some((primary, secondary)) = classify_miner_from_coinbase(coinbase_tx) {
-        match (&wallet_miner, &secondary) {
-            (Some(pool), Some(cb_pool)) if pool == cb_pool => {
-                format!("{primary} (via {cb_pool})")
-            }
+    let need_coinbase = wallet_miner.is_none()
+        || matches!(wallet_miner.as_deref(), Some("OCEAN"));
 
-           (Some(pool), None)
-                if *pool != primary && primary.chars().any(|c| c.is_ascii_alphabetic()) =>
-            {
-                format!("{primary} (via {pool})")
-            }
+    let miner: String = if !need_coinbase {
+        // Normal path: trust wallet
+        wallet_miner.clone().unwrap_or_else(|| "Unknown".to_string())
+    } else if let Some((primary_raw, secondary_raw)) = classify_miner_from_coinbase(coinbase_tx) {
+        let primary = clean_coinbase_label(&primary_raw);
+        let secondary = clean_secondary(secondary_raw);
 
-            (None, _) => match secondary {
+        // B) Wallet says OCEAN → coinbase can reveal upstream identity
+        if matches!(wallet_miner.as_deref(), Some("OCEAN")) {
+            // If coinbase primary is more specific than OCEAN, show it (optionally "via OCEAN")
+            if !primary.is_empty() && primary != "OCEAN" {
+                format!("{primary} (via OCEAN)")
+                // or just: primary
+            } else {
+                "OCEAN".to_string()
+            }
+        } else {
+            // A) Wallet unknown → coinbase fallback (with optional "via <pool>")
+            match secondary {
                 Some(pool) => format!("{primary} (via {pool})"),
-                None => primary,
-            },
-
-            _ => wallet_miner.unwrap_or(primary),
+                None => {
+                    if primary.is_empty() { "Unknown".to_string() } else { primary }
+                }
+            }
         }
-
     } else {
-        wallet_miner.unwrap_or("Unknown".to_string())
+        // coinbase parse failed → fallback to wallet or Unknown
+        wallet_miner.clone().unwrap_or_else(|| "Unknown".to_string())
     };
-
 
     // Append into rolling history
     let block_history = BLOCK_HISTORY.write().await;
@@ -356,7 +364,7 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
     if runs.is_empty() {
         return None;
     }
-
+   
     // Pre-scan: is Ocean present anywhere?
     let ocean_present = runs.iter().any(|r| {
         let sig = squash_alnum_lower(r);
@@ -411,6 +419,12 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
         if sig.contains("binance") {
             return Some(("Binance Pool".to_string(), None));
         }
+        if sig.contains("secpool") {
+            return Some(("SECPOOL".to_string(), None));
+        }
+        if sig.contains("mara") {
+            return Some(("MARA Pool".to_string(), None));
+        }
     }
 
     // Second pass: if Ocean present, pick best human-ish token as sub-miner.
@@ -455,5 +469,21 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
     runs.into_iter()
         .find(|r| r.chars().any(|c| c.is_ascii_alphabetic()))
         .map(|r| (r, None))
+}
+
+fn clean_coinbase_label(s: &str) -> String {
+    let filtered: String = s
+        .chars()
+        .filter(|c| c.is_ascii() && !c.is_ascii_control())
+        .collect();
+
+    filtered.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+fn clean_secondary(opt: Option<String>) -> Option<String> {
+    opt.and_then(|s| {
+        let s = clean_coinbase_label(&s);
+        if s.is_empty() || s == "0" { None } else { Some(s) }
+    })
 }
 

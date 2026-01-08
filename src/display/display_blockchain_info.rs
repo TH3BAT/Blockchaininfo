@@ -25,7 +25,7 @@ use crate::models::errors::MyError;
 use crate::models::flashing_text::{BEST_BLOCK_TEXT, MINER_TEXT};
 use crate::consensus::satoshi_math::*;
 use std::sync::Arc;
-
+use unicode_width::UnicodeWidthStr;
 
 /// Renders the Blockchain section of the dashboard.
 ///
@@ -386,13 +386,19 @@ pub fn draw_last20_miners<B: Backend>(
         let available = width as usize;
         let mut miner_out = miner_str.to_string();
 
-        let remaining = available.saturating_sub(height_str.len()).max(1);
-        if miner_out.len() > remaining {
+        let remaining = available
+            .saturating_sub(UnicodeWidthStr::width(height_str.as_str()))
+            .saturating_sub(spacer.len())
+            .max(1);
+
+        if UnicodeWidthStr::width(miner_out.as_str()) > remaining {
+            // leave room for ellipsis (1 column)
+            let target = remaining.saturating_sub(1);
+            while UnicodeWidthStr::width(miner_out.as_str()) > target && !miner_out.is_empty() {
+                miner_out.pop();
+            }
             if remaining >= 2 {
-                miner_out.truncate(remaining.saturating_sub(1));
                 miner_out.push('…');
-            } else {
-                miner_out.truncate(remaining);
             }
         }
 
@@ -424,12 +430,11 @@ pub fn draw_last20_miners<B: Backend>(
         .collect();
 
     let left_para = Paragraph::new(left_text)
-        .block(Block::default().borders(Borders::NONE))
-        .wrap(Wrap { trim: true });
+        .block(Block::default().borders(Borders::NONE));
 
     let right_para = Paragraph::new(right_text)
-        .block(Block::default().borders(Borders::NONE))
-        .wrap(Wrap { trim: true });
+        .block(Block::default().borders(Borders::NONE));
+
 
     frame.render_widget(left_para, cols[0]);
     frame.render_widget(right_para, cols[1]);
