@@ -425,9 +425,6 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
         if sig.contains("marapool") || sig.contains("maramadeinusa"){
             return Some(("MARA Pool".to_string(), None));
         }
-        if sig.contains("viabtc") {
-            return Some(("ViaBTC".to_string(), None));
-        }
           if sig.contains("spiderpool") {
             return Some(("SpiderPool".to_string(), None));
         }
@@ -449,12 +446,6 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
           if sig.contains("innopolis") {
             return Some(("Innopolis Tech".to_string(), None));
         }
-          if sig.contains("solockpoolorg") {
-            return Some(("Solo CK".to_string(), None));
-        }
-          if sig.contains("solopoolcom") {
-            return Some(("SoloPool".to_string(), None));
-        }
           if sig.contains("miningdutch") {
             return Some(("Mining-Dutch".to_string(), None));
         }
@@ -473,9 +464,6 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
           if sig.contains("publicpool") {
             return Some(("Public Pool".to_string(), None));
         }
-          if sig.contains("apollo") || sig.contains("minedbyasolofutureBitapollo") {
-            return Some(("FutureBit Apollo Solo".to_string(), None));
-        }
           if sig.contains("kano") {
             return Some(("KanoPool".to_string(), None));
         }
@@ -488,6 +476,17 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
           if sig.contains("neopool") {
             return Some(("Neopool".to_string(), None));
         }
+        // Solo / small pools
+        if sig.contains("solockpoolorg") {
+            return Some(("Solo CK".to_string(), None));
+        }
+        if sig.contains("solopoolcom") {
+            return Some(("SoloPool".to_string(), None));
+        }
+        if sig.contains("apollo") || sig.contains("minedbyasolofuturebitapollo") {
+            return Some(("FutureBit Apollo Solo".to_string(), None));
+        }
+
     }
 
     // Second pass: if Ocean present, pick best human-ish token as sub-miner.
