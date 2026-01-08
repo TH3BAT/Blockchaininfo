@@ -62,3 +62,4 @@ pub mod transaction_info;
 /// and applies temporary highlight styles.
 pub mod flashing_text;
 
+pub mod miner_tags;

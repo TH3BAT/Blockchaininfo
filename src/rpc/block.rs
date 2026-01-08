@@ -29,6 +29,7 @@ use crate::models::block_info::{
 };
 
 use crate::utils::{BLOCK_HISTORY, squash_alnum_lower};
+use crate::models::miner_tags::{PRIMARY_TAGS, OCEAN_PATS};
 use crate::consensus::satoshi_math::*;
 
 /// Fetch block information at a specific height using `getblock` with verbose=1.
@@ -364,137 +365,57 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
     if runs.is_empty() {
         return None;
     }
-   
+
     // Pre-scan: is Ocean present anywhere?
     let ocean_present = runs.iter().any(|r| {
         let sig = squash_alnum_lower(r);
-        sig.contains("oceanxyz") || sig == "ocean"
+        is_ocean(&sig)
     });
 
     let mut pool: Option<String> = None;
-    let mut best_miner: Option<String> = None;
 
-    // First pass: strong signatures (but don't short-circuit if Ocean is present)
+    // If Ocean is present, we may want to capture a "known upstream" tag (NiceHash, etc.)
+    // before falling back to the loose "best human-ish token" heuristic.
+    let mut ocean_upstream: Option<String> = None;
+
+    // Pass 1: detect OCEAN and (if not ocean_present) return strong canonical tags.
+    // If ocean_present, don't short-circuit primary; only collect upstream candidates.
     for r in &runs {
         let sig = squash_alnum_lower(r);
 
+        // OCEAN detection
         if sig.contains("oceanxyz") || sig == "ocean" {
             pool = Some("OCEAN".to_string());
             continue;
         }
 
-        // If Ocean is present, we want these tokens to be candidates for sub-miner,
-        // not an immediate "primary miner" return.
-        if ocean_present {
+        // Normal path: strong tags immediately return
+        if !ocean_present {
+            if let Some(label) = match_table(&sig) {
+                return Some((label.to_string(), None));
+            }
             continue;
         }
 
-        if sig.contains("nicehash") {
-            return Some(("NiceHash".to_string(), None));
+        // Ocean present: collect first known upstream tag as candidate (NiceHash, etc.)
+        if ocean_upstream.is_none() {
+            if let Some(label) = match_table(&sig) {
+                ocean_upstream = Some(label.to_string());
+            }
         }
-        if sig.contains("antpool") {
-            return Some(("AntPool".to_string(), None));
-        }
-        if sig.contains("foundryusapool") || sig.contains("2cdw") {
-            return Some(("Foundry USA".to_string(), None));
-        }
-        if sig.contains("f2pool") {
-            return Some(("F2Pool".to_string(), None));
-        }
-        if sig.contains("viabtc") {
-            return Some(("ViaBTC".to_string(), None));
-        }
-        if sig.contains("luxor") {
-            return Some(("Luxor".to_string(), None));
-        }
-        if sig.contains("braiins") || sig.contains("slush") {
-            return Some(("Braiins Pool".to_string(), None));
-        }
-        if sig.contains("btccom") {
-            return Some(("BTC.com".to_string(), None));
-        }
-        if sig.contains("poolin") {
-            return Some(("Poolin".to_string(), None));
-        }
-        if sig.contains("binance") {
-            return Some(("Binance Pool".to_string(), None));
-        }
-        if sig.contains("secpool") {
-            return Some(("SECPOOL".to_string(), None));
-        }
-        if sig.contains("marapool") || sig.contains("maramadeinusa"){
-            return Some(("MARA Pool".to_string(), None));
-        }
-          if sig.contains("spiderpool") {
-            return Some(("SpiderPool".to_string(), None));
-        }
-          if sig.contains("whitepool") {
-            return Some(("WhitePool".to_string(), None));
-        }
-          if sig.contains("sbicrypto") {
-            return Some(("SBI Crypto".to_string(), None));
-        }
-          if sig.contains("ultimus") {
-            return Some(("ULTIMUSPOOL".to_string(), None));
-        }
-          if sig.contains("gdpool") || sig.contains("luckypool") {
-            return Some(("GDPool".to_string(), None));
-        }
-          if sig.contains("redrock") {
-            return Some(("RedRock Pool".to_string(), None));
-        }
-          if sig.contains("innopolis") {
-            return Some(("Innopolis Tech".to_string(), None));
-        }
-          if sig.contains("miningdutch") {
-            return Some(("Mining-Dutch".to_string(), None));
-        }
-          if sig.contains("bitfufu") {
-            return Some(("BitFuFuPool".to_string(), None));
-        }
-          if sig.contains("est3lar") {
-            return Some(("Est3lar".to_string(), None));
-        }
-          if sig.contains("1thash") {
-            return Some(("1THash".to_string(), None));
-        }
-          if sig.contains("maxipool") {
-            return Some(("MaxiPool".to_string(), None));
-        }
-          if sig.contains("publicpool") {
-            return Some(("Public Pool".to_string(), None));
-        }
-          if sig.contains("kano") {
-            return Some(("KanoPool".to_string(), None));
-        }
-          if sig.contains("miningsquared") || sig.contains("bsquared") {
-            return Some(("Mining Squared".to_string(), None));
-        }
-          if sig.contains("phoenix") {
-            return Some(("Phoenix".to_string(), None));
-        }
-          if sig.contains("neopool") {
-            return Some(("Neopool".to_string(), None));
-        }
-        // Solo / small pools
-        if sig.contains("solockpoolorg") {
-            return Some(("Solo CK".to_string(), None));
-        }
-        if sig.contains("solopoolcom") {
-            return Some(("SoloPool".to_string(), None));
-        }
-        if sig.contains("apollo") || sig.contains("minedbyasolofuturebitapollo") {
-            return Some(("FutureBit Apollo Solo".to_string(), None));
-        }
-
     }
 
-    // Second pass: if Ocean present, pick best human-ish token as sub-miner.
+    // Pass 2: Ocean logic (your existing heuristic), but prefer known upstream if found
     if pool.is_some() {
+        if let Some(upstream) = ocean_upstream {
+            return Some((upstream, pool)); // -> "NiceHash (via OCEAN)" at caller
+        }
+
+        // Your existing "best human-ish token" heuristic
         for r in &runs {
             let sig = squash_alnum_lower(r);
 
-            if sig.contains("oceanxyz") || sig == "ocean" {
+            if is_ocean(&sig) {
                 continue;
             }
 
@@ -517,17 +438,13 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
                 continue;
             }
 
-            best_miner = Some(trimmed.to_string());
-            break; // <- pick first good candidate (avoid last-run wins)
-        }
-
-        if let Some(m) = best_miner {
-            return Some((m, pool));
+            return Some((trimmed.to_string(), pool));
         }
 
         return Some(("OCEAN".to_string(), None));
     }
 
+    // Final fallback: first alphabetic run
     runs.into_iter()
         .find(|r| r.chars().any(|c| c.is_ascii_alphabetic()))
         .map(|r| (r, None))
@@ -549,3 +466,12 @@ fn clean_secondary(opt: Option<String>) -> Option<String> {
     })
 }
 
+fn match_table(sig: &str) -> Option<&'static str> {
+    PRIMARY_TAGS.iter().find_map(|e| {
+        if e.pats.iter().any(|p| sig.contains(p)) { Some(e.label) } else { None }
+    })
+}
+
+fn is_ocean(sig: &str) -> bool {
+    OCEAN_PATS.iter().any(|p| sig.contains(p))
+}
