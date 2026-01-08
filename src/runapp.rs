@@ -266,34 +266,14 @@ pub async fn run_app<B: Backend>(
                 // --- Step 3: Fetch block data for *latest* block ---
                 match fetch_block_data_by_height(&config_clone, block_height, 1).await {
                     Ok(new_data) => {
-                        // Decide if we need to update without taking a write lock.
-                        let needs_update = {
-                            let cache = BLOCK_INFO_CACHE.read().await;
+                        let mut cache = BLOCK_INFO_CACHE.write().await;
 
-                            match cache.last() {
-                                Some(prev) => prev.hash != new_data.hash, // or prev.height != new_data.height
-                                None => true,
-                            }
-                        };
-
-                        if needs_update {
-                            let mut cache = BLOCK_INFO_CACHE.write().await;
-
-                            // Re-check under the write lock to avoid races (optional but correct).
-                            let still_needs_update = match cache.last() {
-                                Some(prev) => prev.hash != new_data.hash,
-                                None => true,
-                            };
-
-                            if still_needs_update {
-                                if cache.len() >= 1 {
-                                    cache.remove(0);
-                                }
-                                cache.push(new_data);
-                            }
+                        let same = cache.first().is_some_and(|prev| prev.hash == new_data.hash);
+                        if !same {
+                            cache.clear();
+                            cache.push(new_data);
                         }
                     }
-
                     Err(e) => {
                         let _ = log_error(&format!(
                             "Block Data by Height failed at height {}: {}",
@@ -307,30 +287,9 @@ pub async fn run_app<B: Backend>(
                 // --- Step 4: Fetch the block from ~24 hours ago ---
                 match fetch_block_data_by_height(&config_clone, block_height, 2).await {
                     Ok(block24_data) => {
-                        let needs_update = {
-                            let cache = BLOCK24_INFO_CACHE.read().await;
-                            match cache.last() {
-                                Some(prev) => prev.hash != block24_data.hash, // or height
-                                None => true,
-                            }
-                        };
-
-                        if needs_update {
-                            let mut cache = BLOCK24_INFO_CACHE.write().await;
-
-                            // Optional re-check under write lock
-                            let still_needs_update = match cache.last() {
-                                Some(prev) => prev.hash != block24_data.hash,
-                                None => true,
-                            };
-
-                            if still_needs_update {
-                                if cache.len() >= 1 {
-                                    cache.remove(0);
-                                }
-                                cache.push(block24_data);
-                            }
-                        }
+                        let mut cache = BLOCK24_INFO_CACHE.write().await;
+                        cache.clear();
+                        cache.push(block24_data);
                     }
                     Err(e) => {
                         let _ = log_error(&format!(
