@@ -450,6 +450,16 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
         .map(|r| (r, None))
 }
 
+/// Normalize a raw coinbase label into a safe, displayable form.
+///
+/// This function removes non-ASCII and control characters from miner-provided
+/// coinbase data, then collapses all whitespace into single spaces. The goal is
+/// not to reinterpret or rebrand miner identity, but to prevent malformed,
+/// decorative, or non-printable data from affecting UI rendering.
+///
+/// The returned string preserves human-readable intent while eliminating
+/// zero-width characters, emojis, and other artifacts commonly found in
+/// coinbase tags.
 fn clean_coinbase_label(s: &str) -> String {
     let filtered: String = s
         .chars()
