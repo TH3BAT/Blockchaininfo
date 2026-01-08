@@ -7,6 +7,54 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
+## **v1.2.2 — 2026-01-08**
+
+### **Miner Attribution & Network Insight**
+
+* Restored **wallet-first miner attribution** as the primary source of truth.
+* Added **table-driven coinbase tag classification** as a sanitized fallback when wallet attribution is unavailable.
+* Improved miner specificity when pools (e.g. OCEAN) expose upstream hashpower sources, enabling displays such as:
+
+  * `NiceHash`
+  * `NiceHash (via OCEAN)`
+* Hardened coinbase tag sanitization to safely handle malformed or non-ASCII data.
+
+### **RPC Security & Reliability**
+
+* Added **Linux password store support** for secure RPC credential retrieval.
+* Exit cleanly when RPC password retrieval fails (prevents startup hangs).
+* Hide RPC password input during terminal prompts.
+
+### **Performance & Correctness**
+
+* Reduced cache write-lock contention via read-first comparisons.
+* Restored **single-slot cache invariants** for difficulty reference blocks, fixing missing difficulty direction indicators.
+* Tightened internal block constants and clarified TXID conversion paths.
+
+### **UI & Usability**
+
+* Centralized accent color definitions.
+* Improved informational text contrast for better terminal readability.
+* Graceful truncation of long labels using Unicode-aware width calculations.
+
+### **Documentation & Maintenance**
+
+* Added documentation for:
+
+  * Coinbase tag sanitization and classification helpers
+  * Linux RPC password support
+  * `hex_decode()` utility
+* Expanded internal documentation in preparation for future releases.
+
+---
+
+### **Notes**
+
+This release focuses on correctness, clarity, and long-term maintainability.
+No user action is required.
+
+---
+
 ## v1.2.0 — Miner history panel & consensus hygiene (2026-01-03)
 
 Added
