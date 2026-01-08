@@ -395,7 +395,7 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
         if sig.contains("antpool") {
             return Some(("AntPool".to_string(), None));
         }
-        if sig.contains("foundry") {
+        if sig.contains("foundryusapool") || sig.contains("2cdw") {
             return Some(("Foundry USA".to_string(), None));
         }
         if sig.contains("f2pool") {
@@ -422,8 +422,71 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
         if sig.contains("secpool") {
             return Some(("SECPOOL".to_string(), None));
         }
-        if sig.contains("mara") {
+        if sig.contains("marapool") || sig.contains("maramadeinusa"){
             return Some(("MARA Pool".to_string(), None));
+        }
+        if sig.contains("viabtc") {
+            return Some(("ViaBTC".to_string(), None));
+        }
+          if sig.contains("spiderpool") {
+            return Some(("SpiderPool".to_string(), None));
+        }
+          if sig.contains("whitepool") {
+            return Some(("WhitePool".to_string(), None));
+        }
+          if sig.contains("sbicrypto") {
+            return Some(("SBI Crypto".to_string(), None));
+        }
+          if sig.contains("ultimus") {
+            return Some(("ULTIMUSPOOL".to_string(), None));
+        }
+          if sig.contains("gdpool") || sig.contains("luckypool") {
+            return Some(("GDPool".to_string(), None));
+        }
+          if sig.contains("redrock") {
+            return Some(("RedRock Pool".to_string(), None));
+        }
+          if sig.contains("innopolis") {
+            return Some(("Innopolis Tech".to_string(), None));
+        }
+          if sig.contains("solockpoolorg") {
+            return Some(("Solo CK".to_string(), None));
+        }
+          if sig.contains("solopoolcom") {
+            return Some(("SoloPool".to_string(), None));
+        }
+          if sig.contains("miningdutch") {
+            return Some(("Mining-Dutch".to_string(), None));
+        }
+          if sig.contains("bitfufu") {
+            return Some(("BitFuFuPool".to_string(), None));
+        }
+          if sig.contains("est3lar") {
+            return Some(("Est3lar".to_string(), None));
+        }
+          if sig.contains("1thash") {
+            return Some(("1THash".to_string(), None));
+        }
+          if sig.contains("maxipool") {
+            return Some(("MaxiPool".to_string(), None));
+        }
+          if sig.contains("publicpool") {
+            return Some(("Public Pool".to_string(), None));
+        }
+          if sig.contains("apollo") || sig.contains("minedbyasolofutureBitapollo") {
+            return Some(("FutureBit Apollo Solo".to_string(), None));
+        }
+          if sig.contains("kano") {
+            return Some(("KanoPool".to_string(), None));
+        }
+          if sig.contains("miningsquared") || sig.contains("bsquared") {
+            return Some(("Mining Squared".to_string(), None));
+        }
+          if sig.contains("phoenix") {
+            return Some(("Phoenix".to_string(), None));
+        }
+          if sig.contains("neopool") {
+            return Some(("Neopool".to_string(), None));
         }
     }
 
