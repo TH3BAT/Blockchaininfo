@@ -61,6 +61,7 @@ pub static PRIMARY_TAGS: &[TagMapEntry] = &[
     TagMapEntry { pats: &["miningsquared", "bsquared"], label: "Mining Squared" },
     TagMapEntry { pats: &["phoenix"], label: "Phoenix" },
     TagMapEntry { pats: &["neopool"], label: "Neopool" },
+    TagMapEntry { pats: &["upgradeya"], label: "UpgradeYa 21M" },
 ];
 
 // Ocean identifiers (pool detection)

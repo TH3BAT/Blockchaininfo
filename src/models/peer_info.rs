@@ -43,6 +43,7 @@ pub struct PeerInfoJsonWrap {
 pub struct NetworkState {
     pub last_propagation_index: Option<usize>,
     pub last_block_seen: u64,
+    pub last_block_seen_at: Option<std::time::Instant>,
 }
 
 //
@@ -253,50 +254,56 @@ impl PeerInfo {
     /// - Knots   → Knots  
     /// - Ronin   → Ronin  
     /// - Anything else → Other  
-    pub fn extract_client(subver: &str) -> String {
+    pub fn extract_client(subver: &str, version: i32) -> Option<String> {
         fn normalize(name: &str) -> String {
             match name.to_lowercase().as_str() {
                 "satoshi" => "Core".to_string(),
-                "knots" => "Knots".to_string(),
-                "ronin" => "Ronin".to_string(),
+                "knots"   => "Knots".to_string(),
+                "ronin"   => "Ronin".to_string(),
                 _ => "Other".to_string(),
             }
         }
 
-        // remove outer slashes
+        // Remove outer slashes
         let trimmed = subver.trim_matches('/');
 
-        // extract segments
+         // Bitcoin P2P protocol only
+        if version < 70016 {
+            return None;
+        }
+
+        // Split segments: e.g. ["70016", "Satoshi:25.0.0"]
         let segments: Vec<&str> = trimmed.split('/').collect();
 
-        // scan right → left for a "name:version" segment
+        // Find a "name:version" segment (scan right → left, skipping proto)
         for seg in segments.iter().rev() {
-            if seg.contains(':') {
-                let raw = seg.split(':').next().unwrap_or("").trim();
-                return normalize(raw);
+            if let Some((raw, _ver)) = seg.split_once(':') {
+                return Some(normalize(raw.trim()));
             }
         }
 
-        "Other".to_string()
+        // It's a 70016 peer, but we couldn't parse a client name
+        Some("Other".to_string())
     }
+
 
     /// Aggregates client counts and sorts by:
     /// 1. count descending
     /// 2. name ascending
     pub fn aggregate_and_sort_clients(peer_info: &[PeerInfo]) -> Vec<(String, usize)> {
-        let mut counts = HashMap::new();
+        let mut counts: HashMap<String, usize> = HashMap::new();
 
         for p in peer_info {
-            let c = Self::extract_client(&p.subver);
-            *counts.entry(c).or_insert(0) += 1;
+            if let Some(c) = Self::extract_client(&p.subver, p.version) {
+                *counts.entry(c).or_insert(0) += 1;
+            }
         }
 
         let mut list: Vec<(String, usize)> = counts.into_iter().collect();
-
         list.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
-
         list
     }
+
     //
     // ────────────────────────────────────────────────────────────────────────────────
     //   BLOCK PROPAGATION ANALYTICS

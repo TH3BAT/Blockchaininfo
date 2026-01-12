@@ -207,6 +207,7 @@ pub async fn run_app<B: Backend>(
     let mut network_state = NetworkState {
         last_propagation_index: None,
         last_block_seen: 0,
+        last_block_seen_at: None,
     };
 
 
@@ -657,6 +658,7 @@ loop {
         propagation_times.push_back(avg_block_propagate_time);
         network_state.last_propagation_index = Some(propagation_times.len() - 1);
         network_state.last_block_seen = blockchain_info.blocks;
+        network_state.last_block_seen_at = Some(std::time::Instant::now());
 
         LAST_BLOCK_NUMBER.clear();
         LAST_BLOCK_NUMBER.insert(network_state.last_block_seen);
@@ -667,12 +669,23 @@ loop {
         let _ = fetch_miner(&config, &miners_data, &block).await;
 
     } else {
-        // Same block — but propagation estimate changed.
+        // Same block — propagation estimate changed.
+        // Only allow updating propagation time for the same block height within the first 10 seconds.
+        // This prevents incorrectly overwriting a completed block sample during a best-block change.
+        // Peers may report updated timings briefly after a new block is observed; this window allows
+        // one corrective update before the sample is locked in. 
         if network_state.last_block_seen == blockchain_info.blocks {
-            if let Some(idx) = network_state.last_propagation_index {
-                if let Some(val) = propagation_times.get_mut(idx) {
-                    if *val != avg_block_propagate_time {
-                        *val = avg_block_propagate_time;
+            let allow_updates = network_state
+                .last_block_seen_at
+                .map(|t| t.elapsed() <= std::time::Duration::from_secs(10))
+                .unwrap_or(false);
+
+            if allow_updates {
+                if let Some(idx) = network_state.last_propagation_index {
+                    if let Some(val) = propagation_times.get_mut(idx) {
+                        if *val != avg_block_propagate_time {
+                            *val = avg_block_propagate_time;
+                        }
                     }
                 }
             }

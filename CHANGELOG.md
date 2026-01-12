@@ -7,13 +7,25 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
+## **v1.2.3 -2026-01-15**
+
+Fixed
+
+* Correct client distribution filtering by using peer protocol version (>= 70016)
+* Stabilize propagation time slot updates during same-block observation
+* Refine miner attribution via expanded coinbase tag mappings
+
+---
+
 ## **v1.2.2 — 2026-01-08**
 
 ### **Miner Attribution & Network Insight**
 
 * Restored **wallet-first miner attribution** as the primary source of truth.
-* Added **table-driven coinbase tag classification** as a sanitized fallback when wallet attribution is unavailable.
-* Improved miner specificity when pools (e.g. OCEAN) expose upstream hashpower sources, enabling displays such as:
+* Added **table-driven coinbase tag classification** as a sanitized fallback when
+wallet attribution is unavailable.
+* Improved miner specificity when pools (e.g. OCEAN) expose upstream hashpower
+sources, enabling displays such as:
 
   * `NiceHash`
   * `NiceHash (via OCEAN)`
@@ -28,7 +40,8 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 ### **Performance & Correctness**
 
 * Reduced cache write-lock contention via read-first comparisons.
-* Restored **single-slot cache invariants** for difficulty reference blocks, fixing missing difficulty direction indicators.
+* Restored **single-slot cache invariants** for difficulty reference blocks, fixing
+missing difficulty direction indicators.
 * Tightened internal block constants and clarified TXID conversion paths.
 
 ### **UI & Usability**
@@ -46,9 +59,7 @@ v1.0.0 marks the first stable release of BlockChainInfo.
   * `hex_decode()` utility
 * Expanded internal documentation in preparation for future releases.
 
----
-
-### **Notes**
+Notes
 
 This release focuses on correctness, clarity, and long-term maintainability.
 No user action is required.
@@ -69,7 +80,8 @@ Changed
 Improved visual hierarchy across ASCII charts:
 Percentage values remain crisp.
 Horizontal ASCII bars are dimmed to reduce visual noise.
-Miner names in the Last 20 view are rendered with secondary emphasis for clearer pattern recognition.
+Miner names in the Last 20 view are rendered with secondary emphasis for clearer
+pattern recognition.
 
 Improved
 
@@ -80,8 +92,10 @@ Improved cache stability and behavior under higher-latency environments (e.g. To
 
 Notes
 
-The Last 20 Blocks / Miners panel builds on the existing rolling block history and does not introduce new RPC calls.
-Under Tor/onion access, this view provides a lightweight alternative to heavier distribution charts.
+The Last 20 Blocks / Miners panel builds on the existing rolling block history and
+does not introduce new RPC calls.
+Under Tor/onion access, this view provides a lightweight alternative to heavier
+distribution charts.
 Startup behavior gracefully fills from 1 → 20 blocks as history accumulates.
 
 ---
@@ -90,13 +104,17 @@ Startup behavior gracefully fills from 1 → 20 blocks as history accumulates.
 
 Changed
 
-Improved RPC client handling for high-latency connections by adjusting timeouts when a proxy is in use.
-Stabilized background RPC jobs (e.g. miner detection) when accessing nodes over Tor/onion services.
+Improved RPC client handling for high-latency connections by adjusting timeouts
+when a proxy is in use.
+Stabilized background RPC jobs (e.g. miner detection) when accessing nodes over
+Tor/onion services.
 
 Notes
 
-When using Start9 onion RPC interfaces, be sure to include the explicit RPC port (:8332) at the end of the onion address.
-Initial loads over Tor (e.g. mempool and transaction-related views) may take longer than LAN connections due to network latency.
+When using Start9 onion RPC interfaces, be sure to include the explicit RPC port
+(:8332) at the end of the onion address.
+Initial loads over Tor (e.g. mempool and transaction-related views) may take longer
+than LAN connections due to network latency.
 
 Added / Changed (Original commit)
 
@@ -114,33 +132,38 @@ Notes
 
 ## v1.1.4 — Refinements, Consistency, and Block-Native Hash-Rate Window (2025-12-19)
 
-This release focuses on structural clarity, documentation improvements, and aligning UI output with Bitcoin’s block-driven reality. No new features — just meaningful refinements across several modules.
+This release focuses on structural clarity, documentation improvements, and aligning
+UI output with Bitcoin’s block-driven reality. No new features — just meaningful
+refinements across several modules.
 
 Changed
 
 * Renamed ChainTipsResponse → ChainTipsJsonWrap and
   PeerInfoResponse → PeerInfoJsonWrap
   to maintain consistent naming across all JsonWrap structs.
-* Hash-Rate panel title now displays the actual block window (derived from miner distribution counts)
+* Hash-Rate panel title now displays the actual block window (derived from miner
+  distribution counts)
   instead of a static “24 hrs” placeholder.
   This clarifies sampling scope and better reflects Bitcoin’s block-time cadence.
 
 Improved
 
-* Added documentation and preserved (commented-out) deserialize_wtxid for educational reference and
+* Added documentation and preserved (commented-out) deserialize_wtxid for educational
+  reference and
   potential future use.
-* Marked wtxid with serde(skip) in MempoolEntry, removing redundant data and reducing memory +
-  deserialization overhead.
+* Marked wtxid with serde(skip) in MempoolEntry, removing redundant data and reducing
+  memory + deserialization overhead.
 
 Notes
 This update completes the intended refinements for the v1.1.x line.
-The codebase is now in a clean, consistent state ahead of introducing new views and toggles planned in the upcoming roadmap.
+The codebase is now in a clean, consistent state ahead of introducing new views
+and toggles planned in the upcoming roadmap.
 
 ---
 
 ## v1.1.3 (2025-12-17)
 
-### Fixed
+Fixed
 
 * Corrected mempool transaction lookup to deserialize the full JSON-RPC response,
   matching the mempool distribution path. This replaces older result-only
@@ -169,21 +192,24 @@ Docs: Reduce model memory usage by skipping unused RPC fields with serde
 
 ## v1.1.0 – Network Observability Refinement (2025-12-14)
 
-### Added
+Added
 
-* Added a toggleable average block propagation view to the Network panel, providing a clear numerical anchor alongside the existing sparkline for improved network health interpretation.
+* Added a toggleable average block propagation view to the Network panel, providing
+a clear numerical anchor alongside the existing sparkline for improved network health
+interpretation.
 
 ---
 
 ## v1.0.2 – Optimize mempool TXID (2025-12-13)
 
-### Improved
+Improved
 
-* Reduced mempool memory usage by switching TXID storage from hex strings to fixed-size byte arrays (`[u8; 32]`)
+* Reduced mempool memory usage by switching TXID storage from hex strings to fixed-size
+  byte arrays (`[u8; 32]`)
 * Improved DashMap key efficiency under high mempool churn
 * Lower allocator pressure during sustained congestion
 
-### Internal
+Internal
 
 * Refactored mempool hot path to enforce byte-native TXID handling
 
@@ -191,19 +217,24 @@ Docs: Reduce model memory usage by skipping unused RPC fields with serde
 
 ## v1.0.1 — Stability & Foundations (2025-12-11)
 
-### Fixes & Internal Improvements
+Fixes & Internal Improvements
 
-* Corrected the first hash-phase threshold (0.10 → 10.0) to accurately represent the 10% phase change.
-* Removed unintended `[dev-dependencies]` self-referencing path to prevent Rust Analyzer cyclic dependency warnings.
-* Updated toolchain expectations to Rust 1.90+ for compatibility with recent rust-analyzer behavior.
-* Resolved various analyzer warnings and ensured smoother development environment behavior.
+* Corrected the first hash-phase threshold (0.10 → 10.0) to accurately represent
+  the 10% phase change.
+* Removed unintended `[dev-dependencies]` self-referencing path to prevent Rust
+  Analyzer cyclic dependency warnings.
+* Updated toolchain expectations to Rust 1.90+ for compatibility with recent
+  rust-analyzer behavior.
+* Resolved various analyzer warnings and ensured smoother development environment
+  behavior.
 
-### Documentation
+Documentation
 
-* Introduced `docs/FGMO.md` — Photo-BIP for the **Floating Global Mesh Observer**, outlining the conceptual
+* Introduced `docs/FGMO.md` — Photo-BIP for the **Floating Global Mesh Observer**,
+  outlining the conceptual
   architecture for an optional, sovereign, global operator observability mesh.
 
-### Notes
+Notes
 
 This release does not modify runtime behavior of the dashboard.
 It consolidates correctness, improves developer environment stability, and
@@ -252,7 +283,8 @@ Fixed
 ## Past Versions (Pre-Stable Series)
 
 Prior versions represent the experimental, pre-1.0 development phase.  
-Highlights included early dashboard rendering, miner distribution prototypes, propagation-time logic, and initial TUI features.
+Highlights included early dashboard rendering, miner distribution prototypes,
+propagation-time logic, and initial TUI features.
 
 For historical context, previous entries remain below:
 
