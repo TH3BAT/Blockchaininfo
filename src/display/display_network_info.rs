@@ -289,9 +289,25 @@ fn draw_client_distribution<B: Backend>(
     }
 
     // -----------------------------------------------------------------------
+    // 0. Build a display list: top 5 + "Other" (rest)
+    // -----------------------------------------------------------------------
+    let mut rows: Vec<(String, usize)> = client_counts.to_vec();
+
+    rows.sort_by(|a, b| b.1.cmp(&a.1));
+
+    let rows: Vec<(String, usize)> = if rows.len() <= 6 {
+        rows
+    } else {
+        let mut top = rows.into_iter().take(5).collect::<Vec<_>>();
+        let other_sum: usize = client_counts.iter().skip(5).map(|(_, c)| *c).sum();
+        top.push(("Other".to_string(), other_sum));
+        top
+    };
+
+    // -----------------------------------------------------------------------
     // 1. Compute raw counts + normalized percentages
     // -----------------------------------------------------------------------
-    let raw_counts: Vec<u64> = client_counts.iter().map(|(_, c)| *c as u64).collect();
+    let raw_counts: Vec<u64> = rows.iter().map(|(_, c)| *c as u64).collect();
 
     let pcts: Vec<u64> = normalize_percentages(&raw_counts);
 
@@ -300,7 +316,7 @@ fn draw_client_distribution<B: Backend>(
     // -----------------------------------------------------------------------
     // 2. Build up to 6 ASCII rows
     // -----------------------------------------------------------------------
-    for ((name, count), pct) in client_counts.iter().zip(pcts.iter()).take(6) {
+    for ((name, count), pct) in rows.iter().zip(pcts.iter()) {
         // Fixed width bar = 10 chars
         //let bar_width = 10;
         //let filled = (*pct as usize * bar_width) / 100;

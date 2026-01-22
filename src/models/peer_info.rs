@@ -254,7 +254,7 @@ impl PeerInfo {
     /// - Knots   → Knots  
     /// - Ronin   → Ronin  
     /// - Anything else → Other  
-    pub fn extract_client(subver: &str, version: i32) -> Option<String> {
+   pub fn extract_client(subver: &str, version: i32) -> Option<String> {
         fn normalize(name: &str) -> String {
             match name.to_lowercase().as_str() {
                 "satoshi" => "Core".to_string(),
@@ -264,28 +264,34 @@ impl PeerInfo {
             }
         }
 
-        // Remove outer slashes
-        let trimmed = subver.trim_matches('/');
-
-         // Bitcoin P2P protocol only
-        if version < 70016 {
+        // Bitcoin P2P protocol only (semantic sync with Version Distribution)
+        if !subver.contains("Satoshi") || version < 70016 {
             return None;
         }
 
-        // Split segments: e.g. ["70016", "Satoshi:25.0.0"]
+        // Remove outer slashes
+        let trimmed = subver.trim_matches('/');
+
+        // Split segments: e.g. ["70016", "Satoshi:29.2.0", "Knots:20251110", "UASF-BIP110:0.1"]
         let segments: Vec<&str> = trimmed.split('/').collect();
 
-        // Find a "name:version" segment (scan right → left, skipping proto)
+        // Prefer known primary clients anywhere in UA.
+        // This prevents feature flags (e.g. UASF-BIP110:0.1) from hijacking classification.
+        for preferred in ["knots", "ronin", "satoshi"] {
+            if segments.iter().any(|seg| seg.to_lowercase().starts_with(preferred)) {
+                return Some(normalize(preferred));
+            }
+        }
+
+        // Fallback: find any "name:version" segment (scan right → left)
         for seg in segments.iter().rev() {
             if let Some((raw, _ver)) = seg.split_once(':') {
                 return Some(normalize(raw.trim()));
             }
         }
 
-        // It's a 70016 peer, but we couldn't parse a client name
         Some("Other".to_string())
     }
-
 
     /// Aggregates client counts and sorts by:
     /// 1. count descending

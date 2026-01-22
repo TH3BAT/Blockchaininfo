@@ -410,16 +410,19 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
         if let Some(upstream) = ocean_upstream {
             return Some((upstream, pool)); // -> "NiceHash (via OCEAN)" at caller
         }
-
+        
+        // OCEAN-only candidates (max_gap=3 is a good starting point)
+        let runs_candidate = tx.extract_coinbase_ocean_candidates(3);
+        
         // Your existing "best human-ish token" heuristic
-        for r in &runs {
+        for r in &runs_candidate {
             let sig = squash_alnum_lower(r);
 
             if is_ocean(&sig) {
                 continue;
             }
 
-            if sig.starts_with("mm") || sig.len() < 4 {
+            if sig.starts_with("mm") || sig.len() < 3 {
                 continue;
             }
 
@@ -507,4 +510,6 @@ fn match_table(sig: &str) -> Option<&'static str> {
 fn is_ocean(sig: &str) -> bool {
     OCEAN_PATS.iter().any(|p| sig.contains(p))
 }
+
+
 

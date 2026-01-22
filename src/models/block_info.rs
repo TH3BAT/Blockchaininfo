@@ -146,7 +146,7 @@ impl Transaction {
 
     /// Returns coinbase scriptSig bytes (decoded from hex) if this TX is a coinbase TX.
     /// Bitcoin Core provides `vin[0].coinbase` as hex string for coinbase transactions.
-    pub fn extract_coinbase_bytes(&self) -> Option<Vec<u8>> {
+    fn extract_coinbase_bytes(&self) -> Option<Vec<u8>> {
         let vin0 = self.vin.get(0)?;
         let hex = vin0.coinbase.as_ref()?;
         hex_decode(hex).ok()
@@ -154,7 +154,7 @@ impl Transaction {
 
     /// Returns coinbase scriptSig hex string, if present.
     #[allow(dead_code)]
-    pub fn extract_coinbase_hex(&self) -> Option<&str> {
+    fn extract_coinbase_hex(&self) -> Option<&str> {
         self.vin.get(0)?.coinbase.as_deref()
     }
 
@@ -166,6 +166,117 @@ impl Transaction {
         };
         extract_ascii_runs(&bytes, min_len)
     }
+
+    /// OCEAN-only: Extracts “candidate tags” from coinbase bytes.
+    /// Unlike extract_coinbase_ascii_runs(), this can merge runs across small control gaps
+    /// *except* when the gap contains NUL (0x00), which we treat as a hard separator.
+    pub fn extract_coinbase_ocean_candidates(&self, max_gap: usize) -> Vec<String> {
+        let Some(bytes) = self.extract_coinbase_bytes() else {
+            return Vec::new();
+        };
+        Self::extract_ocean_candidates(&bytes, max_gap)
+    }
+
+    /// Produce “human-ish” candidates for OCEAN secondaries.
+    /// This will yield BDEHX, will NOT yield SoVAV (due to NUL break).
+    fn extract_ocean_candidates(bytes: &[u8], max_gap: usize) -> Vec<String> {
+        let runs = Self::extract_runs_idx(bytes);
+        let merged = Self::merge_runs_no_nul(bytes, &runs, max_gap);
+
+        let mut out = Vec::new();
+        for span in merged {
+            let s = Self::span_to_string(bytes, span);
+            let s = s.trim();
+            if !s.is_empty() {
+                out.push(s.to_string());
+            }
+        }
+        out
+    }
+
+    /// Returns true if the byte is considered part of a human-readable coinbase tag.
+    /// 
+    /// We intentionally restrict this to alphanumeric characters plus a small
+    /// set of punctuation commonly used by pools (., _, -, /, :).
+    /// 
+    /// This avoids pulling in high-noise ASCII that often appears in coinbase
+    /// scriptSig fields (control bytes, padding, flags, versioning data, etc).
+    fn is_tag_byte(b: u8) -> bool {
+        matches!(b,
+            b'0'..=b'9' |
+            b'a'..=b'z' |
+            b'A'..=b'Z' |
+            b'.' | b'_' | b'-' | b'/' | b':'
+        )
+    }
+
+    /// Extracts contiguous ranges of printable tag bytes from a coinbase scriptSig.
+    ///
+    /// Instead of directly building strings, this returns index ranges (start, end)
+    /// into the original byte buffer. This allows downstream logic to:
+    ///   - merge adjacent runs across small control-byte gaps, and
+    ///   - inspect gap contents (e.g. detect NUL separators).
+    ///
+    /// This is particularly important for OCEAN coinbase tags, where human-readable
+    /// miner identifiers may be split across non-printable bytes.    
+    fn extract_runs_idx(bytes: &[u8]) -> Vec<(usize, usize)> {
+        let mut runs = Vec::new();
+        let mut i = 0;
+
+        while i < bytes.len() {
+            while i < bytes.len() && !Self::is_tag_byte(bytes[i]) { i += 1; }
+            let start = i;
+            while i < bytes.len() && Self::is_tag_byte(bytes[i]) { i += 1; }
+            let end = i;
+            if end > start { runs.push((start, end)); }
+        }
+        runs
+    }
+
+    /// Merge adjacent printable runs if:
+    /// - gap <= max_gap
+    /// - and the gap does NOT contain a null byte (0x00)
+    fn merge_runs_no_nul(bytes: &[u8], runs: &[(usize, usize)], max_gap: usize) -> Vec<(usize, usize)> {
+        let mut out: Vec<(usize, usize)> = Vec::new();
+
+        for &(s, e) in runs {
+            if let Some(last) = out.last_mut() {
+                if s >= last.1 {
+                    let gap = s - last.1;
+                    if gap <= max_gap {
+                        let gap_slice = &bytes[last.1..s];
+                        let has_nul = gap_slice.iter().any(|&b| b == 0x00);
+                        if !has_nul {
+                            last.1 = e;
+                            continue;
+                        }
+                    }
+                }
+            }
+            out.push((s, e));
+        }
+
+        out
+    }
+
+    /// Builds a String from a merged byte span, skipping any non-tag bytes.
+    ///
+    /// This allows reconstruction of human-readable identifiers that were
+    /// fragmented by control bytes inside the coinbase field
+    /// (e.g. "BDE" + <ctrl> + "HX" → "BDEHX").
+    ///
+    /// Non-tag bytes are intentionally ignored rather than replaced.
+    fn span_to_string(bytes: &[u8], span: (usize, usize)) -> String {
+        let (start, end) = span;
+        let mut s = String::with_capacity(end.saturating_sub(start));
+        for &b in &bytes[start..end] {
+            if Self::is_tag_byte(b) {
+                s.push(b as char);
+            }
+        }
+        s
+    }
+
 
 }
 

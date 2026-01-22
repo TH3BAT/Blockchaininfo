@@ -7,7 +7,17 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
-## **v1.2.3 -2026-01-15**
+## **v1.2.4 - 2026-01-22**
+
+* Improved OCEAN coinbase tag parsing to better reconstruct split miner identifiers.
+* Improved client detection logic to correctly classify multi-segment user agents
+(e.g. Knots + UASF-BIP110), ensuring accurate client distribution reporting.
+* Synced peer filtering with version distribution to ensure consistent Bitcoin
+protocol node reporting.
+
+---
+
+## **v1.2.3 - 2026-01-15**
 
 Fixed
 
