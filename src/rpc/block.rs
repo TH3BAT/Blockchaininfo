@@ -28,7 +28,7 @@ use crate::models::block_info::{
     BlockInfoFullJsonWrap,
 };
 
-use crate::utils::{BLOCK_HISTORY, squash_alnum_lower};
+use crate::utils::BLOCK_HISTORY;
 use crate::models::miner_tags::{PRIMARY_TAGS, OCEAN_PATS};
 use crate::consensus::satoshi_math::*;
 
@@ -368,7 +368,7 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
 
     // Pre-scan: is Ocean present anywhere?
     let ocean_present = runs.iter().any(|r| {
-        let sig = squash_alnum_lower(r);
+        let sig = Transaction::squash_alnum_lower(r);
         is_ocean(&sig)
     });
 
@@ -381,7 +381,7 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
     // Pass 1: detect OCEAN and (if not ocean_present) return strong canonical tags.
     // If ocean_present, don't short-circuit primary; only collect upstream candidates.
     for r in &runs {
-        let sig = squash_alnum_lower(r);
+        let sig = Transaction::squash_alnum_lower(r);
 
         // OCEAN detection
         if is_ocean(&sig) {
@@ -416,7 +416,7 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
         
         // Your existing "best human-ish token" heuristic
         for r in &runs_candidate {
-            let sig = squash_alnum_lower(r);
+            let sig = Transaction::squash_alnum_lower(r);
 
             if is_ocean(&sig) {
                 continue;

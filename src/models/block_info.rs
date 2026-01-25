@@ -17,7 +17,7 @@
 use serde::Deserialize;
 use std::collections::{VecDeque, HashMap};
 use std::sync::{Mutex, Arc};
-use crate::utils::{hex_decode, extract_ascii_runs};
+use crate::utils::hex_decode;
 use crate::consensus::satoshi_math::*;
 
 /// Wrapper for `getblockhash`.  
@@ -164,7 +164,56 @@ impl Transaction {
         let Some(bytes) = self.extract_coinbase_bytes() else {
             return Vec::new();
         };
-        extract_ascii_runs(&bytes, min_len)
+        Self::extract_ascii_runs(&bytes, min_len)
+    }
+
+    /// Extracts contiguous printable ASCII substrings from an arbitrary byte stream.
+    ///
+    /// Coinbase scriptSig data often contains a mixture of control bytes, binary data,
+    /// and human-readable identifiers (e.g. miner or pool tags).
+    ///
+    /// This helper scans the byte stream and collects runs of printable ASCII characters
+    /// (`0x20..=0x7E`) that meet a minimum length threshold, trimming whitespace and
+    /// discarding empty or invalid UTF-8 segments.
+    ///
+    /// This is intentionally conservative:
+    /// - Non-printable bytes act as hard delimiters.
+    /// - Short or noisy fragments are ignored.
+    /// - Returned strings reflect only explicit text embedded by the miner.
+    ///
+    /// Used as a fallback mechanism for miner attribution when payout address lookup
+    /// is unavailable or unreliable (e.g. rotating addresses, shared pools).
+    fn extract_ascii_runs(bytes: &[u8], min_len: usize) -> Vec<String> {
+        let mut out = Vec::new();
+        let mut buf: Vec<u8> = Vec::new();
+
+        for &b in bytes {
+            let printable = (0x20..=0x7E).contains(&b);
+            if printable {
+                buf.push(b);
+            } else {
+                if buf.len() >= min_len {
+                    if let Ok(s) = String::from_utf8(buf.clone()) {
+                        let trimmed = s.trim();
+                        if !trimmed.is_empty() {
+                            out.push(trimmed.to_string());
+                        }
+                    }
+                }
+                buf.clear();
+            }
+        }
+
+        if buf.len() >= min_len {
+            if let Ok(s) = String::from_utf8(buf) {
+                let trimmed = s.trim();
+                if !trimmed.is_empty() {
+                    out.push(trimmed.to_string());
+                }
+            }
+        }
+
+        out
     }
 
     /// OCEAN-only: Extracts “candidate tags” from coinbase bytes.
@@ -206,6 +255,7 @@ impl Transaction {
             b'0'..=b'9' |
             b'a'..=b'z' |
             b'A'..=b'Z' |
+            b' ' | // Important to include :).
             b'.' | b'_' | b'-' | b'/' | b':'
         )
     }
@@ -277,6 +327,23 @@ impl Transaction {
         s
     }
 
+    /// Normalizes a string for robust signature matching.
+    ///
+    /// This helper removes all non-alphanumeric characters and lowercases the result,
+    /// producing a compact form suitable for substring comparisons.
+    ///
+    /// Example:
+    /// - "/NiceHash/"   → "nicehash"
+    /// - "< OCEAN.XYZ >" → "oceanxyz"
+    ///
+    /// Used to reliably detect known miner or pool identifiers embedded in
+    /// coinbase scriptSig text, regardless of surrounding punctuation or formatting.
+    pub fn squash_alnum_lower(s: &str) -> String {
+        s.chars()
+            .filter(|c| c.is_ascii_alphanumeric())
+            .flat_map(|c| c.to_lowercase())
+            .collect()
+    }
 
 }
 
