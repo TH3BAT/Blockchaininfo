@@ -10,6 +10,9 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 ## **v1.2.5 - 2026-01-25**
 
 * Fixed OCEAN miner attribution for multi-word upstream tags (e.g., "Peak Mining").
+* Refined OCEAN coinbase parsing to extract secondary tags only from the post-banner
+ region, preventing pool-tag contamination.
+
 * Refactored transaction byte parsing helpers into the Transaction layer for improved
 semantic scoping and code clarity.
 * Updated dependencies:
