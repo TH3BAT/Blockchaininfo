@@ -1,7 +1,8 @@
 
 # **🚀 ROADMAP.md — 2025 Sovereign Edition**
 
-*A modern, accurate roadmap for BlockchainInfo, reflecting the tool as it exists today.*
+*A modern, accurate roadmap for BlockchainInfo, reflecting the tool as it exists
+today.*
 
 ---
 
@@ -78,9 +79,10 @@ Pure mempool analytics, undistorted by spam, dust, or non-minable tx.
 
 ---
 
-## **3. Upcoming Enhancements (v1.0 → v1.2)**
+## **3. Upcoming Enhancements (v1.2 → v1.3)**
 
-These are real ideas — not promises — designed to expand clarity without bloating the interface.
+These are real ideas — not promises — designed to expand clarity without bloating
+the interface.
 
 ---
 
@@ -133,6 +135,41 @@ Single key → exports:
 * miner identity
 
 A simple archival feature for node operators.
+
+---
+
+### **🔥 3.5 — 30 Chain-Day Miner Trend (Block-Based Momentum)**
+
+A rolling 30 chain-day miner trend view based on actual blocks rewarded (144 blocks
+= 1 chain-day).
+
+This feature reveals which miners and pools are gaining or losing momentum over
+time by tracking block distribution across consecutive chain-days.
+
+Intent:
+Provide operators with a clean, manipulation-resistant signal of miner trend and
+network participation shifts — based purely on block reality, not hash-rate
+estimates or external metrics.
+
+Design:
+
+* Rolling 30 chain-day window
+* Each chain-day = 144 blocks
+* Miner counts aggregated per chain-day
+* Trend deltas computed day-over-day and across full window
+* Optional compact sparkline per miner
+
+Insights Provided:
+
+* Miner momentum (rising / falling participation)
+* Pool dominance changes
+* Emerging miner activity
+* Structural network shifts
+
+Philosophy:
+Blocks are the final truth layer of mining activity.
+This feature surfaces what the network actually rewarded, not what was advertised
+or estimated.
 
 ---
 
