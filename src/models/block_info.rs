@@ -19,6 +19,7 @@ use std::collections::{VecDeque, HashMap};
 use std::sync::{Mutex, Arc};
 use crate::utils::hex_decode;
 use crate::consensus::satoshi_math::*;
+use crate::models::miner_tags::OCEAN_PATS;
 
 /// Wrapper for `getblockhash`.  
 /// Bitcoin Core returns `{ result: "blockhash", id, error }`.
@@ -229,12 +230,33 @@ impl Transaction {
     /// Produce “human-ish” candidates for OCEAN secondaries.
     /// This will yield BDEHX, will NOT yield SoVAV (due to NUL break).
     fn extract_ocean_candidates(bytes: &[u8], max_gap: usize) -> Vec<String> {
+        // 1) Find the OCEAN banner span end (e.g., "< OCEAN.XYZ >")
         let runs = Self::extract_runs_idx(bytes);
-        let merged = Self::merge_runs_no_nul(bytes, &runs, max_gap);
+
+        let mut start_at = 0usize;
+        for &(s, e) in &runs {
+            let s_run = Self::span_to_string(bytes, (s, e));
+            let sig = Self::squash_alnum_lower(&s_run);
+            if Self::is_ocean(&sig) {
+                start_at = e; // start scanning AFTER the banner run
+                break;
+            }
+        }
+
+        // If we didn't find the banner, no candidates
+        if start_at == 0 {
+            return Vec::new();
+        }
+
+        // 2) Now scan only the tail region after the banner
+        let tail = &bytes[start_at..];
+
+        let runs = Self::extract_runs_idx(tail);
+        let merged = Self::merge_runs_no_nul(tail, &runs, max_gap);
 
         let mut out = Vec::new();
         for span in merged {
-            let s = Self::span_to_string(bytes, span);
+            let s = Self::span_to_string(tail, span);
             let s = s.trim();
             if !s.is_empty() {
                 out.push(s.to_string());
@@ -326,6 +348,16 @@ impl Transaction {
         }
         s
     }
+
+    /// Determine whether a normalized coinbase signature indicates OCEAN.
+    ///
+    /// OCEAN is treated as a special-case pool that may expose upstream
+    /// hashrate sources via additional coinbase tags. Detection is kept
+    /// centralized to avoid duplicated string checks.
+    pub fn is_ocean(sig: &str) -> bool {
+        OCEAN_PATS.iter().any(|p| sig.contains(p))
+    }
+
 
     /// Normalizes a string for robust signature matching.
     ///

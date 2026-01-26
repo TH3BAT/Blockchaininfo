@@ -29,7 +29,7 @@ use crate::models::block_info::{
 };
 
 use crate::utils::BLOCK_HISTORY;
-use crate::models::miner_tags::{PRIMARY_TAGS, OCEAN_PATS};
+use crate::models::miner_tags::PRIMARY_TAGS;
 use crate::consensus::satoshi_math::*;
 
 /// Fetch block information at a specific height using `getblock` with verbose=1.
@@ -369,7 +369,7 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
     // Pre-scan: is Ocean present anywhere?
     let ocean_present = runs.iter().any(|r| {
         let sig = Transaction::squash_alnum_lower(r);
-        is_ocean(&sig)
+        Transaction::is_ocean(&sig)
     });
 
     let mut pool: Option<String> = None;
@@ -384,7 +384,7 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
         let sig = Transaction::squash_alnum_lower(r);
 
         // OCEAN detection
-        if is_ocean(&sig) {
+        if Transaction::is_ocean(&sig) {
             pool = Some("OCEAN".to_string());
             continue;
         }
@@ -418,7 +418,7 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
         for r in &runs_candidate {
             let sig = Transaction::squash_alnum_lower(r);
 
-            if is_ocean(&sig) {
+            if Transaction::is_ocean(&sig) {
                 continue;
             }
 
@@ -502,14 +502,6 @@ fn match_table(sig: &str) -> Option<&'static str> {
 }
 
 
-/// Determine whether a normalized coinbase signature indicates OCEAN.
-///
-/// OCEAN is treated as a special-case pool that may expose upstream
-/// hashrate sources via additional coinbase tags. Detection is kept
-/// centralized to avoid duplicated string checks.
-fn is_ocean(sig: &str) -> bool {
-    OCEAN_PATS.iter().any(|p| sig.contains(p))
-}
 
 
 
