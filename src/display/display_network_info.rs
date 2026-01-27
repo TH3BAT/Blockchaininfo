@@ -185,13 +185,18 @@ pub fn display_network_info<B: Backend>(
                 .collect();
 
             let total_versions = version_counts.len();
+            let top5orless = if total_versions < 5 {
+                total_versions
+            } else {
+                5
+            };
 
             let barchart = BarChart::default()
                 .block(
                     Block::default()
                         .title(format!(
-                            "Version Distribution (Top 5 of {})",
-                            total_versions
+                            "Version Distribution (Top {} of {})",
+                            top5orless, total_versions
                         ))
                         .borders(Borders::ALL),
                 )
