@@ -7,6 +7,29 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
+## **v1.2.6 - 2026-01-30**
+
+Added
+
+* Mempool Size Lens filtering for transaction distribution:
+  * Small, Medium, and Large transaction views
+  * Lens applies consistently across fee, age, and RBF metrics
+* Size lens integrates with existing Dust-Free mode (filters compose cleanly)
+
+Improved
+
+* Operator clarity by allowing mempool statistics to reflect current transaction
+context
+* Fee metrics now better distinguish urgency vs typical behavior by transaction
+size
+
+Notes
+
+* Size lens is a view filter only — no changes to underlying mempool data
+* Default behavior remains unchanged when no lens is active
+
+---
+
 ## **v1.2.5 - 2026-01-25**
 
 * Fixed OCEAN miner attribution for multi-word upstream tags (e.g., "Peak Mining").

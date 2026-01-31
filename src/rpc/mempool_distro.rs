@@ -71,6 +71,10 @@ struct LastSeen {
 
 static LAST_SEEN: OnceLock<Mutex<LastSeen>> = OnceLock::new();
 
+const SMALL_MAX_VB: u32 = 250;
+const MEDIUM_MAX_VB: u32 = 1000;
+
+
 /// Main entry point for computing mempool distribution.
 ///
 /// This function performs **three responsibilities**:
@@ -98,6 +102,7 @@ static LAST_SEEN: OnceLock<Mutex<LastSeen>> = OnceLock::new();
 pub async fn fetch_mempool_distribution(
     config: &RpcConfig,
     dust_free: bool,
+    size_lens: u8,
     last_block: u64,
 ) -> Result<(), MyError> {
 
@@ -190,18 +195,19 @@ pub async fn fetch_mempool_distribution(
                         }
                     }
 
-                    // Dust-Free mode: retain only entries >= dust threshold
-                    if dust_free {
-                        if mempool_entry.fees.base >= DUST_THRESHOLD {
-                            TX_CACHE.insert(tx_id_bytes.clone(), mempool_entry);
-                        }
+                    let vb = mempool_entry.vsize as u32; 
+                    let keep = (!dust_free || mempool_entry.fees.base >= DUST_THRESHOLD) && size_ok(vb, size_lens);
 
-                        // prune any lingering dust
-                        TX_CACHE.retain(|_, mempool_entry| mempool_entry.fees.base >= DUST_THRESHOLD);
-
-                    } else {
-                        // Full mode: store everything
+                    if keep {
                         TX_CACHE.insert(tx_id_bytes.clone(), mempool_entry);
+                    }
+
+                   // prune only when any filter is active
+                    if dust_free || size_lens != 0 {
+                        TX_CACHE.retain(|_, e| {
+                            let vb = e.vsize as u32;
+                            (!dust_free || e.fees.base >= DUST_THRESHOLD) && size_ok(vb, size_lens)
+                        });
                     }
 
                     Ok(())
@@ -306,3 +312,12 @@ fn update_tx_cache(
     state.last_block = last_block;
 }
 
+
+fn size_ok(vb: u32, lens: u8) -> bool {
+    match lens {
+        1 => vb < SMALL_MAX_VB,
+        2 => vb >= SMALL_MAX_VB && vb <= MEDIUM_MAX_VB,
+        3 => vb > MEDIUM_MAX_VB,
+        _ => true, // 0 = All
+    }
+}

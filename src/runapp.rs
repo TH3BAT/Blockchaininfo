@@ -72,6 +72,7 @@ use crossterm::{
 use std::io::{self, Stdout};
 use std::collections::VecDeque;
 use std::sync::Arc;
+use std::sync::atomic::AtomicU8;
 
 use tokio::time::{sleep, Duration, Instant};
 
@@ -122,6 +123,7 @@ struct App {
     is_pasting: bool,            // Detect multi-character paste events
     show_hash_distribution: bool,// Toggle: Hashrate Distribution view
     dust_free: Arc<AtomicBool>,  // Toggle: Dust filtering for mempool distro
+    size_lens: Arc<AtomicU8>,     // NEW: 0=All, 1=S, 2=M, 3=L
     show_client_distribution: bool, // NEW toggle: Version vs Client view
     last_fork_alert_height: Option<u64>, // For deduping fork warning popups
     show_propagation_avg: bool, // NEW toggle: Propagation average over 20 block period
@@ -141,6 +143,7 @@ impl App {
             is_pasting: false,
             show_hash_distribution: false,
             dust_free: Arc::new(AtomicBool::new(true)), // dust-free enabled by default
+            size_lens: Arc::new(AtomicU8::new(0)), // default: All
             show_client_distribution: false,            // default: show Version view
             last_fork_alert_height: None,
             show_propagation_avg: false,                //default: show sparkline view
@@ -535,6 +538,7 @@ tokio::spawn({
 // distribution errors no longer require granular logging.
 //
 let dust_flag = app.dust_free.clone();
+let size_flag = app.size_lens.clone();          // NEW
 let last_block_clone = app.last_block.clone();
 
 tokio::spawn({
@@ -544,9 +548,10 @@ tokio::spawn({
         loop {
             let start = Instant::now();
             let dust_free = dust_flag.load(Ordering::Relaxed);
+            let size_lens = size_flag.load(Ordering::Relaxed);
             let last_block = last_block_clone.load(Ordering::Relaxed); 
 
-            if let Err(e) = fetch_mempool_distribution(&config_clone, dust_free, last_block).await {
+            if let Err(e) = fetch_mempool_distribution(&config_clone, dust_free, size_lens, last_block).await {
                 // Distribution failures are usually transient due to mempool churn.
                 let _ = &e; // intentionally unused now
             }
@@ -858,9 +863,29 @@ loop {
                 }
 
                 // DUST-FREE toggle for mempool distribution
-                KeyCode::Char('d') => {
-                    let old = app.dust_free.load(Ordering::Relaxed);
-                    app.dust_free.store(!old, Ordering::Relaxed);
+                KeyCode::Char('1') => {
+                    let cur = app.size_lens.load(Ordering::Relaxed);
+                    if cur == 0 {
+                        app.size_lens.store(1, Ordering::Relaxed);
+                    } else if cur == 1 {
+                        app.size_lens.store(0, Ordering::Relaxed);
+                    }
+                }
+                KeyCode::Char('2') => {
+                    let cur = app.size_lens.load(Ordering::Relaxed);
+                    if cur == 0 {
+                        app.size_lens.store(2, Ordering::Relaxed);
+                    } else if cur == 2 {
+                        app.size_lens.store(0, Ordering::Relaxed);
+                    }
+                }
+                KeyCode::Char('3') => {
+                    let cur = app.size_lens.load(Ordering::Relaxed);
+                    if cur == 0 {
+                        app.size_lens.store(3, Ordering::Relaxed);
+                    } else if cur == 3 {
+                        app.size_lens.store(0, Ordering::Relaxed);
+                    }
                 }
 
                 // Version <-> Client distribution toggle
@@ -1003,6 +1028,26 @@ loop {
             Span::styled(" [D] ALL TX", Style::default().fg(C_KEYTOGGLE_DIM))
         };
 
+        let size = app.size_lens.load(Ordering::Relaxed);
+
+        let s1 = if size == 1 {
+            Span::styled(" [1] S", Style::default().fg(C_KEYTOGGLE_HIGHLIGHT).add_modifier(Modifier::BOLD))
+        } else {
+            Span::styled(" [1] S", Style::default().fg(C_KEYTOGGLE_DIM))
+        };
+
+        let s2 = if size == 2 {
+            Span::styled(" [2] M", Style::default().fg(C_KEYTOGGLE_HIGHLIGHT).add_modifier(Modifier::BOLD))
+        } else {
+            Span::styled(" [2] M", Style::default().fg(C_KEYTOGGLE_DIM))
+        };
+
+        let s3 = if size == 3 {
+            Span::styled(" [3] L", Style::default().fg(C_KEYTOGGLE_HIGHLIGHT).add_modifier(Modifier::BOLD))
+        } else {
+            Span::styled(" [3] L", Style::default().fg(C_KEYTOGGLE_DIM))
+        };
+
         let mempool_title = Spans(vec![
             Span::styled(
                 "[Mempool]",
@@ -1011,6 +1056,7 @@ loop {
                     .add_modifier(Modifier::BOLD),
             ),
             dust_label,
+            s1, s2, s3
         ]);
 
         let block_mempool = Block::default()
@@ -1334,3 +1380,4 @@ fn render_consensus_warning_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) 
     frame.render_widget(block, popup_area);
     frame.render_widget(paragraph, container);
 }
+
