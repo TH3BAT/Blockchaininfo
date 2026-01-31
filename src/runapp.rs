@@ -863,6 +863,12 @@ loop {
                 }
 
                 // DUST-FREE toggle for mempool distribution
+                KeyCode::Char('d') => {
+                    let old = app.dust_free.load(Ordering::Relaxed);
+                    app.dust_free.store(!old, Ordering::Relaxed);
+                }
+
+                // Size toggles for mempool distribution
                 KeyCode::Char('1') => {
                     let cur = app.size_lens.load(Ordering::Relaxed);
                     if cur == 0 {
