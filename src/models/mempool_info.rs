@@ -59,6 +59,9 @@ pub struct MempoolDistribution {
     /// Fee rate estimate: (total fees / total vsize)
     /// Expressed as sats/vB.
     pub average_fee_rate: u64,
+
+    /// Median of per-tx fee rates (fee/vsize) in sats/vB.
+    pub median_fee_rate: u64,
 }
 
 impl MempoolDistribution {
@@ -78,12 +81,13 @@ impl MempoolDistribution {
         let mut rbf_count = 0;
         let mut non_rbf_count = 0;
 
-        let mut total_fee = 0;
-        let mut total_vsize = 0;
+        let mut total_fee: u64 = 0;
+        let mut total_vsize: u64 = 0;
         let mut count = 0;
 
         // let mut fees: Vec<f64> = Vec::new();
         let mut fees: Vec<u64> = Vec::new();
+        let mut fee_rates: Vec<u64> = Vec::new(); // sats/vB per tx
 
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -115,15 +119,18 @@ impl MempoolDistribution {
                 non_rbf_count += 1;
             }
 
-            // Fee aggregation
-            let fee = (e.fees.base * 100_000_000.0).round() as u64 
-                + (e.fees.ancestor * 100_000_000.0).round() as u64 
-                + (e.fees.modified * 100_000_000.0).round() as u64 
-                + (e.fees.descendant * 100_000_000.0).round() as u64;
-            total_fee += fee;
-            total_vsize += e.vsize;
-            fees.push(fee);
+            // Fee in sats: pick ONE field (base is the clean default)
+            let fee: u64 = (e.fees.base * 100_000_000.0).round() as u64;
 
+            total_fee = total_fee.saturating_add(fee);
+            total_vsize = total_vsize.saturating_add(e.vsize as u64);
+            fees.push(fee);
+            
+            // per-tx fee rate (sats/vB); floor division is fine for display
+            let v = e.vsize as u64;
+            let fr = if v > 0 { fee / v } else { 0 };
+            fee_rates.push(fr);
+            
             count += 1;
         }
 
@@ -158,6 +165,19 @@ impl MempoolDistribution {
         self.average_fee_rate = if total_vsize > 0 {
             total_fee / total_vsize as u64
             // (total_fee * 100_000_000.0) / total_vsize as f64
+        } else {
+            0
+        };
+
+        // Median fee rate (sats/vB) across txs (unweighted median)
+        self.median_fee_rate = if !fee_rates.is_empty() {
+            fee_rates.sort_unstable();
+            let mid = fee_rates.len() / 2;
+            if fee_rates.len() % 2 == 0 {
+                (fee_rates[mid - 1] + fee_rates[mid]) / 2
+            } else {
+                fee_rates[mid]
+            }
         } else {
             0
         };

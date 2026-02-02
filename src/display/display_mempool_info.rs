@@ -530,15 +530,23 @@ pub fn display_mempool_info<B: Backend>(
             ),
         ]),
         Spans::from(vec![
-            Span::styled(
-                "  🎯 Average Fee Rate (sats/vByte): ",
-                Style::default().fg(C_MEMPOOL_DIST_LABELS),
-            ),
-            Span::styled(
-                format!("{:.2}", distribution.average_fee_rate),
-                Style::default().fg(C_MEMPOOL_VALUES),
-            ),
-        ]),
+        Span::styled(
+            "  🎯 Average Fee Rate (sats/vByte): ",
+            Style::default().fg(C_MEMPOOL_DIST_LABELS),
+        ),
+        Span::styled(
+            format!("{:.2}", distribution.average_fee_rate),
+            Style::default().fg(C_MEMPOOL_VALUES),
+        ),
+        Span::styled(
+            "   Median: ",
+            Style::default().fg(C_MEMPOOL_DIST_LABELS), // same yellow
+        ),
+        Span::styled(
+            format!("{:.2}", distribution.median_fee_rate),
+            Style::default().fg(C_MEMPOOL_VALUES),
+        ),
+    ])
     ];
 
     // Wrap all content lines inside a Paragraph and render into the content chunk.

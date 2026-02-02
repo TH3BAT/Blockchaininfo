@@ -7,6 +7,24 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
+## **v1.2.7 - 2026-02-02**
+
+Fixed
+
+* Corrected Average Fee Rate calculation to use the transaction’s base fee only.
+  Previously, multiple mempool fee fields (base, ancestor, descendant, modified)
+  were summed, which unintentionally overstated fee rates. These fields represent
+  alternative views of the same transaction, not additive values.
+* As a result, reported average fee rates may appear lower going forward, but now
+  accurately reflect mempool reality.
+
+Added
+
+* Median Fee Rate (sats/vByte) displayed alongside Average Fee Rate, providing a
+  robust, outlier-resistant view of typical mempool conditions.
+
+---
+
 ## **v1.2.6 - 2026-01-30**
 
 Added
