@@ -92,14 +92,14 @@ pub fn display_blockchain_info<B: Backend>(
 
     let show_epoch_estimate = blocks_into_epoch >= 5;
 
-   let difficulty_arrow = if !show_epoch_estimate {
-        " ".to_string()
+    let (difficulty_arrow, difficulty_color) = if !show_epoch_estimate {
+        (" ", C_MAIN_LABELS)
     } else if estimate_difficulty_chng > 0.0 {
-        "↑".to_string()
+        ("↑", C_ESTIMATE_POS)
     } else if estimate_difficulty_chng < 0.0 {
-        "↓".to_string()
+        ("↓", C_ESTIMATE_NEG)
     } else {
-        "→".to_string() // optional: exact zero
+        ("→", C_SEPARATORS) 
     };
 
     // Arrow for 24-hour diff projection.
@@ -165,7 +165,7 @@ pub fn display_blockchain_info<B: Backend>(
             // Epoch arrow
             Span::styled(
                 difficulty_arrow,
-                Style::default().fg(if estimate_difficulty_chng > 0.0 { C_ESTIMATE_POS } else { C_ESTIMATE_NEG }),
+                Style::default().fg(difficulty_color),
             ),
             difficulty_change_display,
 
