@@ -103,10 +103,13 @@ pub fn display_blockchain_info<B: Backend>(
     };
 
     // Arrow for 24-hour diff projection.
-    let difficulty_arrow_24h = if estimate_24h_difficulty_chng > 0.0 {
-        "↑".to_string()
+    let (difficulty_arrow_24h, difficulty_color_24h) =
+    if estimate_24h_difficulty_chng > 0.0 {
+        ("↑", C_ESTIMATE_POS)
+    } else if estimate_24h_difficulty_chng < 0.0 {
+        ("↓", C_ESTIMATE_NEG)
     } else {
-        "↓".to_string()
+        ("→", C_SEPARATORS) // or DarkGray / neutral
     };
 
     // FlashingText system: update Best Block & Miner flashing styles.
@@ -175,7 +178,7 @@ pub fn display_blockchain_info<B: Backend>(
             // 24h arrow
             Span::styled(
                 difficulty_arrow_24h,
-                Style::default().fg(if estimate_24h_difficulty_chng > 0.0 { C_ESTIMATE_POS } else { C_ESTIMATE_NEG }),
+                Style::default().fg(difficulty_color_24h),
             ),
             Span::styled(
                 format!(" {:.2}% ", estimate_24h_difficulty_chng.abs()),
