@@ -330,11 +330,12 @@ pub fn log_error(message: &str) -> io::Result<()> {
     }
 
     // Write entry
+    let _lock = LOG_FILE.lock().unwrap();
+
     let mut file = OpenOptions::new().create(true).append(true).open(log_path)?;
-    let ts = Local::now().format("%Y-%m-%d %H:%M:%S");
+    let ts = Local::now().format("%Y-%m-%d %H:%M:%S %z");
     let entry = format!("[{}] {}\n", ts, message);
 
-    let _lock = LOG_FILE.lock().unwrap();
     file.write_all(entry.as_bytes())
 }
 

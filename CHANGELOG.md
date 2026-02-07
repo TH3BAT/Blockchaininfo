@@ -7,6 +7,31 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
+## **v1.2.8 — Logging & Difficulty UI Cleanup**
+
+### **Improvements**
+
+* **Hardened logging order and clarity**
+
+  * Moved the log mutex to cover timestamp generation and file open/write to ensure
+    consistent ordering when multiple async tasks log concurrently.
+  * Added timezone offset to log timestamps (e.g. `-0600`, `+0000`) to eliminate
+    ambiguity during OS timezone transitions.
+
+* **Fixed epoch difficulty arrow visibility**
+
+  * Aligned epoch difficulty direction arrow gating with the estimate logic.
+  * Replaced confirmation-based gating with `blocks_into_epoch` to ensure the
+    arrow appears consistently once the estimate is shown.
+
+### **Notes**
+
+This release focuses on small but important correctness and observability
+improvements ahead of the v1.3 roadmap work. No changes to consensus logic or
+data collection.
+
+---
+
 ## **v1.2.7 - 2026-02-02**
 
 Fixed

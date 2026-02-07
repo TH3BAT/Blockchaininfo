@@ -89,12 +89,17 @@ pub fn display_blockchain_info<B: Backend>(
     );
 
     // Arrow for epoch diff projection.
-    let difficulty_arrow = if block_info.confirmations < 6 {
-        " ".to_string() // Hidden arrow during N/A period
+
+    let show_epoch_estimate = blocks_into_epoch >= 5;
+
+   let difficulty_arrow = if !show_epoch_estimate {
+        " ".to_string()
     } else if estimate_difficulty_chng > 0.0 {
         "↑".to_string()
-    } else {
+    } else if estimate_difficulty_chng < 0.0 {
         "↓".to_string()
+    } else {
+        "→".to_string() // optional: exact zero
     };
 
     // Arrow for 24-hour diff projection.
