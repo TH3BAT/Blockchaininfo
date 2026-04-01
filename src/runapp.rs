@@ -1328,6 +1328,7 @@ fn render_help_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) {
         " each section for clarity.",
         "",
         " Built for the community",
+        " BCI doesn’t shout. It endures. 🦀",
     ];
 
     let paragraph = Paragraph::new(help_text.join("\n"))

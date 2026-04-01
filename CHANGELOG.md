@@ -7,6 +7,17 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
+## **v1.2.9 - fix: preserve block_history alignment on RPC failure during fetch**
+
+* Handle fetch_full_block_data_by_height errors without early return
+* Insert "RPC Err" entry when miner data cannot be retrieved
+* Prevent Last 20 miner view from drifting under RPC timeouts
+* Maintain one history slot per observed block height
+* Updated dependancies: tokio 1.50.0, futures 0.3.32, once_cell 1.21.4,
+regex 1.12.3, chrono 0.4.44
+
+---
+
 ## **v1.2.8 — Logging & Difficulty UI Cleanup**
 
 ### **Improvements**

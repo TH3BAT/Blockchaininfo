@@ -251,7 +251,15 @@ pub async fn fetch_miner(
 ) -> Result<(), MyError> {
 
     // Always fetch with verbose=2 for miner identification
-    let block = fetch_full_block_data_by_height(config, &current_block).await?;
+    // Always fetch with verbose=2 for miner identification
+    let block = match fetch_full_block_data_by_height(config, current_block).await {
+        Ok(block) => block,
+        Err(_) => {
+            let block_history = BLOCK_HISTORY.write().await;
+            block_history.add_block(Some("RPC Err".to_string()));
+            return Ok(());
+        }
+    };
 
     // Coinbase is always tx[0]
     let coinbase_tx = &block.tx[0];
@@ -291,6 +299,7 @@ pub async fn fetch_miner(
     } else {
         // coinbase parse failed → fallback to wallet or Unknown
         wallet_miner.clone().unwrap_or_else(|| "Unknown".to_string())
+    
     };
 
     // Append into rolling history
