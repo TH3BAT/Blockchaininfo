@@ -725,7 +725,7 @@ loop {
     // Construct last 20 miners and heights vector for the Blockchain section toggle.
     let last20_miners = {
         let h = BLOCK_HISTORY.read().await;
-        h.last_n_with_heights(network_state.last_block_seen, 20)
+        h.last_n_with_heights(20)
     };
     app.last20_miners = last20_miners;
 

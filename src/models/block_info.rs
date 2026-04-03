@@ -442,12 +442,18 @@ pub struct Miner {
     pub wallet: String,
 }
 
+#[derive(Clone)]
+pub struct BlockHistoryEntry {
+    pub height: u64,
+    pub miner: Option<Arc<str>>,
+}
+
 /// Rolling 24-hour miner distribution tracking.
-/// Stores the last 144 block miners.
+/// Stores the last 144 block miners with their heights.
 ///
 /// Used for the Hash Rate Distribution chart and “Last Miner” display.
 pub struct BlockHistory {
-    pub blocks: Mutex<VecDeque<Option<Arc<str>>>>,
+    pub blocks: Mutex<VecDeque<BlockHistoryEntry>>,
 }
 
 impl BlockHistory {
@@ -460,36 +466,39 @@ impl BlockHistory {
 
     /// Return up to the last `n` blocks as (height, miner).
     /// Assumes the most recent entry corresponds to `last_block`.
-    pub fn last_n_with_heights(&self, last_block: u64, n: usize) -> Vec<(u64, Option<Arc<str>>)> {
+    pub fn last_n_with_heights(&self, n: usize) -> Vec<(u64, Option<Arc<str>>)> {
         let blocks = self.blocks.lock().unwrap();
 
         // How many entries do we actually have?
         let k = blocks.len().min(n);
 
         // Take the last k entries (newest at the end)
-        let tail = blocks.iter().rev().take(k);
-
-        // Map index 0 => last_block, index 1 => last_block - 1, etc.
-        tail.enumerate()
-            .map(|(i, miner_opt)| (last_block.saturating_sub(i as u64), miner_opt.clone()))
+        blocks
+            .iter()
+            .rev()
+            .take(k)
+            .map(|entry| (entry.height, entry.miner.clone()))
             .collect()
     }
 
     /// Returns the miner of the most recent block (if known).
     pub fn last_miner(&self) -> Option<Arc<str>> {
         let blocks = self.blocks.lock().unwrap();
-        blocks.back().cloned().flatten()
+        blocks.back().and_then(|entry| entry.miner.clone())
     }
 
     /// Add a miner label for the next block in the rolling window.
-    pub fn add_block(&self, miner: Option<String>) {
+    pub fn add_block(&self, height: u64, miner: Option<String>) {
         let mut blocks = self.blocks.lock().unwrap();
 
         if blocks.len() == 144 {
             blocks.pop_front(); // Maintain fixed-size window
         }
 
-        blocks.push_back(miner.map(|m| Arc::from(m.into_boxed_str())));
+        blocks.push_back(BlockHistoryEntry {
+            height,
+            miner: miner.map(|m| Arc::from(m.into_boxed_str())),
+        });
     }
 
     /// Count block frequency by miner across the 144-block window.
@@ -497,8 +506,10 @@ impl BlockHistory {
         let blocks = self.blocks.lock().unwrap().clone();
         let mut distribution: HashMap<Arc<str>, u64> = HashMap::new();
 
-        for miner in blocks.iter().flatten() {
-            *distribution.entry(miner.clone()).or_insert(0) += 1;
+        for entry in blocks.iter() {
+            if let Some(miner) = &entry.miner {
+                *distribution.entry(miner.clone()).or_insert(0) += 1;
+            }
         }
 
         distribution.into_iter().collect()

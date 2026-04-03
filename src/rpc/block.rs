@@ -256,7 +256,7 @@ pub async fn fetch_miner(
         Ok(block) => block,
         Err(_) => {
             let block_history = BLOCK_HISTORY.write().await;
-            block_history.add_block(Some("RPC Err".to_string()));
+            block_history.add_block(*current_block, Some("RPC Err".to_string()));
             return Ok(());
         }
     };
@@ -304,7 +304,7 @@ pub async fn fetch_miner(
 
     // Append into rolling history
     let block_history = BLOCK_HISTORY.write().await;
-    block_history.add_block(Some(miner.into()));
+    block_history.add_block(*current_block, Some(miner.into()));
 
     Ok(())
 }

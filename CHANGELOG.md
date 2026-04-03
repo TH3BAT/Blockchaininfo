@@ -16,6 +16,14 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 * Updated dependancies: tokio 1.50.0, futures 0.3.32, once_cell 1.21.4,
 regex 1.12.3, chrono 0.4.44
 
+refactor: bind block history to block height and remove derived height logic
+
+* Store block height alongside miner label in BLOCK_HISTORY
+* Remove last_block-based height reconstruction from Last 20 miner view
+* Simplify last_n_with_heights() to return stored (height, miner) pairs
+* Preserve alignment under RPC timeouts and missed block transitions
+* Maintain explicit "RPC Err" entries tied to actual block heights
+
 ---
 
 ## **v1.2.8 — Logging & Difficulty UI Cleanup**
