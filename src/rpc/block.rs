@@ -28,7 +28,7 @@ use crate::models::block_info::{
     BlockInfoFullJsonWrap,
 };
 
-use crate::utils::BLOCK_HISTORY;
+use crate::utils::{BLOCK_HISTORY, log_error};
 use crate::models::miner_tags::PRIMARY_TAGS;
 use crate::consensus::satoshi_math::*;
 
@@ -254,13 +254,18 @@ pub async fn fetch_miner(
     // Always fetch with verbose=2 for miner identification
     let block = match fetch_full_block_data_by_height(config, current_block).await {
         Ok(block) => block,
-        Err(_) => {
+        Err(err) => {
+            let _ = log_error(&format!(
+                "Miner fetch RPC error at height {}: {:?}",
+                current_block, err
+            ));
+
             let block_history = BLOCK_HISTORY.write().await;
             block_history.add_block(*current_block, Some("RPC Err".to_string()));
             return Ok(());
         }
     };
-
+    
     // Coinbase is always tx[0]
     let coinbase_tx = &block.tx[0];
     let coinbase_tx_addresses = coinbase_tx.extract_wallet_addresses();

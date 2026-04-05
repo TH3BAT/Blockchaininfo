@@ -12,6 +12,7 @@ feat: log block height gaps during observation
 * Detect multi-height advances between observed blocks
 * Log missed block count for operator visibility
 * Improve correlation with RPC timeouts and observation gaps
+* log miner fetch RPC errors with block height
 
 ---
 
