@@ -7,6 +7,14 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
+feat: log block height gaps during observation
+
+* Detect multi-height advances between observed blocks
+* Log missed block count for operator visibility
+* Improve correlation with RPC timeouts and observation gaps
+
+---
+
 ## **v1.2.9 - fix: preserve block_history alignment on RPC failure during fetch**
 
 * Handle fetch_full_block_data_by_height errors without early return

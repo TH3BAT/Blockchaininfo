@@ -608,7 +608,17 @@ loop {
         MEMPOOL_DISTRIBUTION_CACHE.read(),
         CHAIN_TIP_CACHE.read(),
     );
+    let last_block = app.last_block.load(Ordering::Relaxed);
 
+    if last_block != 0 && blockchain_info.blocks > last_block + 1 {
+        let missed = blockchain_info.blocks - last_block - 1;
+        let _ = log_error(&format!(
+            "Block gap detected: last seen={}, current={} (missed {} blocks)",
+            last_block,
+            blockchain_info.blocks,
+            missed
+        ));
+    }
     app.last_block.store(blockchain_info.blocks, Ordering::Relaxed);
 
     // ---------------------------------------------------------------------------------------------
