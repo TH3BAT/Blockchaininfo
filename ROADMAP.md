@@ -173,6 +173,44 @@ or estimated.
 
 ---
 
+### **3.6 - On-Demand Hashrate Check (getnetworkhashps)**
+
+Add a keybind to trigger a lightweight popup
+Popup displays:
+    Current estimated hashrate (EH/s)
+    Uses same logic: getnetworkhashps(144, current_height)
+
+Intent:
+Provides an immediate comparison:
+Current state vs. sampled phase progression
+
+Operator can quickly answer:
+
+* Is hashrate rising since earlier phase samples?
+* Is it dropping off mid-epoch?
+* Is current value out of line with recent checkpoints?
+* Add a keybind to trigger a lightweight popup
+* Popup displays:
+* Current estimated hashrate (EH/s)
+
+Design:
+
+* On-demand only (no constant polling)
+* Uses same 144-block window for consistency
+* Minimal UI:
+  * small popup
+  * no history, just “now”
+
+Optional future extension (if it evolves):
+
+* Color hint vs. last phase:
+  * ↑ higher than last sample
+  * ↓ lower than last sample
+* Or simple delta:
+  * +32 EH/s from last phase
+
+---
+
 ## **4. Longer-Term Concepts (Fantasy Stage)**
 
 ### **🌱 Node-to-Node Dashboard Sync**
