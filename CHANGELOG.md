@@ -7,12 +7,37 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
-feat: log block height gaps during observation
+v1.3.0: add epoch hashphase sampling + compress network/mempool UI
 
-* Detect multi-height advances between observed blocks
-* Log missed block count for operator visibility
-* Improve correlation with RPC timeouts and observation gaps
-* log miner fetch RPC errors with block height
+* Introduce epoch-based hashrate sampling using getnetworkhashps
+  * Samples at 10%, 25%, 50%, 75%, 100% of 2016-block cycle
+  * Edge-triggered (no duplicate sampling per phase)
+  * 0% is visual only (no RPC call)
+  * Rolling 5-slot window rendered in header as EH/s
+  * Session-based view (no retroactive reconstruction on startup)
+
+* Extend header with hashphase strip:
+  [---, ---, ---, ---, 1024] EH/s
+
+* Reduce vertical footprint across panels:
+  * Merge Connections In/Out onto single line (preserve flashing In)
+  * Merge Total Bytes Received/Sent onto single line
+  * Merge Average/Median Fee (BTC) onto single line
+
+* Adjust layout spacing to eliminate unused rows after compression
+
+Result:
+
+* More signal in less space
+* Adds intra-epoch hashrate context without increasing noise
+
+* fix: align consensus warning popup with visible chaintips (top 3 only)
+
+* feat: log block height gaps during observation
+  * Detect multi-height advances between observed blocks
+  * Log missed block count for operator visibility
+  * Improve correlation with RPC timeouts and observation gaps
+  * log miner fetch RPC errors with block height
 
 ---
 

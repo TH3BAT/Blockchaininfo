@@ -32,6 +32,7 @@ use crate::rpc::{
     fetch_mempool_distribution,
     fetch_transaction,
     fetch_miner,
+    getnetworkhashps,
 };
 
 use crate::models::errors::MyError;
@@ -87,6 +88,8 @@ use dashmap::DashSet;
 // OnceCell provides a lazy static container.
 use once_cell::sync::Lazy;
 
+use crate::models::chaintips_info::ChainTip;
+
 // Shared caches used across async tasks for concurrency-safe data access.
 use crate::utils::{
     BLOCKCHAIN_INFO_CACHE,
@@ -130,6 +133,10 @@ struct App {
     last_block: Arc<AtomicU64>, // last block to pass to mempool_distro
     show_last20_miners: bool,   // Toggle: Show last 20 blocks / miners.
     last20_miners: Vec<(u64, Option<Arc<str>>)>,
+    hashphase_rates: Vec<f64>, // max 5 entries
+    last_hashphase: Option<u8>,
+    last_percent: f64,
+    hashphase_initialized: bool,
 }
 
 impl App {
@@ -150,6 +157,10 @@ impl App {
             last_block: Arc::new(AtomicU64::new(0)),
             show_last20_miners: false,
             last20_miners: Vec::new(),
+            hashphase_rates: Vec::new(),
+            last_hashphase: None,
+            last_percent: 0.0,
+            hashphase_initialized: false,
         }
     }
 }
@@ -627,6 +638,87 @@ loop {
     let into_epoch = blockchain_info.blocks % 2016;
     let percent = (into_epoch as f64 / 2016.0) * 100.0;
 
+    // -----------------------------------------------------------------------------
+    // HASH PHASE SAMPLING (Epoch-aware hashrate checkpoints)
+    // -----------------------------------------------------------------------------
+    // This logic samples network hashrate at key points within a 2016-block epoch
+    // using `getnetworkhashps(144, height)`.
+    //
+    // Design goals:
+    // - Provide a compact, operator-friendly view of how hashrate evolves *within*
+    //   the current epoch (not a historical reconstruction).
+    // - Avoid noisy or redundant sampling.
+    // - Maintain strict alignment with epoch structure.
+    //
+    // Behavior:
+    // - Sampling occurs only when crossing the following phase thresholds:
+    //     10% · 25% · 50% · 75% · 100%
+    // - Detection is edge-based:
+    //     last_percent < threshold && current_percent >= threshold
+    //   ensuring each phase triggers exactly once.
+    //
+    // - 0% (new epoch) is *visual only*:
+    //     No RPC call is made at 0%.
+    //     The previous epoch’s final sample remains visible until 10% of the new epoch.
+    //
+    // - On startup:
+    //     The current percent is captured as a baseline (last_percent),
+    //     but no retroactive sampling is performed.
+    //     On the next loop pass, if already past a threshold, the current phase
+    //     may populate immediately. Earlier phases remain empty.
+    //     This reflects a “live session” view rather than reconstructing history.
+    //
+    // Data handling:
+    // - Each successful sample pushes a new value into `hashphase_rates`.
+    // - The vector is capped at 5 entries (one per phase):
+    //     oldest entry is dropped when exceeding capacity.
+    // - Values are stored as raw H/s and later rendered as EH/s.
+    //
+    // Result:
+    // - Produces a rolling 5-slot view of hashrate progression across the epoch.
+    // - Example:
+    //     [---, 812, 845, 901, 932] EH/s
+    // -----------------------------------------------------------------------------
+    if !app.hashphase_initialized {
+        app.last_percent = percent;
+        app.hashphase_initialized = true;
+    } else {
+        let thresholds = [10.0, 25.0, 50.0, 75.0, 100.0];
+
+        for &t in &thresholds {
+            if app.last_percent < t && percent >= t {
+                if let Ok(rate) = getnetworkhashps(config, 144, blockchain_info.blocks as i64).await {
+                    app.hashphase_rates.push(rate);
+
+                    if app.hashphase_rates.len() > 5 {
+                        app.hashphase_rates.remove(0);
+                    }
+                }
+            }
+        }
+
+        app.last_percent = percent;
+    }
+  
+    // -----------------------------------------------------------------------------
+    // Update hash phase rates before drawing
+    // -----------------------------------------------------------------------------
+    let current_phase = phase_index(percent);
+
+    if let Some(phase) = current_phase {
+        if app.last_hashphase != Some(phase) {
+            app.last_hashphase = Some(phase);
+
+            if let Ok(rate) = getnetworkhashps(config, 144, blockchain_info.blocks as i64).await {
+                app.hashphase_rates.push(rate);
+
+                if app.hashphase_rates.len() > 5 {
+                    app.hashphase_rates.remove(0);
+                }
+            }
+        }
+    }
+
     // ---------------------------------------------------------------------------------------------
     // Consensus Warning Trigger
     // If any chaintip is a "valid-fork" of length >= 2, show warning.
@@ -634,7 +726,17 @@ loop {
     // ---------------------------------------------------------------------------------------------
     let chaintips_result = &chaintips_info.result;
 
-    for tip in chaintips_result {
+    let mut filtered_tips: Vec<&ChainTip> = chaintips_info
+        .result
+        .iter()
+        .filter(|tip| tip.status == "active" || tip.status == "valid-fork")
+        .collect();
+
+    // Match display ordering: highest height first
+    filtered_tips.sort_by(|a, b| b.height.cmp(&a.height));
+
+    // Only inspect the same 3 tips BCI shows
+    for tip in filtered_tips.into_iter().take(3) {
         if tip.status == "valid-fork" && tip.branchlen >= 2 {
             if app.last_fork_alert_height != Some(tip.height) {
                 app.last_fork_alert_height = Some(tip.height);
@@ -937,8 +1039,8 @@ loop {
                 [
                     Constraint::Length(3),   // Header
                     Constraint::Length(14),  // Blockchain
-                    Constraint::Length(25),  // Mempool
-                    Constraint::Max(18),     // Network
+                    Constraint::Length(24),  // Mempool
+                    Constraint::Max(16),     // Network
                     Constraint::Length(7),   // Consensus Security
                     Constraint::Length(1),   // Footer
                 ]
@@ -953,7 +1055,7 @@ loop {
             let header_block = Block::default().borders(Borders::NONE);
             frame.render_widget(header_block, chunks[0]);
 
-            let header_widget = render_header(percent);
+            let header_widget = render_header(percent, &app.hashphase_rates);
             frame.render_widget(header_widget, chunks[0]);
         }
 
@@ -1398,3 +1500,19 @@ fn render_consensus_warning_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) 
     frame.render_widget(paragraph, container);
 }
 
+
+fn phase_index(percent: f64) -> Option<u8> {
+    if percent < 10.0 {
+        None // 0% zone (no fetch)
+    } else if percent < 25.0 {
+        Some(0)
+    } else if percent < 50.0 {
+        Some(1)
+    } else if percent < 75.0 {
+        Some(2)
+    } else if percent < 100.0 {
+        Some(3)
+    } else {
+        Some(4) // 100%
+    }
+}

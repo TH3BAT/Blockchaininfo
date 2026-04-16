@@ -45,6 +45,8 @@ mod transaction;
 /// Handles building the client for all RPC modules.
 mod client;
 
+mod getnetworkhashps;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Imports for returned model types.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -170,4 +172,16 @@ pub async fn fetch_miner(
     current_block: &u64,
 ) -> Result<(), MyError> {
     block::fetch_miner(config, miners_data, current_block).await
+}
+
+/// Fetch estimated network hashrate (H/s) via `getnetworkhashps`.
+///
+/// Thin wrapper around the RPC module call.
+/// Used for epoch-phase sampling; returns raw H/s (convert to EH/s at render).
+pub async fn getnetworkhashps(
+    config: &RpcConfig,
+    nblocks: i64,
+    height: i64,
+) -> Result<f64, MyError> {
+    getnetworkhashps::getnetworkhashps(config, nblocks, height).await
 }

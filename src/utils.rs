@@ -248,7 +248,7 @@ pub fn estimate_24h_difficulty_change(
 //
 
 /// Render the header block, including the epoch-cycle dot and version.
-pub fn render_header(percent: f64) -> Paragraph<'static> {
+pub fn render_header(percent: f64, rates: &[f64]) -> Paragraph<'static> {
     // Phase glyph (visual epoch indicator)
     let dot = if percent == 0.0 {
         "●" // New epoch (solid circle)
@@ -264,6 +264,19 @@ pub fn render_header(percent: f64) -> Paragraph<'static> {
 
     // We want the first phase change to be at 10%, and the percent is passed already converted.
     let color = if percent < 10.0 { C_HASH_PHASE_NEW } else { C_HASH_PHASE };
+    let rate_display = if rates.is_empty() {
+        "[---, ---, ---, ---, ---] EH/s".to_string()
+    } else {
+        let mut slots = vec!["---".to_string(); 5];
+
+        let start = 5 - rates.len();
+
+        for (i, rate) in rates.iter().enumerate() {
+            slots[start + i] = format_eh(*rate);
+        }
+
+        format!("[{}] EH/s", slots.join(", "))
+    };
 
     Paragraph::new(vec![
         Spans::from(vec![
@@ -273,6 +286,10 @@ pub fn render_header(percent: f64) -> Paragraph<'static> {
         Spans::from(Span::styled(
             format!("v{}", APP_VERSION),
             Style::default().fg(C_APP_VERSION).add_modifier(Modifier::ITALIC),
+        )),
+        Spans::from(Span::styled(
+            rate_display,
+            Style::default().fg(C_APP_VERSION),
         )),
     ])
     .alignment(Alignment::Center)
@@ -463,4 +480,9 @@ pub fn hex_decode(s: &str) -> Result<Vec<u8>, ()> {
         i += 2;
     }
     Ok(out)
+}
+
+/// Format hashrate into human readable format. (EH/s)
+fn format_eh(rate: f64) -> String {
+    format!("{:.0}", rate / 1e18)
 }

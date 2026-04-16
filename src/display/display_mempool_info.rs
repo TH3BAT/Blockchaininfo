@@ -511,17 +511,16 @@ pub fn display_mempool_info<B: Backend>(
         ]),
         Spans::from(vec![
             Span::styled(
-                "  📊 Average Fee (BTC): ",
+                "  📊 Avg Fee: ",
                 Style::default().fg(C_MEMPOOL_DIST_LABELS),
             ),
             Span::styled(
                 format!("{:.8}", distribution.average_fee as f64 / SATS_PER_BTC),
                 Style::default().fg(C_MEMPOOL_VALUES),
             ),
-        ]),
-        Spans::from(vec![
+            Span::raw("   "),
             Span::styled(
-                "  📊 Median Fee (BTC) : ",
+                "Median: ",
                 Style::default().fg(C_MEMPOOL_DIST_LABELS),
             ),
             Span::styled(

@@ -79,8 +79,14 @@ pub fn display_network_info<B: Backend>(
     let connections_in_style = CONNECTIONS_IN_TEXT.lock().unwrap().style();
 
     let connections_in_spans = Spans::from(vec![
-        Span::styled("🔌 Connections in: ", Style::default().fg(C_MAIN_LABELS)),
+        Span::styled("🔌 In: ", Style::default().fg(C_MAIN_LABELS)),
         Span::styled(network_info.connections_in.to_string(), connections_in_style),
+        Span::raw("   "),
+        Span::styled("Out: ", Style::default().fg(C_MAIN_LABELS)),
+        Span::styled(
+            network_info.connections_out.to_string(),
+            Style::default().fg(C_CONNECTIONS_OUT),
+        ),
     ]);
 
     // -----------------------------------------------------------------------
@@ -96,7 +102,7 @@ pub fn display_network_info<B: Backend>(
         .constraints(
             [
                 Constraint::Length(1),  // Header line.
-                Constraint::Length(6),  // Network stats block.
+                Constraint::Length(4),  // Network stats block.
                 Constraint::Min(8),     // Distribution + Sparkline.
             ]
             .as_ref(),
@@ -113,29 +119,20 @@ pub fn display_network_info<B: Backend>(
     // 4. CORE NETWORK STATS
     // -----------------------------------------------------------------------
     // These are presented as vertically stacked Span rows.
+    // -----------------------------------------------------------------------
     let network_content = vec![
         connections_in_spans,
 
         Spans::from(vec![
-            Span::styled("🔗 Connections out: ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled("⬇️ Recv: ", Style::default().fg(C_MAIN_LABELS)),
             Span::styled(
-                network_info.connections_out.to_string(),
-                Style::default().fg(C_CONNECTIONS_OUT),
-            ),
-        ]),
-
-        Spans::from(vec![
-            Span::styled("⬇️ Total Bytes Received: ", Style::default().fg(C_MAIN_LABELS)),
-            Span::styled(
-                format_size(net_totals.totalbytesrecv).to_string(),
+                format_size(net_totals.totalbytesrecv),
                 Style::default().fg(C_MAIN_LABELS),
             ),
-        ]),
-
-        Spans::from(vec![
-            Span::styled("⬆️ Total Bytes Sent: ", Style::default().fg(C_MAIN_LABELS)),
+            Span::raw("   "),
+            Span::styled("⬆️ Sent: ", Style::default().fg(C_MAIN_LABELS)),
             Span::styled(
-                format_size(net_totals.totalbytessent).to_string(),
+                format_size(net_totals.totalbytessent),
                 Style::default().fg(C_MAIN_LABELS),
             ),
         ]),
