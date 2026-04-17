@@ -7,6 +7,10 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
+v1.3.1: fix hashphase sampling logic (single trigger path, reliable final phase)
+
+---
+
 v1.3.0: add epoch hashphase sampling + compress network/mempool UI
 
 * Introduce epoch-based hashrate sampling using getnetworkhashps

@@ -683,10 +683,16 @@ loop {
         app.last_percent = percent;
         app.hashphase_initialized = true;
     } else {
-        let thresholds = [10.0, 25.0, 50.0, 75.0, 100.0];
+        if percent < app.last_percent {
+            app.last_hashphase = None;
+        }
 
-        for &t in &thresholds {
-            if app.last_percent < t && percent >= t {
+        let current_phase = phase_index(percent);
+
+        if let Some(phase) = current_phase {
+            if app.last_hashphase != Some(phase) {
+                app.last_hashphase = Some(phase);
+
                 if let Ok(rate) = getnetworkhashps(config, 144, blockchain_info.blocks as i64).await {
                     app.hashphase_rates.push(rate);
 
@@ -698,25 +704,6 @@ loop {
         }
 
         app.last_percent = percent;
-    }
-  
-    // -----------------------------------------------------------------------------
-    // Update hash phase rates before drawing
-    // -----------------------------------------------------------------------------
-    let current_phase = phase_index(percent);
-
-    if let Some(phase) = current_phase {
-        if app.last_hashphase != Some(phase) {
-            app.last_hashphase = Some(phase);
-
-            if let Ok(rate) = getnetworkhashps(config, 144, blockchain_info.blocks as i64).await {
-                app.hashphase_rates.push(rate);
-
-                if app.hashphase_rates.len() > 5 {
-                    app.hashphase_rates.remove(0);
-                }
-            }
-        }
     }
 
     // ---------------------------------------------------------------------------------------------
