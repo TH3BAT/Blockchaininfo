@@ -687,7 +687,7 @@ loop {
             app.last_hashphase = None;
         }
 
-        let current_phase = phase_index(percent);
+        let current_phase = phase_index(into_epoch);
 
         if let Some(phase) = current_phase {
             if app.last_hashphase != Some(phase) {
@@ -1488,18 +1488,18 @@ fn render_consensus_warning_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) 
 }
 
 
-fn phase_index(percent: f64) -> Option<u8> {
-    if percent < 10.0 {
-        None // 0% zone (no fetch)
-    } else if percent < 25.0 {
+fn phase_index(blocks_into_epoch: u64) -> Option<u8> {
+    if blocks_into_epoch >= 2015 {
+        Some(4) // final block before reset
+    } else if blocks_into_epoch < 202 {
+        None // under 10%
+    } else if blocks_into_epoch < 504 {
         Some(0)
-    } else if percent < 50.0 {
+    } else if blocks_into_epoch < 1008 {
         Some(1)
-    } else if percent < 75.0 {
+    } else if blocks_into_epoch < 1512 {
         Some(2)
-    } else if percent < 100.0 {
-        Some(3)
     } else {
-        Some(4) // 100%
+        Some(3)
     }
 }

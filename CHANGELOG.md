@@ -7,6 +7,16 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
+v1.3.2: hashphase: fix missing 100% sample by aligning final phase with last
+epoch block
+
+* Replace percent-based 100% detection with block-based boundary
+* Treat blocks_into_epoch >= 2015 as final (100%) phase
+* Prevent skipped final sample due to percent never reaching 100.0
+* Keeps phase strip consistent with visual epoch progression
+
+---
+
 v1.3.1: fix hashphase sampling logic (single trigger path, reliable final phase)
 
 ---
