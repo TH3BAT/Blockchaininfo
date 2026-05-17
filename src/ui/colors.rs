@@ -42,6 +42,8 @@ pub const C_CHAIN: Color = Color::Yellow;
 pub const C_MINER: Color = Color::Yellow;
 // *_FLASH colors are used for brief visual emphasis on state change.
 pub const C_MINER_FLASH: Color = Color::LightYellow;
+pub const C_FULLHASHPHASE_FLASH: Color = Color::White;
+pub const C_FULLHASHPHASE: Color = Color::DarkGray;
 
 pub const C_TIME_SINCE_BLOCK: Color = Color::Red;
 pub const C_DIFFICULTY: Color = Color::LightRed;
@@ -84,3 +86,7 @@ pub const C_STATUS_HIGH: Color = Color::Red;
 pub const C_TX_LOOKUP_TXT: Color = Color::Rgb(255, 165, 0);
 pub const C_HELP_TXT: Color = Color::Rgb(255, 180, 80);
 pub const C_CONSENSUS_WARNING_TXT: Color =  Color::Rgb(255, 180, 80);
+
+/// Hashrate strip in header colors
+pub const C_HASHSTRIP_DIM: Color = Color::DarkGray;
+pub const C_HASHSTRIP_HIGHLIGHT: Color = Color::Gray;

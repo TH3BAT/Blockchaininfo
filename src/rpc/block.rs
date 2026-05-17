@@ -64,7 +64,7 @@ pub async fn fetch_block_data_by_height(
         }
         2 => {
             // Approx. block height 24 hours ago (~144 blocks)
-            blocks.saturating_sub((BLOCKS_PER_HOUR * HOURS_PER_DAY) - 1)
+            blocks.saturating_sub((ONE_CHAIN_DAY) - 1)
         }
         _ => {
             return Err(MyError::CustomError(
@@ -436,7 +436,7 @@ fn classify_miner_from_coinbase(tx: &Transaction) -> Option<(String, Option<Stri
                 continue;
             }
 
-            if sig.starts_with("mm") || sig.len() < 3 {
+            if sig.starts_with("mm") || sig.len() < 2 { // OCEAN 2-char minimum.
                 continue;
             }
 

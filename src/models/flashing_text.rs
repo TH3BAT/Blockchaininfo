@@ -41,6 +41,12 @@ lazy_static! {
     pub static ref MINER_TEXT: Mutex<FlashingMiner> = Mutex::new(FlashingMiner::new());
 }
 
+// Global flash tracker for the **full hashphase cycle**.
+lazy_static! {
+    pub static ref FULL_HASHPHASE_CYCLE: Mutex<FlashingHashPhase> = Mutex::new(FlashingHashPhase::new());
+}
+
+
 /// Tracks flashing behavior for numeric dashboard values (u64).
 ///
 /// - `last_value` stores the previously rendered value
@@ -123,5 +129,44 @@ impl FlashingMiner {
             }
         }
         Style::default().fg(C_MINER) // Default
+    }
+}
+
+pub struct FlashingHashPhase {
+    pub last_value: String,              // Previously displayed miner name
+    pub flash_until: Option<Instant>,    // When the flash highlight should expire
+}
+
+impl FlashingHashPhase {
+    /// Creates a new hashphase flash tracker with a blank initial value.
+    pub fn new() -> Self {
+        Self {
+            last_value: " ".to_string(),
+            flash_until: None,
+        }
+    }
+
+    /// Updates the hashphase symbol and triggers flash.
+    ///
+    /// Flash duration: **400 milliseconds**  
+    /// (Miner changes are less frequent, so longer highlight is useful.)
+    pub fn update(&mut self, new_value: String) {
+        if new_value != self.last_value {
+            self.last_value = new_value;
+            self.flash_until = Some(Instant::now() + Duration::from_millis(200));
+        }
+    }
+
+    /// Determines the style for miner text:
+    ///
+    /// - Active flash → **LightYellow**
+    /// - Idle → **Yellow**
+    pub fn style(&self) -> Style {
+        if let Some(flash_until) = self.flash_until {
+            if Instant::now() < flash_until {
+                return Style::default().fg(C_FULLHASHPHASE_FLASH); // Highlight
+            }
+        }
+        Style::default().fg(C_FULLHASHPHASE) // Default
     }
 }

@@ -45,6 +45,7 @@ use crate::display::{
     display_consensus_security_info,
     render_hashrate_distribution_chart,
     draw_last20_miners,
+    draw_miner_trend,
 };
 
 // Misc utilities: header/footer, miner loader, block history tracker.
@@ -52,6 +53,8 @@ use crate::utils::{render_header, render_footer, load_miners_data, BLOCK_HISTORY
 
 // For peer aggregation functions (versions, clients, etc.)
 use crate::models::peer_info::{PeerInfo, NetworkState};
+
+use crate::consensus::satoshi_math::ONE_CHAIN_DAY;
 
 // TUI dependencies
 use tui::{
@@ -77,7 +80,7 @@ use std::sync::atomic::AtomicU8;
 
 use tokio::time::{sleep, Duration, Instant};
 
-use blockchaininfo::utils::log_error;
+use crate::utils::{log_error, format_eh};
 use crate::ui::colors::*;
 
 use crate::models::chaintips_info::ChainTipsJsonWrap;
@@ -106,7 +109,6 @@ use crate::utils::{
 // Atomic flags used for toggles (no locking overhead).
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-
 /// Popup windows used in the application.
 #[derive(PartialEq)]
 pub enum PopupType {
@@ -114,6 +116,17 @@ pub enum PopupType {
     TxLookup,
     Help,
     ConsensusWarning,
+    HashRateOnDemand,
+    Quit
+}
+
+#[derive(Clone)]
+pub struct MinerTrendRow {
+    pub miner: Arc<str>,
+    pub day_count: usize,
+    pub day_delta: isize,
+    pub week_count: usize,
+    pub week_delta: isize,
 }
 
 /// Global application state.
@@ -137,6 +150,12 @@ struct App {
     last_hashphase: Option<u8>,
     last_percent: f64,
     hashphase_initialized: bool,
+    hashrate_on_demand: Option<f64>,
+    hashrate_on_demand_error: Option<String>,
+    hashrate_on_demand_loading: bool,
+    miner_trend_rows: Vec<MinerTrendRow>,
+    show_miner_trend: bool,
+
 }
 
 impl App {
@@ -161,6 +180,12 @@ impl App {
             last_hashphase: None,
             last_percent: 0.0,
             hashphase_initialized: false,
+            hashrate_on_demand: None,
+            hashrate_on_demand_error: None,
+            hashrate_on_demand_loading: false,
+            miner_trend_rows: Vec::new(),
+            show_miner_trend: false,
+
         }
     }
 }
@@ -223,7 +248,6 @@ pub async fn run_app<B: Backend>(
         last_block_seen: 0,
         last_block_seen_at: None,
     };
-
 
     // Draw initial "Initializing…" screen.
     terminal.draw(|frame| {
@@ -693,7 +717,7 @@ loop {
             if app.last_hashphase != Some(phase) {
                 app.last_hashphase = Some(phase);
 
-                if let Ok(rate) = getnetworkhashps(config, 144, blockchain_info.blocks as i64).await {
+                if let Ok(rate) = getnetworkhashps(config, ONE_CHAIN_DAY as i64, blockchain_info.blocks as i64).await {
                     app.hashphase_rates.push(rate);
 
                     if app.hashphase_rates.len() > 5 {
@@ -828,6 +852,101 @@ loop {
     };
     app.last20_miners = last20_miners;
 
+    let (current_day, previous_day, current_week, previous_week) = {
+        let h = BLOCK_HISTORY.read().await;
+
+        (
+            h.miner_counts_for_range(0, ONE_CHAIN_DAY as usize),
+            h.miner_counts_for_range(ONE_CHAIN_DAY as usize, ONE_CHAIN_DAY as usize),
+            h.miner_counts_for_range(0, (7 * ONE_CHAIN_DAY) as usize),
+            h.miner_counts_for_range((7 * ONE_CHAIN_DAY) as usize, (7 * ONE_CHAIN_DAY) as usize),
+        )
+    };
+
+    // =============================================================================================
+    // MINER TREND ANALYSIS (DAY / WEEK COMPARISON)
+    // =============================================================================================
+    //
+    // Build a unified miner set across:
+    // - current chain-day
+    // - previous chain-day
+    // - current chain-week
+    // - previous chain-week
+    //
+    // This ensures miners are included even if they only appear in one comparison window.
+    //
+    let mut miners: std::collections::HashSet<Arc<str>> = std::collections::HashSet::new();
+
+    miners.extend(current_day.keys().cloned());
+    miners.extend(previous_day.keys().cloned());
+    miners.extend(current_week.keys().cloned());
+    miners.extend(previous_week.keys().cloned());
+
+    // Current witnessed miner-history depth.
+    //
+    // NOTE:
+    // Miner trend comparisons require at least:
+    // - 1 current chain-day
+    // - 1 previous chain-day
+    //
+    // Therefore:
+    // 2 × ONE_CHAIN_DAY minimum history is required before rendering trend data.
+    //
+    let history_len = {
+        let h = BLOCK_HISTORY.read().await;
+        h.len()
+    };
+
+    // Not enough witnessed blocks yet to produce meaningful comparisons.
+    if history_len < (2 * ONE_CHAIN_DAY) as usize {
+        app.miner_trend_rows.clear();
+    } else {
+
+        // Build compact miner trend rows:
+        //
+        // day_count   = current rolling chain-day count
+        // day_delta   = current day vs previous day
+        // week_count  = current rolling chain-week count
+        // week_delta  = current week vs previous week
+        //
+        let mut miner_trend_rows: Vec<MinerTrendRow> = miners
+            .into_iter()
+            .map(|miner| {
+                let day_count = *current_day.get(&miner).unwrap_or(&0);
+                let prev_day_count = *previous_day.get(&miner).unwrap_or(&0);
+
+                let week_count = *current_week.get(&miner).unwrap_or(&0);
+                let prev_week_count = *previous_week.get(&miner).unwrap_or(&0);
+
+                MinerTrendRow {
+                    miner,
+                    day_count,
+                    day_delta: day_count as isize - prev_day_count as isize,
+
+                    week_count,
+                    week_delta: week_count as isize - prev_week_count as isize,
+                }
+            })
+            .collect();
+
+        // Sort primarily by current week presence,
+        // then by current day presence.
+        //
+        // This keeps the most active miners at the top of the trend panel.
+        //
+        miner_trend_rows.sort_by(|a, b| {
+            b.week_count
+                .cmp(&a.week_count)
+                .then(b.day_count.cmp(&a.day_count))
+        });
+
+        // Compact TUI view:
+        // only display the top 10 active miners.
+        miner_trend_rows.truncate(10);
+
+        app.miner_trend_rows = miner_trend_rows;
+    }
+
     // =============================================================================================
     // INPUT POLLING — Adaptive Polling Rate
     // =============================================================================================
@@ -863,8 +982,13 @@ loop {
                     app.is_pasting = false;
                 }
 
-                // Begin Shutdown
-                KeyCode::Char('q') if !app.is_pasting => {
+                // Open Quit confirmation popup
+                KeyCode::Char('q') if app.popup == PopupType::None => {
+                    app.popup = PopupType::Quit;
+                }
+
+                // Confirm Quit
+                KeyCode::Char('y') if app.popup == PopupType::Quit => {
                     app.is_exiting = true;
 
                     // Manual layout for one last clean exit frame
@@ -893,6 +1017,11 @@ loop {
                     break;
                 }
 
+                // Cancel quit. Hide popup.
+                 KeyCode::Char('n') if app.popup == PopupType::Quit => {
+                     app.popup = PopupType::None;
+                 }
+
                 // Open Tx Lookup popup
                 KeyCode::Char('t') if app.popup == PopupType::None => {
                     app.popup = PopupType::TxLookup;
@@ -906,13 +1035,45 @@ loop {
                     app.popup = PopupType::Help;
                 }
 
+                // Open Hashrate on Demand popup
+                KeyCode::Char('#') if app.popup == PopupType::None => {
+                    app.popup = PopupType::HashRateOnDemand;
+
+                    app.hashrate_on_demand_loading = true;
+                    app.hashrate_on_demand = None;
+                    app.hashrate_on_demand_error = None;
+
+                    match getnetworkhashps(
+                        &config,
+                        ONE_CHAIN_DAY as i64,
+                        blockchain_info.blocks as i64,
+                    ).await {
+                        Ok(rate) => {
+                            app.hashrate_on_demand = Some(rate);
+                        }
+                        Err(e) => {
+                            app.hashrate_on_demand_error = Some(e.to_string());
+                        }
+                    }
+
+                    app.hashrate_on_demand_loading = false;
+                }
+
+                // Miner Trend toggle
+                KeyCode::Char('m') if app.popup == PopupType::None && !app.show_hash_distribution
+                && !app.show_last20_miners => {
+                    app.show_miner_trend = !app.show_miner_trend;
+                }
+
                 // Hashrate Distribution toggle
-                KeyCode::Char('h') if app.popup == PopupType::None && !app.show_last20_miners => {
+                KeyCode::Char('h') if app.popup == PopupType::None && !app.show_last20_miners 
+                && !app.show_miner_trend => {
                     app.show_hash_distribution = !app.show_hash_distribution;
                 }
 
                 // Last 20 miners and heights toggle
-                KeyCode::Char('l') if app.popup == PopupType::None && !app.show_hash_distribution => {
+                KeyCode::Char('l') if app.popup == PopupType::None && !app.show_hash_distribution 
+                && !app.show_miner_trend => {
                     app.show_last20_miners = !app.show_last20_miners;
                 }
 
@@ -1070,6 +1231,16 @@ loop {
             Span::styled("[L] 20", Style::default().fg(C_KEYTOGGLE_DIM))
         };
 
+        // Build Miner Trend toggle label
+        let miner_trend_label = if app.show_miner_trend {
+            Span::styled(
+                "[M] Trend",
+                Style::default().fg(C_KEYTOGGLE_HIGHLIGHT).add_modifier(Modifier::BOLD),
+            )
+        } else {
+            Span::styled("[M] Trend", Style::default().fg(C_KEYTOGGLE_DIM))
+        };
+
         // Full title for Blockchain block
         let blockchain_title = Spans::from(vec![
             Span::styled(
@@ -1081,6 +1252,8 @@ loop {
             hrd_label,
             Span::raw(" "), // spacing
             last20_label,
+            Span::raw(" "),
+            miner_trend_label,
         ]);
 
         let block_blockchain = Block::default()
@@ -1096,10 +1269,10 @@ loop {
             render_hashrate_distribution_chart(&hash_distribution, frame, chunks[1]);
         
         } else if app.show_last20_miners {
-            // assuming you already computed rows in runapp and have them available here
-            // e.g., `last20_rows: &[(u64, Option<Arc<str>>)]`
             draw_last20_miners(frame, chunks[1], &app.last20_miners);
-        
+        } else if app.show_miner_trend {
+            draw_miner_trend(frame, chunks[1], &app.miner_trend_rows, history_len);
+
         } else {
             if !block_info.is_empty() && !block24_info.is_empty() {
                 let latest_block = &block_info[block_info.len() - 1];
@@ -1267,9 +1440,9 @@ loop {
         // -----------------------------------------------------------------------------------------
         {
             let footer_msg = if app.is_exiting {
-                "Shutting Down Cleanly..."
+                   "Shutting Down Cleanly..."
             } else {
-                "Press 'q' to quit | 't' for Tx Lookup | '?' for Help"
+                "'q' → Quit | 't' → Tx Lookup | '#' → Hashrate | '?' → Help"
             };
 
             let footer_block = Block::default().borders(Borders::NONE);
@@ -1295,6 +1468,14 @@ loop {
 
             PopupType::ConsensusWarning => {
                 render_consensus_warning_popup(frame, &app);
+            }
+
+            PopupType::HashRateOnDemand => {
+                render_hashrate_on_demand_popup(frame, &app);
+            }
+
+            PopupType::Quit => {
+                render_quit_popup(frame, &mut app);
             }
         }
 
@@ -1397,14 +1578,53 @@ fn render_tx_lookup_popup<B: Backend>(frame: &mut Frame<B>, app: &mut App) {
     );
 }
 
+// =================================================================================================
+// POPUP: HASHRATE ON DEMAND PANEL
+// =================================================================================================
+/// Draws the Hashrate popup showing current 144-block network hashrate.
+fn render_hashrate_on_demand_popup<B: Backend>(frame: &mut Frame<B>, app: &App) {
+    let popup_area = centered_rect(54, 10, frame.size());
 
+    frame.render_widget(Clear, popup_area);
+
+    // Yellow border/title
+    let popup = Block::default()
+        .title("Hashrate on Demand (Esc to close)")
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(Color::Yellow))
+        .style(Style::default().fg(Color::Yellow));
+
+    let text = if app.hashrate_on_demand_loading {
+        vec![Spans::from("Fetching current 144-block network hashrate...")]
+    } else if let Some(rate) = app.hashrate_on_demand {
+        vec![
+            Spans::from(" "),
+            Spans::from(format!("Window: 144 blocks")),
+            Spans::from(format!("Estimated Network Rate: {} EH/s", format_eh(rate))),
+            Spans::from(" ")
+        ]
+    } else if let Some(err) = &app.hashrate_on_demand_error {
+        vec![Spans::from(format!("RPC error: {}", err))]
+    } else {
+        vec![Spans::from("Press # to fetch hashrate.")]
+    };
+
+    // Orange text inside
+    let paragraph = Paragraph::new(text)
+        .style(Style::default().fg(C_HELP_TXT))
+        .block(popup)
+        .alignment(Alignment::Center)
+        .wrap(Wrap { trim: true });
+
+    frame.render_widget(paragraph, popup_area);
+}
 
 // =================================================================================================
 // POPUP: HELP PANEL
 // =================================================================================================
 /// Draws the Help popup showing global shortcuts and section descriptions.
 fn render_help_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) {
-    let popup_area = centered_rect(80, 35, frame.size());
+    let popup_area = centered_rect(75, 36, frame.size());
     frame.render_widget(Clear, popup_area);
 
     // Multi-line help text
@@ -1414,6 +1634,7 @@ fn render_help_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) {
         " ─────────────────────────",
         "  Q     Quit application",
         "  T     Transaction lookup",
+        "  #     Estimated hashrate",
         "  ESC   Close panels",
         "",
         " DASHBOARD SECTIONS",
@@ -1446,6 +1667,37 @@ fn render_help_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) {
     frame.render_widget(paragraph, container);
 }
 
+
+// =================================================================================================
+// POPUP: QUIT PANEL
+// =================================================================================================
+/// Draws the Quit popup to confirm.
+fn render_quit_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) {
+    let popup_area = centered_rect(54, 9, frame.size());
+    frame.render_widget(Clear, popup_area);
+
+    // Multi-line help text
+    let help_text = vec![
+        "",
+        "Confirm shutdown? (y/n)",
+        ""
+    ];
+
+    let paragraph = Paragraph::new(help_text.join("\n"))
+        .alignment(Alignment::Center)
+        .style(Style::default().fg(C_MAIN_LABELS))
+        .wrap(Wrap { trim: false });
+
+    let block = Block::default()
+        .title("Quit (Press Esc to go back)")
+        .borders(Borders::ALL)
+        .style(Style::default().fg(Color::Yellow));
+
+    let container = block.inner(popup_area);
+
+    frame.render_widget(block, popup_area);
+    frame.render_widget(paragraph, container);
+}
 
 
 // =================================================================================================
@@ -1487,10 +1739,25 @@ fn render_consensus_warning_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) 
     frame.render_widget(paragraph, container);
 }
 
-
+/// Convert the current epoch position into a hashphase slot index.
+///
+/// Hashphase sampling occurs at:
+/// - 10%   → slot 0
+/// - 25%   → slot 1
+/// - 50%   → slot 2
+/// - 75%   → slot 3
+/// - 100%  → slot 4
+///
+/// The epoch boundary is represented by `blocks_into_epoch == 0`,
+/// because Bitcoin block height modulo 2016 resets to zero at the
+/// retarget boundary.
+///
+/// Returns:
+/// - `None` before the first 10% threshold
+/// - `Some(0..=4)` for active hashphase sampling zones
 fn phase_index(blocks_into_epoch: u64) -> Option<u8> {
-    if blocks_into_epoch >= 2015 {
-        Some(4) // final block before reset
+    if blocks_into_epoch == 0 {
+        Some(4) // 100%: final sampled block at epoch boundary.
     } else if blocks_into_epoch < 202 {
         None // under 10%
     } else if blocks_into_epoch < 504 {

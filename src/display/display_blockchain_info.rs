@@ -6,7 +6,6 @@
 //
 // No RPC logic lives here — this is pure UI rendering.
 //
-
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect, Alignment},
@@ -26,6 +25,7 @@ use crate::models::flashing_text::{BEST_BLOCK_TEXT, MINER_TEXT};
 use crate::consensus::satoshi_math::*;
 use std::sync::Arc;
 use unicode_width::UnicodeWidthStr;
+use crate::runapp::MinerTrendRow;
 
 /// Renders the Blockchain section of the dashboard.
 ///
@@ -264,10 +264,10 @@ pub fn render_hashrate_distribution_chart<B: Backend>(
 
     // Use to show block representation that replaces static '24 hrs' time.
     let window_blocks: u64 = distribution.iter().map(|entry| entry.1).sum();
-    let window_display = if window_blocks < (BLOCKS_PER_HOUR * HOURS_PER_DAY) {
-        format!("{}/{} blks", window_blocks, (BLOCKS_PER_HOUR * HOURS_PER_DAY))
+    let window_display = if window_blocks < (ONE_CHAIN_DAY) {
+        format!("{}/{} blks", window_blocks, (ONE_CHAIN_DAY))
     } else {
-        format!("{} blks", (BLOCKS_PER_HOUR * HOURS_PER_DAY))
+        format!("{} blks", (ONE_CHAIN_DAY))
     };
 
     let chunks = Layout::default()
@@ -448,4 +448,139 @@ pub fn draw_last20_miners<B: Backend>(
     frame.render_widget(right_para, cols[1]);
 }
 
+/// Draw the Miner Trend panel inside the Blockchain section.
+///
+/// This view compares miner activity across rolling chain-time windows:
+/// - current chain-day vs previous chain-day
+/// - current chain-week vs previous chain-week
+///
+/// Rows are precomputed in `runapp` and passed in through `rows`.
+/// The renderer intentionally stays display-only:
+/// it does not calculate miner counts or inspect block history directly.
+///
+/// If no rows are available, the panel shows a collection message instead.
+/// This usually means BCI has not yet witnessed enough blocks to produce
+/// meaningful trend comparisons.
+pub fn draw_miner_trend<B: Backend>(
+    frame: &mut Frame<B>,
+    area: Rect,
+    rows: &[MinerTrendRow],
+    len: usize,
+) {
+    // Match the interior spacing used by other Blockchain subpanels.
+    let inner = Rect {
+        x: area.x + 1,
+        y: area.y + 1,
+        width: area.width.saturating_sub(2),
+        height: area.height.saturating_sub(2),
+    };
 
+    // Header + body layout.
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Length(2), Constraint::Min(1)].as_ref())
+        .split(inner);
+
+    let header = Paragraph::new(Spans::from(vec![
+        Span::styled("Miner Trend", Style::default().add_modifier(Modifier::BOLD)),
+        Span::raw("  "),
+        Span::raw("(current vs previous chain day/week)"),
+    ]))
+    .alignment(Alignment::Center)
+    .block(Block::default().borders(Borders::NONE))
+    .wrap(Wrap { trim: true });
+
+    frame.render_widget(header, chunks[0]);
+    
+    // Do not show partial/early trend math.
+    // Miner trend rows are only populated once enough witnessed blocks exist.
+    if rows.is_empty() {
+        let required = (2 * ONE_CHAIN_DAY) as usize;
+        let collected = len.min(required);
+
+        let msg = Paragraph::new(vec![
+            Spans::from(vec![
+                Span::styled(
+                    "Collecting miner trend data...",
+                    Style::default().fg(C_MAIN_LABELS),
+                ),
+            ]),
+            Spans::from(vec![
+                Span::styled(
+                    format!("Witnessed blocks: {} / {}", collected, required),
+                    Style::default().fg(C_MAIN_LABELS),
+                ),
+            ]),
+        ])
+        .alignment(Alignment::Center)
+        .block(Block::default().borders(Borders::NONE))
+        .wrap(Wrap { trim: true });
+
+        frame.render_widget(msg, chunks[1]);
+        return;
+    }
+
+    let mut lines: Vec<Spans> = Vec::new();
+
+    // Compact fixed-width table header.
+    lines.push(Spans::from(vec![
+        Span::styled("Miner", Style::default().add_modifier(Modifier::BOLD)),
+        Span::raw("              "),
+        Span::styled("Day Δ", Style::default().add_modifier(Modifier::BOLD)),
+        Span::raw("      "),
+        Span::styled("Week Δ", Style::default().add_modifier(Modifier::BOLD)),
+    ]));
+
+    let week_style = if len < ONE_HASHPHASE_CYCLE as usize {
+        Style::default().fg(Color::DarkGray)
+    } else {
+        Style::default().fg(C_MAIN_LABELS)
+    };
+    
+    // Render top 10 active miners only to preserve TUI readability.
+    for row in rows.iter().take(10) {
+        let miner = truncate_miner(&row.miner, 16);
+
+        let day_delta = format_delta(row.day_delta);
+        let week_delta = format_delta(row.week_delta);
+
+        lines.push(Spans::from(vec![
+            Span::styled(format!("{:<16}", miner), Style::default().fg(C_MAIN_LABELS)),
+            Span::raw("  "),
+            Span::styled(
+                format!("{:>3} {}", row.day_count, day_delta),
+                Style::default().fg(C_MAIN_LABELS),
+            ),
+            Span::raw("    "),
+            Span::styled(
+                format!("{:>4} {}", row.week_count, week_delta),
+                week_style,
+            ),
+        ]));
+    }
+
+    let body = Paragraph::new(lines)
+        .alignment(Alignment::Left)
+        .block(Block::default().borders(Borders::NONE))
+        .wrap(Wrap { trim: true });
+
+    frame.render_widget(body, chunks[1]);
+}
+
+fn format_delta(delta: isize) -> String {
+    if delta > 0 {
+        format!("+{}", delta)
+    } else {
+        delta.to_string()
+    }
+}
+
+fn truncate_miner(miner: &str, max: usize) -> String {
+    if miner.chars().count() <= max {
+        miner.to_string()
+    } else {
+        let mut s: String = miner.chars().take(max.saturating_sub(1)).collect();
+        s.push('…');
+        s
+    }
+}

@@ -7,6 +7,74 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
+v1.4.0-beta - 05-17-2026
+Added:
+
+Miner Trend Observability
+
+* Added new [M] Trend Blockchain panel.
+* Added rolling miner trend comparisons:
+  * current chain-day vs previous chain-day
+  * current chain-week vs previous chain-week
+* Added progressive witnessed-block collection display.
+* Added compact top-miner trend table optimized for terminal layouts.
+* Added shared MinerTrendRow type module.
+
+Hashrate On Demand
+
+* Added # popup for estimated 144-block network hashrate.
+* Added loading/error state rendering.
+* Added centered popup formatting + semantic styling.
+
+Quit Confirmation
+
+* Added Quit confirmation popup:
+  * q → open popup
+  * y → confirm shutdown
+  * n / Esc → cancel
+
+Semantic Color Controls
+
+* Added dedicated hashstrip/full-hashphase semantic color constants:
+  * C_HASHSTRIP_DIM
+  * C_HASHSTRIP_HIGHLIGHT
+  * C_FULLHASHPHASE_FLASH
+  * C_FULLHASHPHASE
+
+Changed:
+
+Hashphase Cycle System
+
+* Stabilized hashphase sampling logic.
+* Corrected 100% phase detection using modulo-zero epoch boundary.
+* Added full hashphase flash lifecycle:
+  * bright white flash at epoch completion
+  * settles into dark gray completed state
+* Added newest-slot highlighting for rolling EH/s header strip.
+* Added ONE_HASHPHASE_CYCLE semantic alias.
+
+BlockHistory
+
+* Expanded BlockHistory retention window to support epoch-scale miner observation.
+* Reduced unnecessary cloning in miner distribution path.
+
+Help / Footer
+
+* Slimmed Help popup layout.
+* Added # Estimated hashrate shortcut documentation.
+* Simplified footer command display.
+
+Improved
+
+* Improved semantic separation of UI colors.
+* Improved popup spacing/alignment consistency.
+* Improved trend-system documentation.
+* Improved epoch/hashphase terminology consistency.
+* Improved defensive handling using saturating_sub().
+* Improved overall operator pacing and temporal observability.
+
+---
+
 v1.3.2: hashphase: fix missing 100% sample by aligning final phase with last
 epoch block
 

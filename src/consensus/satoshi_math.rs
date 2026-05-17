@@ -41,6 +41,9 @@ pub const BLOCKS_PER_HOUR: u64 = 6;
 /// Hours per day.
 pub const HOURS_PER_DAY: u64 = 24;
 
+/// Blocks per day.
+pub const ONE_CHAIN_DAY: u64 = BLOCKS_PER_HOUR * HOURS_PER_DAY;
+
 /// Length of the difficulty period in days.
 pub const DIFFICULTY_PERIOD_DAYS: u64 = 14;
 
@@ -48,6 +51,10 @@ pub const DIFFICULTY_PERIOD_DAYS: u64 = 14;
 /// (6 × 24 × 14 = 2016)
 pub const DIFFICULTY_ADJUSTMENT_INTERVAL: u64 =
     BLOCKS_PER_HOUR * HOURS_PER_DAY * DIFFICULTY_PERIOD_DAYS;
+
+/// One full BCI hashphase observation cycle (2016 blocks).
+/// Semantically aligned with Bitcoin's difficulty adjustment interval.
+pub const ONE_HASHPHASE_CYCLE: u64 = DIFFICULTY_ADJUSTMENT_INTERVAL;
 
 // -------------------------------------------------------------
 // Notes:

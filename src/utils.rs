@@ -43,6 +43,7 @@ use crate::models::network_totals::NetTotals;
 use crate::models::block_info::{BlockHistory, MinersData};
 use crate::consensus::satoshi_math::*;
 use crate::ui::colors::*;
+use crate::models::flashing_text::FULL_HASHPHASE_CYCLE;
 
 //
 // ────────────────────────────────────────────────────────────────────────────────
@@ -262,35 +263,64 @@ pub fn render_header(percent: f64, rates: &[f64]) -> Paragraph<'static> {
         "◕"
     };
 
+    FULL_HASHPHASE_CYCLE.lock().unwrap().update(dot.to_string());
+    let hashphase_style = FULL_HASHPHASE_CYCLE.lock().unwrap().style();
+
     // We want the first phase change to be at 10%, and the percent is passed already converted.
     let color = if percent < 10.0 { C_HASH_PHASE_NEW } else { C_HASH_PHASE };
-    let rate_display = if rates.is_empty() {
-        "[---, ---, ---, ---, ---] EH/s".to_string()
+    
+    let dot_style = if dot == "●" {
+        hashphase_style
     } else {
-        let mut slots = vec!["---".to_string(); 5];
-
-        let start = 5 - rates.len();
-
-        for (i, rate) in rates.iter().enumerate() {
-            slots[start + i] = format_eh(*rate);
-        }
-
-        format!("[{}] EH/s", slots.join(", "))
+        Style::default().fg(color)
     };
+
+    let mut slots = vec!["---".to_string(); 5];
+
+    let start = 5usize.saturating_sub(rates.len());
+
+    for (i, rate) in rates.iter().enumerate() {
+        slots[start + i] = format_eh(*rate);
+    }
+
+    let last_index = slots.iter().rposition(|s| s != "---");
+
+    let mut rate_spans = vec![
+        Span::styled("[", Style::default().fg(C_HASHSTRIP_DIM))];
+
+    for (i, slot) in slots.iter().enumerate() {
+        let is_last_populated = Some(i) == last_index;
+
+        let style = if is_last_populated {
+            Style::default().fg(C_HASHSTRIP_HIGHLIGHT)
+        } else {
+            Style::default().fg(C_HASHSTRIP_DIM)
+        };
+
+        rate_spans.push(Span::styled(slot.clone(), style));
+
+        if i < slots.len() - 1 {
+            rate_spans.push(Span::styled(
+                ", ",
+                Style::default().fg(C_HASHSTRIP_DIM),
+            ));
+        }
+    }
+    rate_spans.push(Span::styled(
+        "] EH/s",
+        Style::default().fg(C_HASHSTRIP_DIM),
+    ));
 
     Paragraph::new(vec![
         Spans::from(vec![
             Span::styled("₿lockChainInfo ", Style::default().fg(C_APP_TITLE)),
-            Span::styled(dot, Style::default().fg(color)),
+            Span::styled(dot, dot_style),
         ]),
         Spans::from(Span::styled(
             format!("v{}", APP_VERSION),
             Style::default().fg(C_APP_VERSION).add_modifier(Modifier::ITALIC),
         )),
-        Spans::from(Span::styled(
-            rate_display,
-            Style::default().fg(C_APP_VERSION),
-        )),
+        Spans::from(rate_spans),
     ])
     .alignment(Alignment::Center)
     .block(Block::default().borders(Borders::NONE))
@@ -483,6 +513,6 @@ pub fn hex_decode(s: &str) -> Result<Vec<u8>, ()> {
 }
 
 /// Format hashrate into human readable format. (EH/s)
-fn format_eh(rate: f64) -> String {
+pub fn format_eh(rate: f64) -> String {
     format!("{:.0}", rate / 1e18)
 }

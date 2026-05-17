@@ -460,7 +460,7 @@ impl BlockHistory {
     /// Create an empty 144-block rolling window.
     pub fn new() -> Self {
         BlockHistory {
-            blocks: Mutex::new(VecDeque::with_capacity((BLOCKS_PER_HOUR * HOURS_PER_DAY) as usize)),
+            blocks: Mutex::new(VecDeque::with_capacity(ONE_HASHPHASE_CYCLE as usize)),
         }
     }
 
@@ -481,6 +481,31 @@ impl BlockHistory {
             .collect()
     }
 
+    pub fn miner_counts_for_range(
+        &self,
+        start_from_end: usize,
+        len: usize,
+    ) -> HashMap<Arc<str>, usize> {
+        let blocks = self.blocks.lock().unwrap();
+
+        let end = blocks.len().saturating_sub(start_from_end);
+        let start = end.saturating_sub(len);
+
+        blocks
+            .iter()
+            .skip(start)
+            .take(end.saturating_sub(start))
+            .filter_map(|entry| entry.miner.clone())
+            .fold(HashMap::new(), |mut acc, miner| {
+                *acc.entry(miner).or_insert(0) += 1;
+                acc
+            })
+    }
+
+    pub fn len(&self) -> usize {
+        self.blocks.lock().unwrap().len()
+    }
+
     /// Returns the miner of the most recent block (if known).
     pub fn last_miner(&self) -> Option<Arc<str>> {
         let blocks = self.blocks.lock().unwrap();
@@ -491,7 +516,7 @@ impl BlockHistory {
     pub fn add_block(&self, height: u64, miner: Option<String>) {
         let mut blocks = self.blocks.lock().unwrap();
 
-        if blocks.len() == 144 {
+        if blocks.len() == ONE_HASHPHASE_CYCLE as usize {
             blocks.pop_front(); // Maintain fixed-size window
         }
 
@@ -501,12 +526,17 @@ impl BlockHistory {
         });
     }
 
-    /// Count block frequency by miner across the 144-block window.
+    /// Return miner distribution for the most recent rolling chain-day.
+    ///
+    /// Uses only the latest ONE_CHAIN_DAY blocks even though the underlying
+    /// BlockHistory buffer may retain a larger epoch-sized history window.
     pub fn get_miner_distribution(&self) -> Vec<(Arc<str>, u64)> {
-        let blocks = self.blocks.lock().unwrap().clone();
+        let blocks = self.blocks.lock().unwrap();
+
         let mut distribution: HashMap<Arc<str>, u64> = HashMap::new();
 
-        for entry in blocks.iter() {
+        // Only inspect the most recent rolling chain-day window.
+        for entry in blocks.iter().rev().take(ONE_CHAIN_DAY as usize) {
             if let Some(miner) = &entry.miner {
                 *distribution.entry(miner.clone()).or_insert(0) += 1;
             }

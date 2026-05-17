@@ -47,6 +47,7 @@ use crate::models::network_totals::NetTotals;
 
 use std::collections::VecDeque;
 use std::sync::Arc;
+use crate::runapp::MinerTrendRow;
 
 /// Render the `[Blockchain]` section: block metadata, difficulty epoch,
 /// verification progress, latest miner, etc.
@@ -99,6 +100,20 @@ pub fn draw_last20_miners<B: Backend>(
         frame, 
         area, 
         rows,
+    );
+}
+
+pub fn draw_miner_trend<B: Backend>(
+    frame: &mut Frame<B>,
+    area: Rect,
+    rows: &[MinerTrendRow],
+    len: usize,
+) {
+    let _ = display_blockchain_info::draw_miner_trend(
+        frame, 
+        area, 
+        rows,
+        len,
     );
 }
 
