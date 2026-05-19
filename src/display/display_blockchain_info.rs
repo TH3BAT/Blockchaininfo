@@ -522,13 +522,22 @@ pub fn draw_miner_trend<B: Backend>(
 
     let mut lines: Vec<Spans> = Vec::new();
 
-    // Compact fixed-width table header.
+   // Compact fixed-width table header.
     lines.push(Spans::from(vec![
-        Span::styled("Miner", Style::default().add_modifier(Modifier::BOLD)),
-        Span::raw("              "),
-        Span::styled("Day Δ", Style::default().add_modifier(Modifier::BOLD)),
-        Span::raw("      "),
-        Span::styled("Week Δ", Style::default().add_modifier(Modifier::BOLD)),
+        Span::styled(
+            format!("{:<16}", "Miner"),
+            Style::default().add_modifier(Modifier::BOLD),
+        ),
+        Span::raw("  "),
+        Span::styled(
+            format!("{:>5} {:>4}", "Day", "Δ"),
+            Style::default().add_modifier(Modifier::BOLD),
+        ),
+        Span::raw("    "),
+        Span::styled(
+            format!("{:>7} {:>4}", "Week", "Δ"),
+            Style::default().add_modifier(Modifier::BOLD),
+        ),
     ]));
 
     let week_style = if len < ONE_HASHPHASE_CYCLE as usize {
