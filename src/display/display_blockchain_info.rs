@@ -545,15 +545,15 @@ pub fn draw_miner_trend<B: Backend>(
         let week_delta = format_delta(row.week_delta);
 
         lines.push(Spans::from(vec![
-            Span::styled(format!("{:<16}", miner), Style::default().fg(C_MAIN_LABELS)),
+            Span::styled(format!("{:<16}", miner), Style::default().fg(C_APP_TITLE)),
             Span::raw("  "),
             Span::styled(
-                format!("{:>3} {}", row.day_count, day_delta),
+                format!("{:>5} {:>4}", row.day_count, day_delta),
                 Style::default().fg(C_MAIN_LABELS),
             ),
             Span::raw("    "),
             Span::styled(
-                format!("{:>4} {}", row.week_count, week_delta),
+                format!("{:>7} {:>4}", row.week_count, week_delta),
                 week_style,
             ),
         ]));
