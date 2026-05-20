@@ -215,7 +215,7 @@ Optional future extension (if it evolves):
 
 ---
 
-### **3.7 - Economic Flow / Value Pressure Metrics
+### **3.7 - Economic Flow / Value Pressure Metrics**
 
 * Explore rolling BTC-value metrics within mempool windows
   * Potential metrics:
