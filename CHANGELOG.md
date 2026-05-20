@@ -7,6 +7,20 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
+v1.4.0-beta - 05-19-2026
+Fixed:
+
+* Miner trend panel now sorts by the 144-block day window
+  during 2016-block week trailer warm-up.
+* Week-based sorting automatically activates once the
+  full trailer window is populated.
+* Added deterministic miner-name tie breakers to prevent
+  row jitter when counts are equal.
+* Improved trend panel visual stability and initialization
+  consistency for operators.
+
+---
+
 v1.4.0-beta - 05-17-2026
 Added:
 
