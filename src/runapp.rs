@@ -54,7 +54,7 @@ use crate::utils::{render_header, render_footer, load_miners_data, BLOCK_HISTORY
 // For peer aggregation functions (versions, clients, etc.)
 use crate::models::peer_info::{PeerInfo, NetworkState};
 
-use crate::consensus::satoshi_math::ONE_CHAIN_DAY;
+use crate::consensus::satoshi_math::{ONE_CHAIN_DAY, ONE_HASHPHASE_CYCLE};
 
 // TUI dependencies
 use tui::{
@@ -929,17 +929,21 @@ loop {
             })
             .collect();
 
-        // Sort primarily by current week presence,
-        // then by current day presence.
-        //
-        // This keeps the most active miners at the top of the trend panel.
-        //
-        miner_trend_rows.sort_by(|a, b| {
-            b.week_count
-                .cmp(&a.week_count)
-                .then(b.day_count.cmp(&a.day_count))
-        });
-
+        // During week-window warm-up, sort by the mature 144-block day window.
+        // Once the 2016-block trailer is fully populated, promote week sorting.
+        if history_len < ONE_HASHPHASE_CYCLE as usize {
+            miner_trend_rows.sort_by(|a, b| {
+                b.day_count
+                    .cmp(&a.day_count)
+                    .then(b.week_count.cmp(&a.week_count))
+            });
+        } else {
+            miner_trend_rows.sort_by(|a, b| {
+                b.week_count
+                    .cmp(&a.week_count)
+                    .then(b.day_count.cmp(&a.day_count))
+            });
+        }
         // Compact TUI view:
         // only display the top 10 active miners.
         miner_trend_rows.truncate(10);
