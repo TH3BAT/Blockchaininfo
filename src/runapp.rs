@@ -936,12 +936,14 @@ loop {
                 b.day_count
                     .cmp(&a.day_count)
                     .then(b.week_count.cmp(&a.week_count))
+                    .then_with(|| a.miner.cmp(&b.miner))
             });
         } else {
             miner_trend_rows.sort_by(|a, b| {
                 b.week_count
                     .cmp(&a.week_count)
                     .then(b.day_count.cmp(&a.day_count))
+                    .then_with(|| a.miner.cmp(&b.miner))
             });
         }
         // Compact TUI view:
