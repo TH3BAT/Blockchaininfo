@@ -140,6 +140,8 @@ A simple archival feature for node operators.
 
 ### **🔥 3.5 — 30 Chain-Day Miner Trend (Block-Based Momentum)**
 
+Implemented in 1.4.0-beta
+
 A rolling 30 chain-day miner trend view based on actual blocks rewarded (144 blocks
 = 1 chain-day).
 
@@ -174,6 +176,8 @@ or estimated.
 ---
 
 ### **3.6 - On-Demand Hashrate Check (getnetworkhashps)**
+
+Implemented in 1.3.0
 
 Add a keybind to trigger a lightweight popup
 Popup displays:
@@ -210,6 +214,19 @@ Optional future extension (if it evolves):
   * +32 EH/s from last phase
 
 ---
+
+### **3.7 - Economic Flow / Value Pressure Metrics
+
+* Explore rolling BTC-value metrics within mempool windows
+  * Potential metrics:
+    * Total BTC awaiting confirmation
+    * BTC competing for next block
+    * Median BTC per transaction
+    * BTC distribution across fee-rate buckets
+    * Rolling BTC cleared per block
+  * Intended as observational/economic context rather than forensic analysis
+  * Could correlate with hashrate breathing, miner distribution, and fee urgency
+    windows
 
 ## **4. Longer-Term Concepts (Fantasy Stage)**
 
