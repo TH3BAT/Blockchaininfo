@@ -57,6 +57,9 @@ pub const C_HASHRATE_CHART_VALUES: Color = Color::White;
 pub const C_LAST20_HEIGHT_LABEL: Color = Color::Cyan;
 pub const C_LAST20_MINER_LABEL: Color = Color::Gray;
 
+pub const C_MINER_TREND_MINER_LABEL: Color = Color::Cyan;
+pub const C_MINER_TREND_METRIC_LABEL: Color = Color::Gray;
+
 /// Mempool
 pub const C_MEMPOOL_DIST_LABELS: Color = Color::Yellow;
 pub const C_MEMPOOL_USAGE_GAUGE_FG: Color = Color::DarkGray;

@@ -182,7 +182,7 @@ pub fn display_mempool_info<B: Backend>(
     // Build the "📊 Transactions: N" line.
     // Optional dust-free decoration is appended if the toggle is ON.
     let mut spans: Vec<Span> = vec![
-        Span::styled("📊 Transactions: ", Style::default().fg(C_MAIN_LABELS)),
+        Span::styled("📊 Transactions: ", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
         Span::styled(
             mempool_info.size.to_formatted_string(&Locale::en),
             transaction_style,
@@ -255,20 +255,34 @@ pub fn display_mempool_info<B: Backend>(
 
         // Memory usage breakdown: current vs max.
         Spans::from(vec![
-            Span::styled("💾 Memory: ", Style::default().fg(C_MAIN_LABELS)),
             Span::styled(
-                format!("{} ", mempool_size_in_memory),
+                "💾 Memory: ",
+                Style::default()
+                    .fg(C_MAIN_LABELS)
+                    .add_modifier(Modifier::DIM),
+            ),
+
+            Span::styled(
+                format!("{}", mempool_size_in_memory),
                 mempool_size_in_memory_color,
             ),
+
             Span::styled(
-                format!("/ {}", max_mempool_size_in_memory),
+                " / ",
+                Style::default()
+                    .fg(C_MAIN_LABELS)
+                    .add_modifier(Modifier::DIM),
+            ),
+
+            Span::styled(
+                format!("{}", max_mempool_size_in_memory),
                 Style::default().fg(C_MEMPOOL_VALUES),
             ),
         ]),
 
         // Total fees currently sitting in the mempool (BTC).
         Spans::from(vec![
-            Span::styled("💰 Total Fees: ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled("💰 Total Fees: ", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
             Span::styled(
                 format!("{:.8}", mempool_info.total_fee),
                 Style::default().fg(C_MEMPOOL_VALUES),
@@ -277,19 +291,19 @@ pub fn display_mempool_info<B: Backend>(
 
         // Local node minimum relay fee (vsats/vByte).
         Spans::from(vec![
-            Span::styled("⚖️ Min Transaction Fee: ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled("⚖️ Min Transaction Fee: ", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
             Span::styled(
                 min_relay_fee_vsats.to_formatted_string(&Locale::en),
                 Style::default().fg(Color::Yellow),
             ),
-            Span::styled(" vSats/vByte", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled(" vSats/vByte", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
         ]),
 
         // -------------------------------------------------------------------
         // SIZE DISTRIBUTION
         // -------------------------------------------------------------------
         Spans::from(vec![
-            Span::styled("📏 Size Distribution ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled("📏 Size Distribution ", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
             // Optional "dust-free" tag is commented out here; preserved for future use.
             // Span::styled("dᵤₛₜ₋fᵣₑₑ", Style::default().fg(Color::DarkGray)
             //    .add_modifier(Modifier::ITALIC)),
@@ -297,7 +311,7 @@ pub fn display_mempool_info<B: Backend>(
         Spans::from(vec![
             Span::styled(
                 "  🔹 Small (< 250 vBytes)     ",
-                Style::default().fg(C_MEMPOOL_DIST_LABELS),
+                Style::default().fg(C_MEMPOOL_DIST_LABELS).add_modifier(Modifier::DIM),
             ),
             Span::styled(
                 format!("{:>7}", (distribution.small).to_formatted_string(&Locale::en)),
@@ -319,7 +333,7 @@ pub fn display_mempool_info<B: Backend>(
         Spans::from(vec![
             Span::styled(
                 "  🔸 Medium (250-1000 vBytes) ",
-                Style::default().fg(C_MEMPOOL_DIST_LABELS),
+                Style::default().fg(C_MEMPOOL_DIST_LABELS).add_modifier(Modifier::DIM),
             ),
             Span::styled(
                 format!("{:>7}", (distribution.medium).to_formatted_string(&Locale::en)),
@@ -341,7 +355,7 @@ pub fn display_mempool_info<B: Backend>(
         Spans::from(vec![
             Span::styled(
                 "  🔳 Large (> 1000 vBytes)    ",
-                Style::default().fg(C_MEMPOOL_DIST_LABELS),
+                Style::default().fg(C_MEMPOOL_DIST_LABELS).add_modifier(Modifier::DIM),
             ),
             Span::styled(
                 format!("{:>7}", (distribution.large).to_formatted_string(&Locale::en)),
@@ -365,14 +379,14 @@ pub fn display_mempool_info<B: Backend>(
         // AGE DISTRIBUTION
         // -------------------------------------------------------------------
         Spans::from(vec![
-            Span::styled("⏳ Age Distribution ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled("⏳ Age Distribution ", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
             //Span::styled("dᵤₛₜ₋fᵣₑₑ", Style::default().fg(Color::DarkGray)
             //    .add_modifier(Modifier::ITALIC)),
         ]),
         Spans::from(vec![
             Span::styled(
                 "  🟢 Young (< 5 min)          ",
-                Style::default().fg(C_MEMPOOL_DIST_LABELS),
+                Style::default().fg(C_MEMPOOL_DIST_LABELS).add_modifier(Modifier::DIM),
             ),
             Span::styled(
                 format!("{:>7}", (distribution.young).to_formatted_string(&Locale::en)),
@@ -394,7 +408,7 @@ pub fn display_mempool_info<B: Backend>(
         Spans::from(vec![
             Span::styled(
                 "  🟡 Moderate (5 min - 1 hr)  ",
-                Style::default().fg(C_MEMPOOL_DIST_LABELS),
+                Style::default().fg(C_MEMPOOL_DIST_LABELS).add_modifier(Modifier::DIM),
             ),
             Span::styled(
                 format!(
@@ -419,7 +433,7 @@ pub fn display_mempool_info<B: Backend>(
         Spans::from(vec![
             Span::styled(
                 "  🔴 Old (> 1 hr)             ",
-                Style::default().fg(C_MEMPOOL_DIST_LABELS),
+                Style::default().fg(C_MEMPOOL_DIST_LABELS).add_modifier(Modifier::DIM),
             ),
             Span::styled(
                 format!("{:>7}", (distribution.old).to_formatted_string(&Locale::en)),
@@ -443,14 +457,14 @@ pub fn display_mempool_info<B: Backend>(
         // RBF DISTRIBUTION
         // -------------------------------------------------------------------
         Spans::from(vec![
-            Span::styled("♻️ RBF Distribution ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled("♻️ RBF Distribution ", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
             //Span::styled("dᵤₛₜ₋fᵣₑₑ", Style::default().fg(Color::DarkGray)
             //    .add_modifier(Modifier::ITALIC)),
         ]),
         Spans::from(vec![
             Span::styled(
                 "  🔄 RBF Transactions         ",
-                Style::default().fg(C_MEMPOOL_DIST_LABELS),
+                Style::default().fg(C_MEMPOOL_DIST_LABELS).add_modifier(Modifier::DIM),
             ),
             Span::styled(
                 format!(
@@ -475,7 +489,7 @@ pub fn display_mempool_info<B: Backend>(
         Spans::from(vec![
             Span::styled(
                 "  ✅ Non-RBF Transactions     ",
-                Style::default().fg(C_MEMPOOL_DIST_LABELS),
+                Style::default().fg(C_MEMPOOL_DIST_LABELS).add_modifier(Modifier::DIM),
             ),
             Span::styled(
                 format!(
@@ -507,12 +521,12 @@ pub fn display_mempool_info<B: Backend>(
         // FEE METRICS
         // -------------------------------------------------------------------
         Spans::from(vec![
-            Span::styled("📉 Fee Metrics ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled("📉 Fee Metrics ", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
         ]),
         Spans::from(vec![
             Span::styled(
                 "  📊 Avg Fee: ",
-                Style::default().fg(C_MEMPOOL_DIST_LABELS),
+                Style::default().fg(C_MEMPOOL_DIST_LABELS).add_modifier(Modifier::DIM),
             ),
             Span::styled(
                 format!("{:.8}", distribution.average_fee as f64 / SATS_PER_BTC),
@@ -521,7 +535,7 @@ pub fn display_mempool_info<B: Backend>(
             Span::raw("   "),
             Span::styled(
                 "Median: ",
-                Style::default().fg(C_MEMPOOL_DIST_LABELS),
+                Style::default().fg(C_MEMPOOL_DIST_LABELS).add_modifier(Modifier::DIM),
             ),
             Span::styled(
                 format!("{:.8}", distribution.median_fee as f64 / SATS_PER_BTC),
@@ -531,7 +545,7 @@ pub fn display_mempool_info<B: Backend>(
         Spans::from(vec![
         Span::styled(
             "  🎯 Average Fee Rate (sats/vByte): ",
-            Style::default().fg(C_MEMPOOL_DIST_LABELS),
+            Style::default().fg(C_MEMPOOL_DIST_LABELS).add_modifier(Modifier::DIM),
         ),
         Span::styled(
             format!("{:.2}", distribution.average_fee_rate),
@@ -539,7 +553,7 @@ pub fn display_mempool_info<B: Backend>(
         ),
         Span::styled(
             "   Median: ",
-            Style::default().fg(C_MEMPOOL_DIST_LABELS), // same yellow
+            Style::default().fg(C_MEMPOOL_DIST_LABELS).add_modifier(Modifier::DIM), // same yellow
         ),
         Span::styled(
             format!("{:.2}", distribution.median_fee_rate),

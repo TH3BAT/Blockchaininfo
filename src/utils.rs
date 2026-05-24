@@ -235,7 +235,7 @@ pub fn estimate_24h_difficulty_change(
     current_block_time: u64,
     block24_time: u64,
 ) -> f64 {
-    let expected = 144 * BLOCK_TIME_SECONDS;
+    let expected = ONE_CHAIN_DAY * BLOCK_TIME_SECONDS;
     let actual = current_block_time.saturating_sub(block24_time);
 
     let factor = expected as f64 / actual as f64;

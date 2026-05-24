@@ -84,6 +84,7 @@ use crate::utils::{log_error, format_eh};
 use crate::ui::colors::*;
 
 use crate::models::chaintips_info::ChainTipsJsonWrap;
+use crate::models::block_info::MinerTrendRow;
 
 // DashSet is used for tracking unique block numbers (propagation-time updates)
 use dashmap::DashSet;
@@ -120,15 +121,6 @@ pub enum PopupType {
     Quit
 }
 
-#[derive(Clone)]
-pub struct MinerTrendRow {
-    pub miner: Arc<str>,
-    pub day_count: usize,
-    pub day_delta: isize,
-    pub week_count: usize,
-    pub week_delta: isize,
-}
-
 /// Global application state.
 /// Tracks UI mode, popup state, toggles, paste-detection, etc.
 struct App {
@@ -155,6 +147,7 @@ struct App {
     hashrate_on_demand_loading: bool,
     miner_trend_rows: Vec<MinerTrendRow>,
     show_miner_trend: bool,
+    miner_trend_page: usize, // Which page to show (0 or 1)
 
 }
 
@@ -185,6 +178,7 @@ impl App {
             hashrate_on_demand_loading: false,
             miner_trend_rows: Vec::new(),
             show_miner_trend: false,
+            miner_trend_page: 0,
 
         }
     }
@@ -909,6 +903,9 @@ loop {
         // week_count  = current rolling chain-week count
         // week_delta  = current week vs previous week
         //
+        let day_total = current_day.values().sum::<usize>().max(1);
+        let week_total = current_week.values().sum::<usize>().max(1);
+
         let mut miner_trend_rows: Vec<MinerTrendRow> = miners
             .into_iter()
             .map(|miner| {
@@ -921,9 +918,11 @@ loop {
                 MinerTrendRow {
                     miner,
                     day_count,
+                    day_pct: ((day_count as f64 / day_total as f64) * 100.0).round() as u64,
                     day_delta: day_count as isize - prev_day_count as isize,
 
                     week_count,
+                    week_pct: ((week_count as f64 / week_total as f64) * 100.0).round() as u64,
                     week_delta: week_count as isize - prev_week_count as isize,
                 }
             })
@@ -946,10 +945,7 @@ loop {
                     .then_with(|| a.miner.cmp(&b.miner))
             });
         }
-        // Compact TUI view:
-        // only display the top 10 active miners.
-        miner_trend_rows.truncate(10);
-
+        
         app.miner_trend_rows = miner_trend_rows;
     }
 
@@ -1069,6 +1065,16 @@ loop {
                 KeyCode::Char('m') if app.popup == PopupType::None && !app.show_hash_distribution
                 && !app.show_last20_miners => {
                     app.show_miner_trend = !app.show_miner_trend;
+                }
+
+                KeyCode::Char('>') if app.popup == PopupType::None && app.show_miner_trend => {
+                    let page_size = 9;
+                    let max_page = history_len.saturating_sub(1) / page_size;
+                    app.miner_trend_page = (app.miner_trend_page + 1).min(max_page);
+                }
+
+                KeyCode::Char('<') if app.popup == PopupType::None && app.show_miner_trend => {
+                    app.miner_trend_page = app.miner_trend_page.saturating_sub(1);
                 }
 
                 // Hashrate Distribution toggle
@@ -1238,17 +1244,41 @@ loop {
         };
 
         // Build Miner Trend toggle label
-        let miner_trend_label = if app.show_miner_trend {
-            Span::styled(
-                "[M] Trend",
-                Style::default().fg(C_KEYTOGGLE_HIGHLIGHT).add_modifier(Modifier::BOLD),
-            )
+        let page_size = 9;
+        let max_page = history_len.saturating_sub(1) / page_size;
+
+        let trend_style = if app.show_miner_trend {
+            Style::default()
+                .fg(C_KEYTOGGLE_HIGHLIGHT)
+                .add_modifier(Modifier::BOLD)
         } else {
-            Span::styled("[M] Trend", Style::default().fg(C_KEYTOGGLE_DIM))
+            Style::default().fg(C_KEYTOGGLE_DIM)
         };
 
-        // Full title for Blockchain block
-        let blockchain_title = Spans::from(vec![
+        let left_arrow_style = if app.show_miner_trend && app.miner_trend_page > 0 {
+            Style::default()
+                .fg(C_KEYTOGGLE_HIGHLIGHT)
+                .add_modifier(Modifier::BOLD)
+        } else {
+            Style::default().fg(C_KEYTOGGLE_DIM)
+        };
+
+        let right_arrow_style = if app.show_miner_trend && app.miner_trend_page < max_page {
+            Style::default()
+                .fg(C_KEYTOGGLE_HIGHLIGHT)
+                .add_modifier(Modifier::BOLD)
+        } else {
+            Style::default().fg(C_KEYTOGGLE_DIM)
+        };
+
+        let miner_trend_label = vec![
+            Span::styled("◀ ", left_arrow_style),
+            Span::styled("[M] Trend", trend_style),
+            Span::styled(" ▶", right_arrow_style),
+        ];
+
+       // Full title for Blockchain block
+        let mut blockchain_title_spans = vec![
             Span::styled(
                 "[Blockchain] ",
                 Style::default()
@@ -1256,11 +1286,14 @@ loop {
                     .add_modifier(Modifier::BOLD),
             ),
             hrd_label,
-            Span::raw(" "), // spacing
+            Span::raw(" "),
             last20_label,
             Span::raw(" "),
-            miner_trend_label,
-        ]);
+        ];
+
+        blockchain_title_spans.extend(miner_trend_label);
+
+        let blockchain_title = Spans::from(blockchain_title_spans); 
 
         let block_blockchain = Block::default()
             .borders(Borders::ALL)
@@ -1277,7 +1310,7 @@ loop {
         } else if app.show_last20_miners {
             draw_last20_miners(frame, chunks[1], &app.last20_miners);
         } else if app.show_miner_trend {
-            draw_miner_trend(frame, chunks[1], &app.miner_trend_rows, history_len);
+            draw_miner_trend(frame, chunks[1], &app.miner_trend_rows, history_len, app.miner_trend_page);
 
         } else {
             if !block_info.is_empty() && !block24_info.is_empty() {
@@ -1445,16 +1478,71 @@ loop {
         // FOOTER SECTION
         // -----------------------------------------------------------------------------------------
         {
-            let footer_msg = if app.is_exiting {
-                   "Shutting Down Cleanly..."
+            let footer_spans = if app.is_exiting {
+                Spans::from(vec![
+                    Span::styled(
+                        "Shutting Down Cleanly...",
+                        Style::default().fg(C_MAIN_LABELS),
+                    ),
+                ])
             } else {
-                "'q' → Quit | 't' → Tx Lookup | '#' → Hashrate | '?' → Help"
+                Spans::from(vec![
+                    Span::styled("q", Style::default().fg(C_APP_TITLE)),
+                    Span::styled(
+                        " Quit",
+                        Style::default()
+                            .fg(C_MAIN_LABELS)
+                            .add_modifier(Modifier::DIM),
+                    ),
+
+                    Span::styled(
+                        "  •  ",
+                        Style::default()
+                            .fg(C_MAIN_LABELS)
+                            .add_modifier(Modifier::DIM),
+                    ),
+
+                    Span::styled("t", Style::default().fg(C_APP_TITLE)),
+                    Span::styled(
+                        " Tx Lookup",
+                        Style::default()
+                            .fg(C_MAIN_LABELS)
+                            .add_modifier(Modifier::DIM),
+                    ),
+
+                    Span::styled(
+                        "  •  ",
+                        Style::default()
+                            .fg(C_MAIN_LABELS)
+                            .add_modifier(Modifier::DIM),
+                    ),
+
+                    Span::styled("#", Style::default().fg(C_APP_TITLE)),
+                    Span::styled(
+                        " Hashrate",
+                        Style::default()
+                            .fg(C_MAIN_LABELS)
+                            .add_modifier(Modifier::DIM),
+                    ),
+
+                    Span::styled(
+                        "  •  ",
+                        Style::default()
+                            .fg(C_MAIN_LABELS)
+                            .add_modifier(Modifier::DIM),
+                    ),
+
+                    Span::styled("?", Style::default().fg(C_APP_TITLE)),
+                    Span::styled(
+                        " Help",
+                        Style::default()
+                            .fg(C_MAIN_LABELS)
+                            .add_modifier(Modifier::DIM),
+                    ),
+                ])
             };
 
-            let footer_block = Block::default().borders(Borders::NONE);
-            frame.render_widget(footer_block, chunks[5]);
-
-            render_footer(frame, chunks[5], footer_msg);
+            render_footer_spans(frame, chunks[5], footer_spans);
         }
 
         // =========================================================================================
@@ -1493,7 +1581,13 @@ loop {
 Ok(())
 } // END run_app
 
+pub fn render_footer_spans<B: Backend>(f: &mut Frame<B>, area: Rect, spans: Spans) {
+    let footer = Paragraph::new(vec![spans])
+        .alignment(Alignment::Center)
+        .block(Block::default().borders(Borders::NONE));
 
+    f.render_widget(footer, area);
+}
 
 // =================================================================================================
 // HELPER: CENTERED POPUP GEOMETRY
@@ -1601,13 +1695,19 @@ fn render_hashrate_on_demand_popup<B: Backend>(frame: &mut Frame<B>, app: &App) 
         .style(Style::default().fg(Color::Yellow));
 
     let text = if app.hashrate_on_demand_loading {
-        vec![Spans::from("Fetching current 144-block network hashrate...")]
+        vec![Spans::from(format!(
+            "Fetching current {}-block network hashrate...",
+            ONE_CHAIN_DAY
+        ))]
     } else if let Some(rate) = app.hashrate_on_demand {
         vec![
             Spans::from(" "),
-            Spans::from(format!("Window: 144 blocks")),
-            Spans::from(format!("Estimated Network Rate: {} EH/s", format_eh(rate))),
-            Spans::from(" ")
+            Spans::from(format!("Window: {} blocks", ONE_CHAIN_DAY)),
+            Spans::from(format!(
+                "Estimated Network Rate: {} EH/s",
+                format_eh(rate)
+            )),
+            Spans::from(" "),
         ]
     } else if let Some(err) = &app.hashrate_on_demand_error {
         vec![Spans::from(format!("RPC error: {}", err))]

@@ -38,5 +38,3 @@ pub mod consensus;
 
 /// tui Color assignments
 pub mod ui;
-
-pub mod runapp;

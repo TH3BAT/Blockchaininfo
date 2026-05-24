@@ -10,7 +10,7 @@
 //
 
 use tui::{
-    style::{Color, Style},
+    style::{Color, Style, Modifier},
     text::{Span, Spans},
     widgets::{Block, Borders, Paragraph},
     layout::{Constraint, Direction, Layout},
@@ -65,7 +65,7 @@ pub fn display_consensus_security_info<B: tui::backend::Backend>(
     lines.push(Spans::from(vec![
         Span::styled(
             "🌲 Fork Monitoring:",
-            Style::default().fg(C_MAIN_LABELS),
+            Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM),
         ),
     ]));
 
@@ -107,21 +107,42 @@ pub fn display_consensus_security_info<B: tui::backend::Backend>(
         //   - Yellow → Highlights the fork status
         let line = Spans::from(vec![
             Span::styled(
-                format!("🌳 Height: {:>7}", tip.height),
+                "🌳 Height: ",
+                Style::default()
+                    .fg(C_MAIN_LABELS)
+                    .add_modifier(Modifier::DIM),
+            ),
+            Span::styled(
+                format!("{:>7}", tip.height),
                 Style::default().fg(C_MAIN_LABELS),
             ),
+
             Span::raw(" | "),
+
             Span::styled(
-                format!("Status: {:<14}", status),
+                "Status: ",
+                Style::default()
+                    .fg(C_CONSENSUS_STATUS_SECTION)
+                    .add_modifier(Modifier::DIM),
+            ),
+            Span::styled(
+                format!("{:<14}", status),
                 Style::default().fg(C_CONSENSUS_STATUS_SECTION),
             ),
+
             Span::raw(" | "),
+
             Span::styled(
-                format!("📏 Length: {:>2}", tip.branchlen),
+                "📏 Length: ",
+                Style::default()
+                    .fg(C_MAIN_LABELS)
+                    .add_modifier(Modifier::DIM),
+            ),
+            Span::styled(
+                format!("{:>2}", tip.branchlen),
                 Style::default().fg(C_MAIN_LABELS),
             ),
         ]);
-
         lines.push(line);
     }
 

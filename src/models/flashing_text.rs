@@ -132,6 +132,7 @@ impl FlashingMiner {
     }
 }
 
+/// Flashing behavior for full hashphase cyle completion block (String-based values).
 pub struct FlashingHashPhase {
     pub last_value: String,              // Previously displayed miner name
     pub flash_until: Option<Instant>,    // When the flash highlight should expire

@@ -481,6 +481,35 @@ impl BlockHistory {
             .collect()
     }
 
+    /// Returns aggregated miner occurrence counts across a rolling
+    /// slice of block history.
+    ///
+    /// The range is calculated relative to the newest observed block,
+    /// allowing callers to query synchronized rolling windows such as:
+    ///
+    /// - last 144 blocks  ("chain-day")
+    /// - last 2016 blocks (difficulty epoch)
+    /// - previous comparison windows for trend delta analysis
+    ///
+    /// Parameters:
+    ///
+    /// - `start_from_end`
+    ///   Offset from the newest block in the history buffer.
+    ///   `0` begins at the current tip-relative end.
+    ///
+    /// - `len`
+    ///   Number of blocks to include in the rolling observation window.
+    ///
+    /// Returns:
+    ///
+    /// A map of:
+    ///
+    /// `miner -> blocks mined within requested window`
+    ///
+    /// Only entries with resolved miner attribution are included.
+    ///
+    /// Used by miner trend analysis, rolling distribution panels,
+    /// and hashrate behavior observation systems.
     pub fn miner_counts_for_range(
         &self,
         start_from_end: usize,
@@ -502,6 +531,7 @@ impl BlockHistory {
             })
     }
 
+    /// Return number of occupied slots in BlockHistory.
     pub fn len(&self) -> usize {
         self.blocks.lock().unwrap().len()
     }
@@ -544,4 +574,34 @@ impl BlockHistory {
 
         distribution.into_iter().collect()
     }
+}
+
+/// Aggregated miner trend statistics used by the Blockchain
+/// trend panel.
+///
+/// Represents miner presence across two synchronized rolling
+/// observation windows:
+///
+/// - Day  = rolling 144-block window ("chain-day")
+/// - Week = rolling 2016-block window (difficulty epoch)
+///
+/// The `*_count` fields represent the number of blocks mined
+/// within each active window.
+///
+/// The `*_delta` fields represent directional movement versus
+/// the previous equivalent rolling window, allowing operators
+/// to observe miner expansion, contraction, or stability over
+/// time.
+///
+/// Used for trend sorting, distribution visualization, and
+/// observational hashrate behavior analysis.
+#[derive(Clone)]
+pub struct MinerTrendRow {
+    pub miner: Arc<str>,
+    pub day_count: usize,
+    pub day_pct: u64,
+    pub day_delta: isize,
+    pub week_count: usize,
+    pub week_pct: u64,
+    pub week_delta: isize,
 }

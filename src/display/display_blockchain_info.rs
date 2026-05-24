@@ -25,7 +25,7 @@ use crate::models::flashing_text::{BEST_BLOCK_TEXT, MINER_TEXT};
 use crate::consensus::satoshi_math::*;
 use std::sync::Arc;
 use unicode_width::UnicodeWidthStr;
-use crate::runapp::MinerTrendRow;
+use crate::models::block_info::MinerTrendRow;
 
 /// Renders the Blockchain section of the dashboard.
 ///
@@ -50,6 +50,9 @@ pub fn display_blockchain_info<B: Backend>(
     frame: &mut Frame<B>,
     area: Rect,
 ) -> Result<(), MyError> {
+    
+    // Max display length for last miner in Blockchain panel. 
+    const LAST_MINER_MAX_CHARS: usize = 30;
     
     // Convert blockchain timestamps + sizes into displayable formats.
     let mediantime = blockchain_info.parse_mediantime()?;
@@ -121,38 +124,38 @@ pub fn display_blockchain_info<B: Backend>(
 
     // Build the "Best Block | Miner" line with dynamic flashing styles.
     let best_block_spans = Spans::from(vec![
-        Span::styled("🏆 Best Block: ", Style::default().fg(C_MAIN_LABELS)),
+        Span::styled("🏆 Best Block: ", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
         Span::styled(
             blockchain_info.blocks.to_formatted_string(&Locale::en),
             best_block_style,
         ),
         Span::styled(" | ", Style::default().fg(C_SEPARATORS)),
-        Span::styled("⛏️ Miner: ", Style::default().fg(C_MAIN_LABELS)),
-        Span::styled(format!("{}", last_miner), last_miner_style),
+        Span::styled("⛏️ Miner: ", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
+        Span::styled(truncate_miner(last_miner, LAST_MINER_MAX_CHARS), last_miner_style),
     ]);
 
     // Build every display line in a Vec<Spans>.
     let blockchain_info_text = vec![
         Spans::from(vec![
-            Span::styled("🔗 Chain: ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled("🔗 Chain: ", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
             Span::styled(blockchain_info.chain.clone(), Style::default().fg(C_CHAIN)),
         ]),
 
         best_block_spans, // Flashing block + miner line
 
         Spans::from(vec![
-            Span::styled("  ⏳ Time since block: ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled("  ⏳ Time since block: ", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
             Span::styled(time_since_block, Style::default().fg(C_TIME_SINCE_BLOCK)),
         ]),
 
         Spans::from(vec![
-            Span::styled("🎯 Difficulty: ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled("🎯 Difficulty: ", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
             Span::styled(formatted_difficulty, Style::default().fg(C_DIFFICULTY)),
         ]),
 
         // Remaining blocks in difficulty epoch.
         Spans::from(vec![
-            Span::styled("     Blocks until adjustment: ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled("     Blocks until adjustment: ", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
             match blockchain_info.display_blocks_until_difficulty_adjustment() {
                 Ok((block_text, block_color)) =>
                     Span::styled(block_text, Style::default().fg(block_color)),
@@ -163,7 +166,7 @@ pub fn display_blockchain_info<B: Backend>(
 
         // Difficulty projections block (epoch + 24hr).
         Spans::from(vec![
-            Span::styled("  📉 Estimated change: ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled("  📉 Estimated change: ", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
 
             // Epoch arrow
             Span::styled(
@@ -189,13 +192,13 @@ pub fn display_blockchain_info<B: Backend>(
 
         // Chainwork line
         Spans::from(vec![
-            Span::styled("   Chainwork: ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled("   Chainwork: ", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
             Span::styled(formatted_chainwork_bits, Style::default().fg(C_CHAINWORK)),
         ]),
 
         // Verification progress
         Spans::from(vec![
-            Span::styled("📡 Verification progress: ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled("📡 Verification progress: ", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
             Span::styled(
                 format!("{:.4}%", blockchain_info.verificationprogress * 100.0),
                 Style::default().fg(C_VERIFICATION),
@@ -204,19 +207,19 @@ pub fn display_blockchain_info<B: Backend>(
 
         // Disk size
         Spans::from(vec![
-            Span::styled("💾 Size on Disk: ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled("💾 Size on Disk: ", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
             Span::styled(formatted_size_on_disk, Style::default().fg(C_MAIN_LABELS)),
         ]),
 
         // Median time
         Spans::from(vec![
-            Span::styled("   Median Time: ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled("   Median Time: ", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
             Span::styled(mediantime, Style::default().fg(C_MAIN_LABELS)),
         ]),
 
         // Block time
         Spans::from(vec![
-            Span::styled("⏰ Block Time : ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled("⏰ Block Time : ", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
             Span::styled(time, Style::default().fg(C_MAIN_LABELS)),
         ]),
     ];
@@ -414,13 +417,12 @@ pub fn draw_last20_miners<B: Backend>(
             Span::styled(
                 height_str,
                 Style::default().fg(C_LAST20_HEIGHT_LABEL)
-                .add_modifier(Modifier::BOLD),
+                .add_modifier(Modifier::DIM),
             ),
             Span::raw(spacer),
             Span::styled(
                 miner_out,
-                Style::default().fg(C_LAST20_MINER_LABEL)
-                .add_modifier(Modifier::DIM),
+                Style::default().fg(C_LAST20_MINER_LABEL),
             ),
         ])
     }
@@ -466,6 +468,7 @@ pub fn draw_miner_trend<B: Backend>(
     area: Rect,
     rows: &[MinerTrendRow],
     len: usize,
+    miner_trend_page: usize,
 ) {
     // Match the interior spacing used by other Blockchain subpanels.
     let inner = Rect {
@@ -474,6 +477,14 @@ pub fn draw_miner_trend<B: Backend>(
         width: area.width.saturating_sub(2),
         height: area.height.saturating_sub(2),
     };
+
+    // Set page size and which page is visible.
+    let page_size = 9;
+    let start = miner_trend_page * page_size;
+
+
+    // Max display length for miner in Miner Trend panel. 
+    const MINER_MAX_CHARS: usize = 16;
 
     // Header + body layout.
     let chunks = Layout::default()
@@ -502,12 +513,31 @@ pub fn draw_miner_trend<B: Backend>(
             Spans::from(vec![
                 Span::styled(
                     "Collecting miner trend data...",
-                    Style::default().fg(C_MAIN_LABELS),
+                    Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM),
                 ),
             ]),
             Spans::from(vec![
                 Span::styled(
-                    format!("Witnessed blocks: {} / {}", collected, required),
+                    "Witnessed blocks: ",
+                    Style::default()
+                        .fg(C_MAIN_LABELS)
+                        .add_modifier(Modifier::DIM),
+                ),
+
+                Span::styled(
+                    format!("{}", collected),
+                    Style::default().fg(C_MAIN_LABELS),
+                ),
+
+                Span::styled(
+                    " / ",
+                    Style::default()
+                        .fg(C_MAIN_LABELS)
+                        .add_modifier(Modifier::DIM),
+                ),
+
+                Span::styled(
+                    format!("{}", required),
                     Style::default().fg(C_MAIN_LABELS),
                 ),
             ]),
@@ -530,13 +560,15 @@ pub fn draw_miner_trend<B: Backend>(
         ),
         Span::raw("  "),
         Span::styled(
-            format!("{:>5} {:>4}", "Day", "Δ"),
+            format!("{:>5} {:>4} {:>4}", "Day", "%", "Δ"),
             Style::default().add_modifier(Modifier::BOLD),
         ),
-        Span::raw("    "),
+        Span::raw("  "),
         Span::styled(
-            format!("{:>7} {:>4}", "Week", "Δ"),
+            format!("{:>7} {:>4} {:>4}", "Week", "%", "Δ"),
             Style::default().add_modifier(Modifier::BOLD),
+        
+        
         ),
     ]));
 
@@ -546,23 +578,24 @@ pub fn draw_miner_trend<B: Backend>(
         Style::default().fg(C_MAIN_LABELS)
     };
     
-    // Render top 10 active miners only to preserve TUI readability.
-    for row in rows.iter().take(10) {
-        let miner = truncate_miner(&row.miner, 16);
+    // Render active miners only to preserve TUI readability.
+    for row in rows.iter().skip(start).take(page_size) {
+        let miner = truncate_miner(&row.miner, MINER_MAX_CHARS);
 
         let day_delta = format_delta(row.day_delta);
         let week_delta = format_delta(row.week_delta);
 
         lines.push(Spans::from(vec![
-            Span::styled(format!("{:<16}", miner), Style::default().fg(C_APP_TITLE)),
+            Span::styled(format!("{:<16}", miner), 
+                Style::default().fg(C_MINER_TREND_MINER_LABEL).add_modifier(Modifier::DIM)),
             Span::raw("  "),
             Span::styled(
-                format!("{:>5} {:>4}", row.day_count, day_delta),
-                Style::default().fg(C_MAIN_LABELS),
+                format!("{:>5} {:>3}% {:>4}", row.day_count, row.day_pct, day_delta),
+                Style::default().fg(C_MINER_TREND_METRIC_LABEL),
             ),
-            Span::raw("    "),
+            Span::raw("  "),
             Span::styled(
-                format!("{:>7} {:>4}", row.week_count, week_delta),
+                format!("{:>7} {:>3}% {:>4}", row.week_count, row.week_pct, week_delta),
                 week_style,
             ),
         ]));
@@ -576,6 +609,10 @@ pub fn draw_miner_trend<B: Backend>(
     frame.render_widget(body, chunks[1]);
 }
 
+/// Formats signed trend deltas for display.
+///
+/// Positive values are prefixed with `+` to improve
+/// visual readability in trend panels.
 fn format_delta(delta: isize) -> String {
     if delta > 0 {
         format!("+{}", delta)
@@ -584,6 +621,11 @@ fn format_delta(delta: isize) -> String {
     }
 }
 
+/// Truncates miner labels to a maximum visible width.
+///
+/// Preserves short names unchanged and appends a unicode
+/// ellipsis when truncation occurs to maintain compact
+/// TUI alignment.
 fn truncate_miner(miner: &str, max: usize) -> String {
     if miner.chars().count() <= max {
         miner.to_string()

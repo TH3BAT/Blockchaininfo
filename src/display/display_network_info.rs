@@ -79,10 +79,10 @@ pub fn display_network_info<B: Backend>(
     let connections_in_style = CONNECTIONS_IN_TEXT.lock().unwrap().style();
 
     let connections_in_spans = Spans::from(vec![
-        Span::styled("🔌 In: ", Style::default().fg(C_MAIN_LABELS)),
+        Span::styled("🔌 In: ", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
         Span::styled(network_info.connections_in.to_string(), connections_in_style),
         Span::raw("   "),
-        Span::styled("Out: ", Style::default().fg(C_MAIN_LABELS)),
+        Span::styled("Out: ", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
         Span::styled(
             network_info.connections_out.to_string(),
             Style::default().fg(C_CONNECTIONS_OUT),
@@ -124,13 +124,13 @@ pub fn display_network_info<B: Backend>(
         connections_in_spans,
 
         Spans::from(vec![
-            Span::styled("⬇️ Recv: ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled("⬇️ Recv: ", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
             Span::styled(
                 format_size(net_totals.totalbytesrecv),
                 Style::default().fg(C_MAIN_LABELS),
             ),
             Span::raw("   "),
-            Span::styled("⬆️ Sent: ", Style::default().fg(C_MAIN_LABELS)),
+            Span::styled("⬆️ Sent: ", Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM)),
             Span::styled(
                 format_size(net_totals.totalbytessent),
                 Style::default().fg(C_MAIN_LABELS),
@@ -140,7 +140,7 @@ pub fn display_network_info<B: Backend>(
         Spans::from(vec![
             Span::styled(
                 "⏱️ Average Block Propagation Time: ",
-                Style::default().fg(C_MAIN_LABELS),
+                Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM),
             ),
             Span::styled(
                 format!("{:.0} {}", avg_block_propagate_time, abpt_text),
@@ -335,8 +335,8 @@ fn draw_client_distribution<B: Backend>(
 
         // Construct final row
         lines.push(Spans::from(vec![
-            Span::styled(format!("{:<10}", name), Style::default().fg(C_CLIENT_DIST_MINER_LABEL)
-            .add_modifier(Modifier::BOLD)),
+            Span::styled(format!("{:<10}", name), Style::default().fg(C_CLIENT_DIST_MINER_LABEL).add_modifier(Modifier::DIM)),
+            // .add_modifier(Modifier::BOLD)),
             count_span,
             dash_span,
             pct_span,
@@ -376,32 +376,53 @@ pub fn draw_propagation_avg<B: Backend>(
     newest_5_avg: Option<i64>,
 ) {
 
-    let mut lines = Vec::new();
+   let mut lines: Vec<Spans> = Vec::new();
 
-    lines.push(format!(
-        "Avg ({} blks): {}s",
-        propagation_len,
-        overall_avg
-    ));
+    lines.push(Spans::from(vec![
+        Span::styled(
+            format!("Avg ({} blks): ", propagation_len),
+            Style::default()
+                .fg(C_MAIN_LABELS)
+                .add_modifier(Modifier::DIM),
+        ),
+        Span::styled(
+            format!("{}s", overall_avg),
+            Style::default().fg(C_MAIN_LABELS),
+        ),
+    ]));
 
     if let Some(avg) = oldest_5_avg {
-        lines.push(format!(
-            "Oldest 5: {}s",
-            avg
-        ));
+        lines.push(Spans::from(vec![
+            Span::styled(
+                "Oldest 5: ",
+                Style::default()
+                    .fg(C_MAIN_LABELS)
+                    .add_modifier(Modifier::DIM),
+            ),
+            Span::styled(
+                format!("{}s", avg),
+                Style::default().fg(C_MAIN_LABELS),
+            ),
+        ]));
     }
 
     if let Some(avg) = newest_5_avg {
-        lines.push(format!(
-            "Latest 5: {}s",
-            avg
-        ));
+        lines.push(Spans::from(vec![
+            Span::styled(
+                "Latest 5: ",
+                Style::default()
+                    .fg(C_MAIN_LABELS)
+                    .add_modifier(Modifier::DIM),
+            ),
+            Span::styled(
+                format!("{}s", avg),
+                Style::default().fg(C_MAIN_LABELS),
+            ),
+        ]));
     }
 
-    let content = format!("\n{}\n", lines.join("\n"));
 
-
-    let paragraph = Paragraph::new(content)
+    let paragraph = Paragraph::new(lines)
         .alignment(Alignment::Center)
         .block(
             Block::default()
