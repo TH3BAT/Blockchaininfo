@@ -1245,7 +1245,7 @@ loop {
 
         // Build Miner Trend toggle label
         let page_size = 9;
-        let max_page = history_len.saturating_sub(1) / page_size;
+        let max_page = app.miner_trend_rows.len().saturating_sub(1) / page_size;
 
         let trend_style = if app.show_miner_trend {
             Style::default()
