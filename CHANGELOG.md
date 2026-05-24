@@ -7,6 +7,15 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
+v1.4.0-beta - 05-24-2026
+
+* Documentation to new logic added in beta
+* Code cleanup
+* Added % to Miner Trend Panel
+* TUI: Refine observational clarity
+
+---
+
 v1.4.0-beta - 05-19-2026
 Fixed:
 
