@@ -35,8 +35,6 @@ use crate::rpc::{
     getnetworkhashps,
 };
 
-use crate::models::errors::MyError;
-
 // UI render functions for each major dashboard section.
 use crate::display::{
     display_blockchain_info,
@@ -49,12 +47,11 @@ use crate::display::{
 };
 
 // Misc utilities: header/footer, miner loader, block history tracker.
-use crate::utils::{render_header, render_footer, load_miners_data, BLOCK_HISTORY};
+use crate::utils::{render_header, render_footer, load_miners_data, log_error, format_eh, 
+    BLOCK_HISTORY};
 
-// For peer aggregation functions (versions, clients, etc.)
-use crate::models::peer_info::{PeerInfo, NetworkState};
-
-use crate::consensus::satoshi_math::{ONE_CHAIN_DAY, ONE_HASHPHASE_CYCLE};
+use crate::consensus::satoshi_math::*;
+use crate::ui::colors::*;
 
 // TUI dependencies
 use tui::{
@@ -76,23 +73,23 @@ use crossterm::{
 use std::io::{self, Stdout};
 use std::collections::VecDeque;
 use std::sync::Arc;
-use std::sync::atomic::AtomicU8;
+// Atomic flags used for toggles (no locking overhead).
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering, AtomicU8};
 
 use tokio::time::{sleep, Duration, Instant};
 
-use crate::utils::{log_error, format_eh};
-use crate::ui::colors::*;
-
-use crate::models::chaintips_info::ChainTipsJsonWrap;
+use crate::models::chaintips_info::{ChainTip, ChainTipsJsonWrap};
 use crate::models::block_info::MinerTrendRow;
+use crate::models::errors::MyError;
+
+// For peer aggregation functions (versions, clients, etc.)
+use crate::models::peer_info::{PeerInfo, NetworkState};
 
 // DashSet is used for tracking unique block numbers (propagation-time updates)
 use dashmap::DashSet;
 
 // OnceCell provides a lazy static container.
 use once_cell::sync::Lazy;
-
-use crate::models::chaintips_info::ChainTip;
 
 // Shared caches used across async tasks for concurrency-safe data access.
 use crate::utils::{
@@ -106,9 +103,6 @@ use crate::utils::{
     NET_TOTALS_CACHE,
     MEMPOOL_DISTRIBUTION_CACHE,
 };
-
-// Atomic flags used for toggles (no locking overhead).
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 /// Popup windows used in the application.
 #[derive(PartialEq)]
@@ -242,6 +236,10 @@ pub async fn run_app<B: Backend>(
         last_block_seen: 0,
         last_block_seen_at: None,
     };
+
+    // Allow advanced operators to enable the Miner Trend panel early.
+    let enable_early_miner_trend =
+        std::env::var("BCI_ENABLE_EARLY_MINER_TREND").is_ok();
 
     // Draw initial "Initializing…" screen.
     terminal.draw(|frame| {
@@ -653,8 +651,8 @@ loop {
     // ---------------------------------------------------------------------------------------------
     // Epoch progress indicator — drives the animated header ("Flip Dot" logic).
     // ---------------------------------------------------------------------------------------------
-    let into_epoch = blockchain_info.blocks % 2016;
-    let percent = (into_epoch as f64 / 2016.0) * 100.0;
+    let into_epoch = blockchain_info.blocks % DIFFICULTY_ADJUSTMENT_INTERVAL;
+    let percent = (into_epoch as f64 / DIFFICULTY_ADJUSTMENT_INTERVAL as f64) * 100.0;
 
     // -----------------------------------------------------------------------------
     // HASH PHASE SAMPLING (Epoch-aware hashrate checkpoints)
@@ -892,7 +890,10 @@ loop {
     };
 
     // Not enough witnessed blocks yet to produce meaningful comparisons.
-    if history_len < (2 * ONE_CHAIN_DAY) as usize {
+    // AND operator has not signaled enabled early miner trend with environment variable.
+    if history_len < (2 * ONE_CHAIN_DAY) as usize
+        && !enable_early_miner_trend
+    {
         app.miner_trend_rows.clear();
     } else {
 
@@ -1065,11 +1066,12 @@ loop {
                 KeyCode::Char('m') if app.popup == PopupType::None && !app.show_hash_distribution
                 && !app.show_last20_miners => {
                     app.show_miner_trend = !app.show_miner_trend;
+                    app.miner_trend_page = 0; // Reset page to zero when toggle on/off.
                 }
 
                 KeyCode::Char('>') if app.popup == PopupType::None && app.show_miner_trend => {
                     let page_size = 9;
-                    let max_page = history_len.saturating_sub(1) / page_size;
+                    let max_page = app.miner_trend_rows.len().saturating_sub(1) / page_size;
                     app.miner_trend_page = (app.miner_trend_page + 1).min(max_page);
                 }
 
@@ -1643,11 +1645,11 @@ fn render_tx_lookup_popup<B: Backend>(frame: &mut Frame<B>, app: &mut App) {
     let popup = Block::default()
         .title("Transaction Lookup (Press Esc to go back)")
         .borders(Borders::ALL)
-        .style(Style::default().fg(Color::Yellow));
+        .style(Style::default().fg(Color::Yellow).add_modifier(Modifier::DIM));
 
     // User input line
     let input = Paragraph::new(app.tx_input.clone())
-        .style(Style::default().fg(Color::Cyan))
+        .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::DIM))
         .wrap(Wrap { trim: true });
 
     // RPC result rendering
@@ -1661,7 +1663,7 @@ fn render_tx_lookup_popup<B: Backend>(frame: &mut Frame<B>, app: &mut App) {
                 Paragraph::new("Enter a TxID and press Enter")
             } else {
                 Paragraph::new("Press Enter to validate TxID")
-                    .style(Style::default().fg(Color::Yellow))
+                    .style(Style::default().fg(Color::Yellow).add_modifier(Modifier::DIM))
             }
         }
     };
@@ -1692,7 +1694,7 @@ fn render_hashrate_on_demand_popup<B: Backend>(frame: &mut Frame<B>, app: &App) 
         .title("Hashrate on Demand (Esc to close)")
         .borders(Borders::ALL)
         .border_style(Style::default().fg(Color::Yellow))
-        .style(Style::default().fg(Color::Yellow));
+        .style(Style::default().fg(Color::Yellow).add_modifier(Modifier::DIM));
 
     let text = if app.hashrate_on_demand_loading {
         vec![Spans::from(format!(
@@ -1717,7 +1719,7 @@ fn render_hashrate_on_demand_popup<B: Backend>(frame: &mut Frame<B>, app: &App) 
 
     // Orange text inside
     let paragraph = Paragraph::new(text)
-        .style(Style::default().fg(C_HELP_TXT))
+        .style(Style::default().fg(C_HELP_TXT).add_modifier(Modifier::DIM))
         .block(popup)
         .alignment(Alignment::Center)
         .wrap(Wrap { trim: true });
@@ -1759,13 +1761,13 @@ fn render_help_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) {
 
     let paragraph = Paragraph::new(help_text.join("\n"))
         .alignment(Alignment::Left)
-        .style(Style::default().fg(C_HELP_TXT))
+        .style(Style::default().fg(C_HELP_TXT).add_modifier(Modifier::DIM))
         .wrap(Wrap { trim: false });
 
     let block = Block::default()
         .title("Help (Press Esc to go back)")
         .borders(Borders::ALL)
-        .style(Style::default().fg(Color::Yellow));
+        .style(Style::default().fg(Color::Yellow).add_modifier(Modifier::DIM));
 
     let container = block.inner(popup_area);
 
@@ -1791,13 +1793,13 @@ fn render_quit_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) {
 
     let paragraph = Paragraph::new(help_text.join("\n"))
         .alignment(Alignment::Center)
-        .style(Style::default().fg(C_MAIN_LABELS))
+        .style(Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::BOLD))
         .wrap(Wrap { trim: false });
 
     let block = Block::default()
         .title("Quit (Press Esc to go back)")
         .borders(Borders::ALL)
-        .style(Style::default().fg(Color::Yellow));
+        .style(Style::default().fg(Color::Yellow).add_modifier(Modifier::DIM));
 
     let container = block.inner(popup_area);
 
@@ -1831,13 +1833,13 @@ fn render_consensus_warning_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) 
 
     let paragraph = Paragraph::new(warning_text.join("\n"))
         .alignment(Alignment::Left)
-        .style(Style::default().fg(C_CONSENSUS_WARNING_TXT))
+        .style(Style::default().fg(C_CONSENSUS_WARNING_TXT).add_modifier(Modifier::DIM))
         .wrap(Wrap { trim: false });
 
     let block = Block::default()
         .title("Consensus Warning (Press Esc to go back)")
         .borders(Borders::ALL)
-        .style(Style::default().fg(Color::Yellow));
+        .style(Style::default().fg(Color::Yellow).add_modifier(Modifier::DIM));
 
     let container = block.inner(popup_area);
 

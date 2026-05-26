@@ -191,11 +191,16 @@ pub fn display_network_info<B: Backend>(
             let barchart = BarChart::default()
                 .block(
                     Block::default()
-                        .title(format!(
-                            "Version Distribution (Top {} of {})",
-                            top5orless, total_versions
-                        ))
-                        .borders(Borders::ALL),
+                        .borders(Borders::ALL)
+                        .border_style(
+                            Style::default()
+                                .fg(Color::Gray)
+                                .add_modifier(Modifier::DIM),
+                        )
+                        .title(Span::styled(
+                    format!("Version Distribution (Top {} of {})", top5orless, total_versions),
+                    Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::BOLD),
+                        )),
                 )
                 .data(&data)
                 .bar_width(7)
@@ -262,8 +267,16 @@ pub fn display_network_info<B: Backend>(
         let sparkline = Sparkline::default()
             .block(
                 Block::default()
-                    .title("Propagation Times")
-                    .borders(Borders::ALL),
+                    .borders(Borders::ALL)
+                    .border_style(
+                        Style::default()
+                            .fg(Color::Gray)
+                            .add_modifier(Modifier::DIM),
+                    )
+                    .title(Span::styled(
+                        format!("Propagation Times"),
+                        Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::BOLD),
+                        )),
             )
             .data(&propagation_data)
             .style(Style::default().fg(C_SPARKLINE));
@@ -350,8 +363,18 @@ fn draw_client_distribution<B: Backend>(
 
     // Build the containing block + paragraph
     let block = Block::default()
-        .title("Client Distribution")
-        .borders(Borders::ALL);
+    .title(Span::styled(
+        "Client Distribution",
+        Style::default()
+            .fg(Color::Gray)
+            .add_modifier(Modifier::DIM | Modifier::BOLD),
+    ))
+    .borders(Borders::ALL)
+    .border_style(
+        Style::default()
+            .fg(Color::Gray)
+            .add_modifier(Modifier::DIM),
+    );
 
     let paragraph = Paragraph::new(lines).block(block);
 
@@ -377,6 +400,8 @@ pub fn draw_propagation_avg<B: Backend>(
 ) {
 
    let mut lines: Vec<Spans> = Vec::new();
+
+   lines.push(Spans::from(Span::raw("")));
 
     lines.push(Spans::from(vec![
         Span::styled(
@@ -421,13 +446,24 @@ pub fn draw_propagation_avg<B: Backend>(
         ]));
     }
 
+    lines.push(Spans::from(Span::raw("")));
 
     let paragraph = Paragraph::new(lines)
         .alignment(Alignment::Center)
         .block(
             Block::default()
-                .title("Propagation Avg")
-                .borders(Borders::ALL),
+                .title(Span::styled(
+                    "Propagation Avg",
+                    Style::default()
+                        .fg(Color::Gray)
+                        .add_modifier(Modifier::DIM | Modifier::BOLD),
+                ))
+                .borders(Borders::ALL)
+                .border_style(
+                    Style::default()
+                        .fg(Color::Gray)
+                        .add_modifier(Modifier::DIM),
+                ),
         );
 
     frame.render_widget(paragraph, area);

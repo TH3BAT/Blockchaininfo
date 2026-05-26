@@ -305,11 +305,21 @@ pub fn render_hashrate_distribution_chart<B: Backend>(
     let barchart = BarChart::default()
         .block(
             Block::default()
-                .title(format!(
-                    "Hash Rate Distribution Top {} of {} 🌐 ({})",
-                    top8_dist, total_miners, window_display
-                ))
-                .borders(Borders::ALL),
+                .title(Span::styled(
+            format!(
+                "Hash Rate Distribution Top {} of {} 🌐 ({})",
+                top8_dist, total_miners, window_display
+            ),
+            Style::default()
+                .fg(Color::Gray)
+                .add_modifier(Modifier::DIM | Modifier::BOLD),
+        ))
+        .borders(Borders::ALL)
+        .border_style(
+            Style::default()
+                .fg(Color::Gray)
+                .add_modifier(Modifier::DIM),
+        ),
         )
         .data(&top_8_distribution_ref)
         .bar_width(7)

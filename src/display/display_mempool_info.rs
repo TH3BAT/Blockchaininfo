@@ -240,8 +240,21 @@ pub fn display_mempool_info<B: Backend>(
     // -----------------------------------------------------------------------
     // Shows mempool usage as a percentage of maxmempool, with a labeled border.
     let mempool_gauge = Gauge::default()
-        .block(Block::default().title("Mempool Usage").borders(Borders::ALL))
-        .gauge_style(Style::default().fg(C_MEMPOOL_USAGE_GAUGE_FG).bg(C_MEMPOOL_USAGE_GAUGE_BG))
+        .block(
+            Block::default()
+                .title("Mempool Usage")
+                .borders(Borders::ALL)
+                .border_style(
+                    Style::default()
+                        .fg(Color::DarkGray)
+                        .add_modifier(Modifier::DIM),
+                ),
+        )
+        .gauge_style(
+            Style::default()
+                .fg(C_MEMPOOL_USAGE_GAUGE_FG)
+                .bg(C_MEMPOOL_USAGE_GAUGE_BG),
+        )
         .percent(mempool_usage_percent as u16);
     frame.render_widget(mempool_gauge, chunks[1]);
 

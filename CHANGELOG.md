@@ -7,6 +7,16 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
+v.1.4.0-beta - 05-26-2026
+
+* Miner Trend: add optional early-observation mode via environment override
+  * Env: BCI_ENABLE_EARLY_MINER_TREND=true
+* UI: fix Miner Trend paging max to anchor to MinerTrendRows length
+* Code cleanup
+* TUI: reduce visual noise and strengthen signal-focused observability
+
+---
+
 v1.4.0-beta - 05-24-2026
 
 * Documentation to new logic added in beta
