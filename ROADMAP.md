@@ -261,6 +261,14 @@ The tool has matured into a **clarity instrument**, not a forensics engine.
 
 ---
 
+### **3.8 - BIP Monitoring**
+
+Future BCI feature: runtime BIP/User-Agent monitoring. Allow operator to set or
+update a monitored token while BCI is running and display peer adoption
+count/percent in a new panel within the Client/Version Distribution area.
+
+---
+
 ## **6. Go-Forward Rules for All Features**
 
 ### **No clutter**
