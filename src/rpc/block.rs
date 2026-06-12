@@ -15,7 +15,6 @@ use reqwest::header::CONTENT_TYPE;
 use serde_json::json;
 
 use crate::models::errors::MyError;
-use crate::models::block_info::Transaction;
 use crate::config::RpcConfig;
 use crate::rpc::client::build_rpc_client;
 
@@ -26,9 +25,10 @@ use crate::models::block_info::{
     MinersData,
     BlockInfoFull,
     BlockInfoFullJsonWrap,
+    Transaction,
 };
 
-use crate::utils::{BLOCK_HISTORY, log_error};
+use crate::utils::{MINER_BLOCK_HISTORY, log_error};
 use crate::models::miner_tags::PRIMARY_TAGS;
 use crate::consensus::satoshi_math::*;
 
@@ -260,8 +260,8 @@ pub async fn fetch_miner(
                 current_block, err
             ));
 
-            let block_history = BLOCK_HISTORY.write().await;
-            block_history.add_block(*current_block, Some("RPC Err".to_string()));
+            let miner_block_history = MINER_BLOCK_HISTORY.write().await;
+            miner_block_history.add_block(*current_block, Some("RPC Err".to_string()));
             return Ok(());
         }
     };
@@ -308,8 +308,8 @@ pub async fn fetch_miner(
     };
 
     // Append into rolling history
-    let block_history = BLOCK_HISTORY.write().await;
-    block_history.add_block(*current_block, Some(miner.into()));
+    let miner_block_history = MINER_BLOCK_HISTORY.write().await;
+    miner_block_history.add_block(*current_block, Some(miner.into()));
 
     Ok(())
 }

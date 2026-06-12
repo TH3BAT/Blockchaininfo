@@ -312,6 +312,50 @@ impl PeerInfo {
 
     //
     // ────────────────────────────────────────────────────────────────────────────────
+    //   UASF SIGNAL DISTRIBUTION
+    // ────────────────────────────────────────────────────────────────────────────────
+    //
+
+    fn extract_uasf_signal(subver: &str) -> Option<(String, String)> {
+        let trimmed = subver.trim_matches('/');
+
+        for segment in trimmed.split('/') {
+            if let Some(rest) = segment.strip_prefix("UASF-") {
+                if let Some((bip, version)) = rest.split_once(':') {
+                    return Some((bip.to_string(), version.to_string()));
+                }
+            }
+        }
+
+        None
+    }
+
+    pub fn aggregate_and_sort_uasf(peer_info: &[PeerInfo]) -> Vec<((String, String), usize)> {
+        let mut counts: HashMap<(String, String), usize> = HashMap::new();
+
+        for peer in peer_info
+            .iter()
+            .filter(|p| p.subver.contains("Satoshi"))
+            .filter(|p| p.subver.contains("UASF-"))
+        {
+            if let Some(signal) = Self::extract_uasf_signal(&peer.subver) {
+                *counts.entry(signal).or_insert(0) += 1;
+            }
+        }
+
+        let mut list: Vec<((String, String), usize)> = counts.into_iter().collect();
+
+        list.sort_by(|a, b| {
+            b.1.cmp(&a.1)
+                .then_with(|| a.0.0.cmp(&b.0.0))
+                .then_with(|| a.0.1.cmp(&b.0.1))
+        });
+
+        list
+    }
+
+    //
+    // ────────────────────────────────────────────────────────────────────────────────
     //   BLOCK PROPAGATION ANALYTICS
     // ────────────────────────────────────────────────────────────────────────────────
     //

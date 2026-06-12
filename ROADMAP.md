@@ -177,7 +177,7 @@ or estimated.
 
 ### **3.6 - On-Demand Hashrate Check (getnetworkhashps)**
 
-Implemented in 1.3.0
+Status: Implemented in 1.3.0
 
 Add a keybind to trigger a lightweight popup
 Popup displays:
@@ -228,6 +228,52 @@ Optional future extension (if it evolves):
   * Could correlate with hashrate breathing, miner distribution, and fee urgency
     windows
 
+Observability Review (2026)
+
+Status: Deferred / Likely Retired
+
+Reason:
+While the concept is interesting from an economic-observability perspective,
+deriving meaningful BTC-value pressure metrics requires continuous inspection
+of the raw mempool.
+
+For large mempools this effectively becomes:
+
+Repeated getrawmempool retrievals
+Continuous transaction processing
+Ongoing value aggregation
+Frequent recomputation of bucket distributions
+
+This workload is disproportionate to the value provided within a lightweight
+terminal observatory.
+
+BCI's design philosophy favors:
+
+Low RPC impact
+Fast refresh cycles
+Broad node compatibility
+Sustainable long-running observation
+
+The proposed metrics are computationally expensive and derive from data that is
+not directly exposed through lightweight RPC summaries.
+
+Lesson learned:
+
+The question was not:
+"Can we calculate economic flow metrics?"
+
+The answer is yes.
+
+The question became:
+"Can we calculate them efficiently enough to justify their place in a real-time
+TUI observatory?"
+
+Current answer:
+Probably not.
+
+This concept may be better suited for a dedicated daemon, research tool, or
+offline analytics platform rather than BCI's live observatory model.
+
 ## **4. Longer-Term Concepts (Fantasy Stage)**
 
 ### **🌱 Node-to-Node Dashboard Sync**
@@ -263,9 +309,39 @@ The tool has matured into a **clarity instrument**, not a forensics engine.
 
 ### **3.8 - BIP Monitoring**
 
+Status: Implemented in v1.4.0 as UASF Signals.
+
 Future BCI feature: runtime BIP/User-Agent monitoring. Allow operator to set or
 update a monitored token while BCI is running and display peer adoption
 count/percent in a new panel within the Client/Version Distribution area.
+
+---
+
+### **Hashrate Distribution (HRD) / Estimated Pool Hashrate**
+
+Status: Deferred / Likely Retired
+
+Reason:
+Miner share already represents observed block attribution.
+Estimated pool hashrate would be derived from the same block-share data and
+therefore does not provide an independent signal.
+
+Example:
+Network HR (On-Demand): 856 EH/s
+Foundry Share: 25%
+
+Operator can already infer:
+856 × 0.25 ≈ 214 EH/s
+
+This adds arithmetic, not observability.
+
+BCI favors new signals over transformed versions of existing signals.
+
+Lesson learned:
+The question was not "How much estimated hashrate does a miner have?"
+The question was "Has the miner's underlying hashrate changed?"
+
+Block attribution alone cannot answer that.
 
 ---
 

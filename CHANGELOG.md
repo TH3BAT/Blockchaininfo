@@ -7,6 +7,54 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
+v1.4.0 - 06-10-2026
+
+For the majority of new features introduced during the v1.4.0 beta cycle
+(including Miner Trend, On-Demand Hashrate, and related observability
+improvements), please refer to the v1.4.0-beta release notes.
+
+This release focuses on stabilization, refinement, and final polish based on
+extended beta observation.
+
+Improvements
+
+* Informational popups now use Observatory Amber while consensus-related
+  warnings retain Alert Orange.* Split shared popup color constants into
+  dedicated customization points, improving operator flexibility and
+  simplifying future theme changes.
+
+Network
+
+* Added UASF Signal Monitoring to the Network panel.• New three-way distribution
+  toggle allows operators to view:
+  * Node Versions
+  * Client Distribution
+  * UASF Signals
+    * Added direct-access shortcut to UASF Signals view.
+
+Propagation Monitoring
+
+* Fixed propagation display drift caused by peer topology changes.
+  * Average Block Propagation Time now reflects the latest recorded propagation
+    observation, aligning the display with the propagation history sparkline.
+
+UI
+
+* Removed application title from the header to reduce visual clutter and improve
+  information density.
+
+Internal
+
+* Renamed BlockHistory → MinerBlockHistory.
+  * Renamed BlockHistoryEntry → MinerBlockHistoryEntry.
+  * General cleanup and codebase refinements completed during the beta
+    stabilization period.
+
+As always, BCI remains an observatory for the Bitcoin network.
+BCI doesn't shout. It endures. 🦀
+
+---
+
 v.1.4.0-beta - 05-26-2026
 
 * Miner Trend: add optional early-observation mode via environment override

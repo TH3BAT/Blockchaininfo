@@ -1,13 +1,12 @@
-// display/display_consensus_security_info.rs
-//
-// Renders the "Consensus Security" section of the dashboard.
-// This section displays active chain tips and fork information,
-// helping users visually monitor whether unexpected chains appear
-// (e.g., stale forks, competing tips, potential re-org signals).
-//
-// All processing here is presentation-only; the underlying chaintips
-// were already retrieved and deserialized inside the RPC subsystem.
-//
+//! display/display_consensus_security_info.rs
+//!
+//! Renders the "Consensus Security" section of the dashboard.
+//! This section displays active chain tips and fork information,
+//! helping users visually monitor whether unexpected chains appear
+//! (e.g., stale forks, competing tips, potential re-org signals).
+//!
+//! All processing here is presentation-only; the underlying chaintips
+//! were already retrieved and deserialized inside the RPC subsystem.
 
 use tui::{
     style::{Color, Style, Modifier},
@@ -15,7 +14,7 @@ use tui::{
     widgets::{Block, Borders, Paragraph},
     layout::{Constraint, Direction, Layout},
 };
-use crate::{models::chaintips_info::ChainTip, ui::colors::{C_CONSENSUS_STATUS_SECTION, C_MAIN_LABELS}};
+use crate::{models::chaintips_info::ChainTip, ui::colors::{C_CONSENSUS_STATUS_SECTION, C_MAIN_LABELS, C_SEPARATORS}};
 use crate::models::errors::MyError;
 
 /// Draws the Consensus Security panel.
@@ -117,7 +116,11 @@ pub fn display_consensus_security_info<B: tui::backend::Backend>(
                 Style::default().fg(C_MAIN_LABELS),
             ),
 
-            Span::raw(" | "),
+            Span::styled(
+                " | ",
+                Style::default()
+                    .fg(C_SEPARATORS)
+            ),
 
             Span::styled(
                 "Status: ",
@@ -130,7 +133,11 @@ pub fn display_consensus_security_info<B: tui::backend::Backend>(
                 Style::default().fg(C_CONSENSUS_STATUS_SECTION),
             ),
 
-            Span::raw(" | "),
+            Span::styled(
+                " | ",
+                Style::default()
+                    .fg(C_SEPARATORS)
+            ),
 
             Span::styled(
                 "📏 Length: ",

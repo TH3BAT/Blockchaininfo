@@ -1,11 +1,12 @@
+//! display/display_blockchain_info.rs
+//!
+//! This module renders all Blockchain-related metrics in the TUI.
+//! It draws Best Block, Miner, Difficulty, Time Since Block,
+//! difficulty projections, chainwork, verification progress,
+//! disk size, timestamps, and the Hash Rate Distribution chart.
+//!
+//! No RPC logic lives here — this is pure UI rendering.
 
-// This module renders all Blockchain-related metrics in the TUI.
-// It draws Best Block, Miner, Difficulty, Time Since Block,
-// difficulty projections, chainwork, verification progress,
-// disk size, timestamps, and the Hash Rate Distribution chart.
-//
-// No RPC logic lives here — this is pure UI rendering.
-//
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect, Alignment},
@@ -312,12 +313,12 @@ pub fn render_hashrate_distribution_chart<B: Backend>(
             ),
             Style::default()
                 .fg(Color::Gray)
-                .add_modifier(Modifier::DIM | Modifier::BOLD),
+                .add_modifier(Modifier::BOLD),
         ))
         .borders(Borders::ALL)
         .border_style(
             Style::default()
-                .fg(Color::Gray)
+                .fg(Color::DarkGray)
                 .add_modifier(Modifier::DIM),
         ),
         )
@@ -582,10 +583,18 @@ pub fn draw_miner_trend<B: Backend>(
         ),
     ]));
 
-    let week_style = if len < ONE_HASHPHASE_CYCLE as usize {
-        Style::default().fg(Color::DarkGray)
+
+
+    let day_style = if len < (ONE_CHAIN_DAY * 2) as usize {
+        Style::default().fg(C_MINER_TREND_METRIC_INACTIVE)
     } else {
-        Style::default().fg(C_MAIN_LABELS)
+        Style::default().fg(C_MINER_TREND_METRIC)
+    };
+
+    let week_style = if len < ONE_HASHPHASE_CYCLE as usize {
+        Style::default().fg(C_MINER_TREND_METRIC_INACTIVE)
+    } else {
+        Style::default().fg(C_MINER_TREND_METRIC)
     };
     
     // Render active miners only to preserve TUI readability.
@@ -601,7 +610,7 @@ pub fn draw_miner_trend<B: Backend>(
             Span::raw("  "),
             Span::styled(
                 format!("{:>5} {:>3}% {:>4}", row.day_count, row.day_pct, day_delta),
-                Style::default().fg(C_MINER_TREND_METRIC_LABEL),
+                day_style,
             ),
             Span::raw("  "),
             Span::styled(

@@ -1,18 +1,18 @@
-// display/display_mempool_info.rs
-//
-// Mempool dashboard renderer.
-//
-// This module is responsible for drawing the entire "Mempool" section
-// of the BlockchainInfo TUI. It shows:
-// - Loading spinner while initial data is collected
-// - Mempool memory usage gauge
-// - Flashing transaction count (global mempool size)
-// - Optional "dust-free" decoration on the transaction line
-// - Size / Age / RBF distributions (with percent + ASCII progress bars)
-// - Fee metrics (average, median, fee rate)
-//
-// This file is *display only* — it does not perform any mempool
-// sampling or filtering logic, it simply renders what models provide.
+//! display/display_mempool_info.rs
+//!
+//! Mempool dashboard renderer.
+//!
+//! This module is responsible for drawing the entire "Mempool" section
+//! of the BlockchainInfo TUI. It shows:
+//! - Loading spinner while initial data is collected
+//! - Mempool memory usage gauge
+//! - Flashing transaction count (global mempool size)
+//! - Optional "dust-free" decoration on the transaction line
+//! - Size / Age / RBF distributions (with percent + ASCII progress bars)
+//! - Fee metrics (average, median, fee rate)
+//!
+//! This file is *display only* — it does not perform any mempool
+//! sampling or filtering logic, it simply renders what models provide.
 
 use tui::{
     backend::Backend,
@@ -242,11 +242,15 @@ pub fn display_mempool_info<B: Backend>(
     let mempool_gauge = Gauge::default()
         .block(
             Block::default()
-                .title("Mempool Usage")
+                .title(Span::styled("Mempool Usage",
+                    Style::default()
+                    .fg(Color::Gray)
+                    .add_modifier(Modifier::BOLD),
+            ))
                 .borders(Borders::ALL)
                 .border_style(
                     Style::default()
-                        .fg(Color::DarkGray)
+                        .fg(C_MEMPOOL_USAGE_GAUGE_BORDER)
                         .add_modifier(Modifier::DIM),
                 ),
         )

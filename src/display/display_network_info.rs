@@ -1,17 +1,17 @@
-// display/display_network_info.rs
-//
-// Network dashboard renderer.
-//
-// This module draws the Network section of the BlockchainInfo TUI.
-// It includes:
-//   - Incoming/outgoing connection counts (with flashing IN counter)
-//   - Total bytes received/sent (formatted human-readable)
-//   - Average block propagation time (color-coded severity)
-//   - Toggle-view section: Version Distribution (BarChart) OR Client Distribution (ASCII)
-//   - Sparkline showing recent block propagation times
-//
-// Like all display modules, it is pure rendering logic,
-// receiving preprocessed data from `models` and plotting it visually.
+//! display/display_network_info.rs
+//!
+//! Network dashboard renderer.
+//!
+//! This module draws the Network section of the BlockchainInfo TUI.
+//! It includes:
+//!   - Incoming/outgoing connection counts (with flashing IN counter)
+//!   - Total bytes received/sent (formatted human-readable)
+//!   - Average block propagation time (color-coded severity)
+//!   - Toggle-view section: Version Distribution (BarChart) OR Client Distribution (ASCII)
+//!   - Sparkline showing recent block propagation times
+//!
+//! Like all display modules, it is pure rendering logic,
+//! receiving preprocessed data from `models` and plotting it visually.
 
 use tui::{
     backend::Backend,
@@ -43,13 +43,24 @@ pub fn display_network_info<B: Backend>(
     frame: &mut Frame<B>,
     version_counts: &[(String, usize)],
     client_counts: &[(String, usize)],
-    avg_block_propagate_time: &i64,
+    uasf_counts: &[((String, String), usize)],
     propagation_times: &VecDeque<i64>,
     show_client_distribution: bool,
     show_propagation_avg: bool,
+    show_uasf_distribution: bool,
     area: Rect,
 ) -> Result<(), MyError> {
     
+    // Extract current average propagation time.
+    let latest_propagation_time = propagation_times
+        .back()
+        .copied()
+        .unwrap_or(0);
+
+    // Passed to draw_uasf_distribution() to calculate pct of total peers.    
+    let total_version_peers: usize =
+        version_counts.iter().map(|(_, count)| *count).sum();
+
     // -----------------------------------------------------------------------
     // 1. BLOCK PROPAGATION TIME COLORING
     // -----------------------------------------------------------------------
@@ -57,15 +68,15 @@ pub fn display_network_info<B: Backend>(
     //   < 3 seconds      → Ideal (Green)
     //   < 60 seconds     → Caution (Yellow)
     //   >= 60 seconds    → Critical (Red)
-    let color = if avg_block_propagate_time.abs() < 3 {
+    let color = if latest_propagation_time.abs() < 3 {
         C_STATUS_LOW
-    } else if avg_block_propagate_time.abs() < 60 {
+    } else if latest_propagation_time.abs() < 60 {
         C_STATUS_MED
     } else {
         C_STATUS_HIGH
     };
     let abpt_text = "seconds";
-
+    
     // -----------------------------------------------------------------------
     // 2. FLASHING CONNECTION-IN COUNTER
     // -----------------------------------------------------------------------
@@ -142,8 +153,8 @@ pub fn display_network_info<B: Backend>(
                 "⏱️ Average Block Propagation Time: ",
                 Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::DIM),
             ),
-            Span::styled(
-                format!("{:.0} {}", avg_block_propagate_time, abpt_text),
+            Span::styled( 
+                format!("{:.0} {}", latest_propagation_time, abpt_text),
                 Style::default().fg(color),
             ),
         ]),
@@ -165,10 +176,12 @@ pub fn display_network_info<B: Backend>(
         .split(chunks[2]);
 
     // -----------------------------------------------------------------------
-    // 6. LEFT SIDE: CLIENT OR VERSION DISTRIBUTION
+    // 6. LEFT SIDE: CLIENT / VERSION / UASF DISTRIBUTION
     // -----------------------------------------------------------------------
-    if show_client_distribution {
-        // ASCII client distribution (new feature)
+    if show_uasf_distribution {
+        draw_uasf_distribution(frame, sub_chunks[0], uasf_counts, total_version_peers as usize);
+
+    } else if show_client_distribution {
         draw_client_distribution(frame, sub_chunks[0], client_counts);
 
     } else {
@@ -176,17 +189,12 @@ pub fn display_network_info<B: Backend>(
         if !version_counts.is_empty() {
             let limited_version_counts = version_counts.iter().take(5);
 
-            // Convert input tuple format → BarChart data array
             let data: Vec<(&str, u64)> = limited_version_counts
                 .map(|(version, count)| (version.as_str(), *count as u64))
                 .collect();
 
             let total_versions = version_counts.len();
-            let top5orless = if total_versions < 5 {
-                total_versions
-            } else {
-                5
-            };
+            let top5orless = total_versions.min(5);
 
             let barchart = BarChart::default()
                 .block(
@@ -194,12 +202,12 @@ pub fn display_network_info<B: Backend>(
                         .borders(Borders::ALL)
                         .border_style(
                             Style::default()
-                                .fg(Color::Gray)
+                                .fg(Color::DarkGray)
                                 .add_modifier(Modifier::DIM),
                         )
                         .title(Span::styled(
-                    format!("Version Distribution (Top {} of {})", top5orless, total_versions),
-                    Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::BOLD),
+                            format!("Version Distribution (Top {} of {})", top5orless, total_versions),
+                            Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::BOLD),
                         )),
                 )
                 .data(&data)
@@ -270,7 +278,7 @@ pub fn display_network_info<B: Backend>(
                     .borders(Borders::ALL)
                     .border_style(
                         Style::default()
-                            .fg(Color::Gray)
+                            .fg(Color::DarkGray)
                             .add_modifier(Modifier::DIM),
                     )
                     .title(Span::styled(
@@ -367,12 +375,12 @@ fn draw_client_distribution<B: Backend>(
         "Client Distribution",
         Style::default()
             .fg(Color::Gray)
-            .add_modifier(Modifier::DIM | Modifier::BOLD),
+            .add_modifier(Modifier::BOLD),
     ))
     .borders(Borders::ALL)
     .border_style(
         Style::default()
-            .fg(Color::Gray)
+            .fg(Color::DarkGray)
             .add_modifier(Modifier::DIM),
     );
 
@@ -456,16 +464,93 @@ pub fn draw_propagation_avg<B: Backend>(
                     "Propagation Avg",
                     Style::default()
                         .fg(Color::Gray)
-                        .add_modifier(Modifier::DIM | Modifier::BOLD),
+                        .add_modifier(Modifier::BOLD),
                 ))
                 .borders(Borders::ALL)
                 .border_style(
                     Style::default()
-                        .fg(Color::Gray)
+                        .fg(Color::DarkGray)
                         .add_modifier(Modifier::DIM),
                 ),
         );
 
     frame.render_widget(paragraph, area);
 
+}
+
+/// Draws the UASF signal distribution panel in the Network section.
+///
+/// Displays the top observed UASF signals parsed from peer subversion strings,
+/// grouped by BIP identifier and signal version.
+///
+/// Example parsed signal:
+/// `/Satoshi:29.2.0/Knots:20251110+bip110-v0.1/UASF-BIP110:0.1/`
+///
+/// renders as:
+/// `BIP110  v0.1`
+///
+/// Percentages are calculated against the same filtered peer universe used by
+/// Version Distribution, keeping UASF signal share aligned with observed
+/// Bitcoin/Satoshi peers rather than raw connection count.
+///
+/// This panel is observational only:
+/// it reports visible peer signals and does not infer activation, support,
+/// enforcement, or network consensus.
+fn draw_uasf_distribution<B: Backend>(
+    frame: &mut Frame<B>,
+    area: Rect,
+    uasf_counts: &[((String, String), usize)],
+    total_peers: usize,
+) {
+    let mut lines: Vec<Spans> = Vec::new();
+
+    // Add spacing below border title
+    lines.push(Spans::from(""));
+
+    if uasf_counts.is_empty() || total_peers == 0 {
+        lines.push(Spans::from(Span::styled(
+            "No UASF signals observed",
+            Style::default().fg(Color::Gray).add_modifier(Modifier::BOLD),
+        )));
+    } else {
+        for ((bip, version), count) in uasf_counts.iter().take(5) {
+            let pct = (*count as f64 / total_peers as f64) * 100.0;
+
+            lines.push(Spans::from(vec![
+                Span::styled(
+                    format!("{:<8}", bip),
+                    Style::default().fg(C_UASF_SIGNAL_LABEL).add_modifier(Modifier::DIM),
+                ),
+                Span::styled(
+                    format!(" v{:<5}", version),
+                    Style::default().fg(C_UASF_SIGNAL_VERSION),
+                ),
+                Span::raw("  "),
+                Span::styled(
+                    format!("{:>3}", count),
+                    Style::default().fg(C_UASF_SIGNAL_COUNT),
+                ),
+                Span::raw("  "),
+                Span::styled(
+                    format!("{:>5.1}%", pct),
+                    Style::default().fg(C_UASF_SIGNAL_PCT),
+                ),
+            ]));
+        }
+    }
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_style(
+            Style::default()
+                .fg(Color::DarkGray)
+                .add_modifier(Modifier::DIM),
+        )
+        .title(Span::styled(
+            format!("UASF Signals (Top {} of {})", uasf_counts.len().min(4), uasf_counts.len()),
+            Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::BOLD),
+        ));
+
+    let paragraph = Paragraph::new(lines).block(block);
+    frame.render_widget(paragraph, area);
 }

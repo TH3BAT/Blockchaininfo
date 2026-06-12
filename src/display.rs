@@ -148,10 +148,11 @@ pub fn display_network_info<B: Backend>(
     frame: &mut Frame<B>,
     version_counts: &[(String, usize)],
     client_counts: &[(String, usize)],
-    avg_block_propagate_time: &i64,
+    uasf_counts: &[((String, String), usize)],
     propagation_times: &VecDeque<i64>,
     show_client_distribution: bool,
     show_propagation_avg: bool,
+    show_uasf_distribution: bool,
     area: Rect,
 ) {
     let _ = display_network_info::display_network_info(
@@ -160,10 +161,11 @@ pub fn display_network_info<B: Backend>(
         frame,
         version_counts,
         client_counts,
-        avg_block_propagate_time,
+        uasf_counts,
         propagation_times,
         show_client_distribution,
         show_propagation_avg,
+        show_uasf_distribution,
         area,
     );
 }

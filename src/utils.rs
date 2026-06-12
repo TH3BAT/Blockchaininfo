@@ -40,7 +40,7 @@ use crate::models::mempool_info::{MempoolDistribution, MempoolInfo};
 use crate::models::peer_info::PeerInfo;
 use crate::models::network_info::NetworkInfo;
 use crate::models::network_totals::NetTotals;
-use crate::models::block_info::{BlockHistory, MinersData};
+use crate::models::block_info::{MinerBlockHistory, MinersData};
 use crate::consensus::satoshi_math::*;
 use crate::ui::colors::*;
 use crate::models::flashing_text::FULL_HASHPHASE_CYCLE;
@@ -127,8 +127,8 @@ lazy_static! {
 
 // Hash distribution history over (typically) the past 144 blocks.
 lazy_static! {
-    pub static ref BLOCK_HISTORY: Arc<RwLock<BlockHistory>> =
-        Arc::new(RwLock::new(BlockHistory::new()));
+    pub static ref MINER_BLOCK_HISTORY: Arc<RwLock<MinerBlockHistory>> =
+        Arc::new(RwLock::new(MinerBlockHistory::new()));
 }
 
 //
@@ -313,7 +313,7 @@ pub fn render_header(percent: f64, rates: &[f64]) -> Paragraph<'static> {
 
     Paragraph::new(vec![
         Spans::from(vec![
-            Span::styled("₿lockChainInfo ", Style::default().fg(C_APP_TITLE)),
+            // Span::styled("₿lockChainInfo ", Style::default().fg(C_APP_TITLE)),
             Span::styled(dot, dot_style),
         ]),
         Spans::from(Span::styled(

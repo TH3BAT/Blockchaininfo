@@ -1,6 +1,6 @@
 [package]
 name = "blockchaininfo"
-version = "1.4.0-beta"
+version = "1.4.0"
 edition = "2021"
 description = "Live terminal dashboard tracking critical Bitcoin metrics."
 readme = "README.md"

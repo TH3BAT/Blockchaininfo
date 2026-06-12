@@ -48,7 +48,7 @@ use crate::display::{
 
 // Misc utilities: header/footer, miner loader, block history tracker.
 use crate::utils::{render_header, render_footer, load_miners_data, log_error, format_eh, 
-    BLOCK_HISTORY};
+    MINER_BLOCK_HISTORY};
 
 use crate::consensus::satoshi_math::*;
 use crate::ui::colors::*;
@@ -142,6 +142,7 @@ struct App {
     miner_trend_rows: Vec<MinerTrendRow>,
     show_miner_trend: bool,
     miner_trend_page: usize, // Which page to show (0 or 1)
+    show_uasf_distribution: bool,
 
 }
 
@@ -173,6 +174,7 @@ impl App {
             miner_trend_rows: Vec::new(),
             show_miner_trend: false,
             miner_trend_page: 0,
+            show_uasf_distribution: false
 
         }
     }
@@ -750,11 +752,12 @@ loop {
     }
 
     // ---------------------------------------------------------------------------------------------
-    // Peer Aggregations: Versions & Clients
+    // Peer Aggregations: Versions & Clients & UASF signal distribution
     // Used by the Network section based on toggle mode.
     // ---------------------------------------------------------------------------------------------
     let version_counts = PeerInfo::aggregate_and_sort_versions(&peer_info);
     let client_counts = PeerInfo::aggregate_and_sort_clients(&peer_info);
+    let uasf_counts = PeerInfo::aggregate_and_sort_uasf(&peer_info);
 
     // ---------------------------------------------------------------------------------------------
     // Block Propagation Time Estimation
@@ -816,7 +819,7 @@ loop {
     // =============================================================================================
 
     // Safely read the last-mined block's miner attribution.
-    let last_miner = BLOCK_HISTORY.read().await.last_miner();
+    let last_miner = MINER_BLOCK_HISTORY.read().await.last_miner();
 
     // Convert default miner string → Arc<str> (so we can store by reference without ownership issues)
     let default_miner_arc = Arc::from(default_miner.as_str());
@@ -829,7 +832,7 @@ loop {
     // NOTE:
     //  We intentionally convert miners into Arc<str> to cheaply clone & pass them.
     //
-    let hash_distribution: Vec<(Arc<str>, u64)> = BLOCK_HISTORY
+    let hash_distribution: Vec<(Arc<str>, u64)> = MINER_BLOCK_HISTORY
         .read()
         .await
         .get_miner_distribution()
@@ -839,13 +842,13 @@ loop {
 
     // Construct last 20 miners and heights vector for the Blockchain section toggle.
     let last20_miners = {
-        let h = BLOCK_HISTORY.read().await;
+        let h = MINER_BLOCK_HISTORY.read().await;
         h.last_n_with_heights(20)
     };
     app.last20_miners = last20_miners;
 
     let (current_day, previous_day, current_week, previous_week) = {
-        let h = BLOCK_HISTORY.read().await;
+        let h = MINER_BLOCK_HISTORY.read().await;
 
         (
             h.miner_counts_for_range(0, ONE_CHAIN_DAY as usize),
@@ -884,14 +887,14 @@ loop {
     // Therefore:
     // 2 × ONE_CHAIN_DAY minimum history is required before rendering trend data.
     //
-    let history_len = {
-        let h = BLOCK_HISTORY.read().await;
+    let miner_history_len = {
+        let h = MINER_BLOCK_HISTORY.read().await;
         h.len()
     };
 
     // Not enough witnessed blocks yet to produce meaningful comparisons.
     // AND operator has not signaled enabled early miner trend with environment variable.
-    if history_len < (2 * ONE_CHAIN_DAY) as usize
+    if miner_history_len < (2 * ONE_CHAIN_DAY) as usize
         && !enable_early_miner_trend
     {
         app.miner_trend_rows.clear();
@@ -931,7 +934,7 @@ loop {
 
         // During week-window warm-up, sort by the mature 144-block day window.
         // Once the 2016-block trailer is fully populated, promote week sorting.
-        if history_len < ONE_HASHPHASE_CYCLE as usize {
+        if miner_history_len < ONE_HASHPHASE_CYCLE as usize {
             miner_trend_rows.sort_by(|a, b| {
                 b.day_count
                     .cmp(&a.day_count)
@@ -1168,13 +1171,27 @@ loop {
                     }
                 }
 
-                // Version <-> Client distribution toggle
-                KeyCode::Char('c') => {
-                    app.show_client_distribution = !app.show_client_distribution;
+                // Client <-> UASF distribution toggle
+                KeyCode::Char('c') if app.popup == PopupType::None => {
+                    if app.show_uasf_distribution {
+                        app.show_uasf_distribution = false;
+                        app.show_client_distribution = false; // Version
+                    } else if app.show_client_distribution {
+                        app.show_client_distribution = false;
+                        app.show_uasf_distribution = true;
+                    } else {
+                        app.show_client_distribution = true;
+                    }
+                }
+
+                // Version distribution toggle
+                KeyCode::Char('u') if app.popup == PopupType::None => {
+                    app.show_client_distribution = false;
+                    app.show_uasf_distribution = true;
                 }
 
                  // Propagation sparkline <-> average toggle
-                KeyCode::Char('p') => {
+                KeyCode::Char('p') if app.popup == PopupType::None => {
                     app.show_propagation_avg = !app.show_propagation_avg;
                 }
                 // If a non-character key is pressed during paste, end paste mode.
@@ -1299,7 +1316,7 @@ loop {
 
         let block_blockchain = Block::default()
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(C_BLOCKCHAIN_BORDER))
+            .border_style(Style::default().fg(C_BLOCKCHAIN_BORDER).add_modifier(Modifier::DIM))
             .border_type(BorderType::Rounded)
             .title(blockchain_title);
 
@@ -1312,7 +1329,7 @@ loop {
         } else if app.show_last20_miners {
             draw_last20_miners(frame, chunks[1], &app.last20_miners);
         } else if app.show_miner_trend {
-            draw_miner_trend(frame, chunks[1], &app.miner_trend_rows, history_len, app.miner_trend_page);
+            draw_miner_trend(frame, chunks[1], &app.miner_trend_rows, miner_history_len, app.miner_trend_page);
 
         } else {
             if !block_info.is_empty() && !block24_info.is_empty() {
@@ -1380,7 +1397,7 @@ loop {
 
         let block_mempool = Block::default()
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(C_MEMPOOL_BORDER))
+            .border_style(Style::default().fg(C_MEMPOOL_BORDER).add_modifier(Modifier::DIM))
             .border_type(BorderType::Rounded)
             .title(mempool_title);
 
@@ -1399,8 +1416,10 @@ loop {
         // -----------------------------------------------------------------------------------------
 
         // Label describing what pressing 'c' will toggle TO
-        let cv_label = if app.show_client_distribution {
+        let dist_label = if app.show_uasf_distribution {
             "(c→Version)"
+        } else if app.show_client_distribution {
+            "(c→UASF)"
         } else {
             "(c→Client)"
         };
@@ -1421,13 +1440,13 @@ loop {
         };
 
         let title = match network_absence {
-            Some(glyph) => format!("[Network] {} {}  {}", cv_label, prop_label, glyph),
-            None => format!("[Network] {} {}", cv_label, prop_label),
+            Some(glyph) => format!("[Network] {} {}  {}", dist_label, prop_label, glyph),
+            None => format!("[Network] {} {}", dist_label, prop_label),
         };
 
         let block_network = Block::default()
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(C_NETWORK_BORDER))
+            .border_style(Style::default().fg(C_NETWORK_BORDER).add_modifier(Modifier::DIM))
             .border_type(BorderType::Rounded)
             .title(
                 Span::styled(
@@ -1447,10 +1466,11 @@ loop {
             frame,
             &version_counts,
             &client_counts,
-            &avg_block_propagate_time,
+            &uasf_counts,
             &propagation_times,
             app.show_client_distribution,
             app.show_propagation_avg,
+            app.show_uasf_distribution,
             chunks[3],
         );
         // -----------------------------------------------------------------------------------------
@@ -1459,7 +1479,7 @@ loop {
         {
             let consensus_block = Block::default()
                 .borders(Borders::ALL)
-                .border_style(Style::default().fg(C_CONSENSUS_BORDER))
+                .border_style(Style::default().fg(C_CONSENSUS_BORDER).add_modifier(Modifier::DIM))
                 .border_type(BorderType::Rounded)
                 .title(
                     Span::styled(
@@ -1649,7 +1669,7 @@ fn render_tx_lookup_popup<B: Backend>(frame: &mut Frame<B>, app: &mut App) {
 
     // User input line
     let input = Paragraph::new(app.tx_input.clone())
-        .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::DIM))
+        .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::DIM).add_modifier(Modifier::BOLD))
         .wrap(Wrap { trim: true });
 
     // RPC result rendering
@@ -1719,7 +1739,7 @@ fn render_hashrate_on_demand_popup<B: Backend>(frame: &mut Frame<B>, app: &App) 
 
     // Orange text inside
     let paragraph = Paragraph::new(text)
-        .style(Style::default().fg(C_HELP_TXT).add_modifier(Modifier::DIM))
+        .style(Style::default().fg(C_HASHRATE_ON_DEMAND_TXT).add_modifier(Modifier::BOLD))
         .block(popup)
         .alignment(Alignment::Center)
         .wrap(Wrap { trim: true });
@@ -1732,11 +1752,19 @@ fn render_hashrate_on_demand_popup<B: Backend>(frame: &mut Frame<B>, app: &App) 
 // =================================================================================================
 /// Draws the Help popup showing global shortcuts and section descriptions.
 fn render_help_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) {
-    let popup_area = centered_rect(75, 36, frame.size());
+    let popup_area = centered_rect(76, 44, frame.size());
     frame.render_widget(Clear, popup_area);
 
     // Multi-line help text
     let help_text = vec![
+        "",
+        "BlockChainInfo (BCI)",
+        "An observatory for the Bitcoin network.",
+        "",
+        "BCI doesn't shout. It endures. 🦀",
+        "",
+        "The longer you run it,",
+        "the more you discover...",
         "",
         " GLOBAL CONTROLS",
         " ─────────────────────────",
@@ -1749,19 +1777,17 @@ fn render_help_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) {
         " ─────────────────────────",
         "  Blockchain   Hashrate Distribution",
         "  Mempool      Mempool Visuals",
-        "  Network      Node Versions & Clients",
+        "  Network      Node Versions, Clients, UASF",
+        "     Hidden: u  Direct access to UASF Signals",
         "  Consensus    Fork Monitoring",
         "",
         " Toggles are displayed directly inside",
         " each section for clarity.",
-        "",
-        " Built for the community",
-        " BCI doesn’t shout. It endures. 🦀",
     ];
 
     let paragraph = Paragraph::new(help_text.join("\n"))
         .alignment(Alignment::Left)
-        .style(Style::default().fg(C_HELP_TXT).add_modifier(Modifier::DIM))
+        .style(Style::default().fg(C_HELP_TXT).add_modifier(Modifier::BOLD))
         .wrap(Wrap { trim: false });
 
     let block = Block::default()
@@ -1833,7 +1859,7 @@ fn render_consensus_warning_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) 
 
     let paragraph = Paragraph::new(warning_text.join("\n"))
         .alignment(Alignment::Left)
-        .style(Style::default().fg(C_CONSENSUS_WARNING_TXT).add_modifier(Modifier::DIM))
+        .style(Style::default().fg(C_CONSENSUS_WARNING_TXT).add_modifier(Modifier::BOLD))
         .wrap(Wrap { trim: false });
 
     let block = Block::default()

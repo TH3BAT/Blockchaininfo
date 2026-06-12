@@ -442,8 +442,9 @@ pub struct Miner {
     pub wallet: String,
 }
 
+// A single miner record inside MinerBlockHistory.
 #[derive(Clone)]
-pub struct BlockHistoryEntry {
+pub struct MinerBlockHistoryEntry {
     pub height: u64,
     pub miner: Option<Arc<str>>,
 }
@@ -452,14 +453,14 @@ pub struct BlockHistoryEntry {
 /// Stores the last 144 block miners with their heights.
 ///
 /// Used for the Hash Rate Distribution chart and “Last Miner” display.
-pub struct BlockHistory {
-    pub blocks: Mutex<VecDeque<BlockHistoryEntry>>,
+pub struct MinerBlockHistory {
+    pub blocks: Mutex<VecDeque<MinerBlockHistoryEntry>>,
 }
 
-impl BlockHistory {
+impl MinerBlockHistory {
     /// Create an empty 144-block rolling window.
     pub fn new() -> Self {
-        BlockHistory {
+        MinerBlockHistory {
             blocks: Mutex::new(VecDeque::with_capacity(ONE_HASHPHASE_CYCLE as usize)),
         }
     }
@@ -482,7 +483,7 @@ impl BlockHistory {
     }
 
     /// Returns aggregated miner occurrence counts across a rolling
-    /// slice of block history.
+    /// slice of miner block history.
     ///
     /// The range is calculated relative to the newest observed block,
     /// allowing callers to query synchronized rolling windows such as:
@@ -550,7 +551,7 @@ impl BlockHistory {
             blocks.pop_front(); // Maintain fixed-size window
         }
 
-        blocks.push_back(BlockHistoryEntry {
+        blocks.push_back(MinerBlockHistoryEntry {
             height,
             miner: miner.map(|m| Arc::from(m.into_boxed_str())),
         });
@@ -559,7 +560,7 @@ impl BlockHistory {
     /// Return miner distribution for the most recent rolling chain-day.
     ///
     /// Uses only the latest ONE_CHAIN_DAY blocks even though the underlying
-    /// BlockHistory buffer may retain a larger epoch-sized history window.
+    /// MinerBlockHistory buffer may retain a larger epoch-sized history window.
     pub fn get_miner_distribution(&self) -> Vec<(Arc<str>, u64)> {
         let blocks = self.blocks.lock().unwrap();
 
@@ -583,7 +584,7 @@ impl BlockHistory {
 /// observation windows:
 ///
 /// - Day  = rolling 144-block window ("chain-day")
-/// - Week = rolling 2016-block window (difficulty epoch)
+/// - Week = rolling 1008-block window
 ///
 /// The `*_count` fields represent the number of blocks mined
 /// within each active window.

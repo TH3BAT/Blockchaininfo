@@ -58,12 +58,14 @@ pub const C_LAST20_HEIGHT_LABEL: Color = Color::Cyan;
 pub const C_LAST20_MINER_LABEL: Color = Color::Gray;
 
 pub const C_MINER_TREND_MINER_LABEL: Color = Color::Cyan;
-pub const C_MINER_TREND_METRIC_LABEL: Color = Color::Gray;
+pub const C_MINER_TREND_METRIC: Color = Color::Gray;
+pub const C_MINER_TREND_METRIC_INACTIVE: Color = Color::DarkGray;
 
 /// Mempool
 pub const C_MEMPOOL_DIST_LABELS: Color = Color::Yellow;
-pub const C_MEMPOOL_USAGE_GAUGE_FG: Color = Color::DarkGray;
+pub const C_MEMPOOL_USAGE_GAUGE_FG: Color = Color::Gray;
 pub const C_MEMPOOL_USAGE_GAUGE_BG: Color = Color::Black;
+pub const C_MEMPOOL_USAGE_GAUGE_BORDER: Color = Color::DarkGray;
 pub const C_MEMPOOL_VALUES: Color = Color::Gray;
 pub const C_DUST_FREE_PCT: Color = Color::Gray;
 pub const C_DUST_FREE_LABEL: Color = Color::DarkGray;
@@ -77,6 +79,10 @@ pub const C_CLIENT_DIST_MINER_LABEL: Color = Color::Cyan;
 pub const C_CLIENT_DIST_MINER_COUNT:Color = Color::Gray;
 pub const C_CLIENT_DIST_MINER_PCT:Color = Color::Gray;
 pub const C_SPARKLINE: Color = Color::DarkGray;
+pub const C_UASF_SIGNAL_LABEL: Color = Color::Cyan;
+pub const C_UASF_SIGNAL_COUNT: Color = Color::Gray;
+pub const C_UASF_SIGNAL_PCT: Color = Color::Gray;
+pub const C_UASF_SIGNAL_VERSION: Color = Color::DarkGray;
 
 /// Consensus
 pub const C_CONSENSUS_STATUS_SECTION: Color = Color::Yellow;
@@ -86,9 +92,10 @@ pub const C_STATUS_LOW: Color = Color::Green;
 pub const C_STATUS_MED: Color = Color::Yellow;
 pub const C_STATUS_HIGH: Color = Color::Red;
 
-pub const C_TX_LOOKUP_TXT: Color = Color::Rgb(255, 165, 0);
-pub const C_HELP_TXT: Color = Color::Rgb(255, 180, 80);
-pub const C_CONSENSUS_WARNING_TXT: Color =  Color::Rgb(255, 180, 80);
+pub const C_TX_LOOKUP_TXT: Color = Color::Rgb(224, 182, 108); //Observatory Amber
+pub const C_HELP_TXT: Color = Color::Rgb(224, 182, 108); //Observatory Amber
+pub const C_HASHRATE_ON_DEMAND_TXT: Color = Color::Rgb(224, 182, 108); //Observatory Amber
+pub const C_CONSENSUS_WARNING_TXT: Color =  Color::Rgb(255, 180, 80); //Alert Orange
 
 /// Hashrate strip in header colors
 pub const C_HASHSTRIP_DIM: Color = Color::DarkGray;
