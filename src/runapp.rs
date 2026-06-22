@@ -1669,7 +1669,7 @@ fn render_tx_lookup_popup<B: Backend>(frame: &mut Frame<B>, app: &mut App) {
 
     // User input line
     let input = Paragraph::new(app.tx_input.clone())
-        .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::DIM).add_modifier(Modifier::BOLD))
+        .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::DIM))
         .wrap(Wrap { trim: true });
 
     // RPC result rendering
@@ -1739,7 +1739,7 @@ fn render_hashrate_on_demand_popup<B: Backend>(frame: &mut Frame<B>, app: &App) 
 
     // Orange text inside
     let paragraph = Paragraph::new(text)
-        .style(Style::default().fg(C_HASHRATE_ON_DEMAND_TXT).add_modifier(Modifier::BOLD))
+        .style(Style::default().fg(C_HASHRATE_ON_DEMAND_TXT))
         .block(popup)
         .alignment(Alignment::Center)
         .wrap(Wrap { trim: true });
@@ -1755,43 +1755,101 @@ fn render_help_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) {
     let popup_area = centered_rect(76, 44, frame.size());
     frame.render_widget(Clear, popup_area);
 
-    // Multi-line help text
-    let help_text = vec![
-        "",
-        "BlockChainInfo (BCI)",
-        "An observatory for the Bitcoin network.",
-        "",
-        "BCI doesn't shout. It endures. 🦀",
-        "",
-        "The longer you run it,",
-        "the more you discover...",
-        "",
-        " GLOBAL CONTROLS",
-        " ─────────────────────────",
-        "  Q     Quit application",
-        "  T     Transaction lookup",
-        "  #     Estimated hashrate",
-        "  ESC   Close panels",
-        "",
-        " DASHBOARD SECTIONS",
-        " ─────────────────────────",
-        "  Blockchain   Hashrate Distribution",
-        "  Mempool      Mempool Visuals",
-        "  Network      Node Versions, Clients, UASF",
-        "     Hidden: u  Direct access to UASF Signals",
-        "  Consensus    Fork Monitoring",
-        "",
-        " Toggles are displayed directly inside",
-        " each section for clarity.",
+   let help_text = vec![
+        Spans::from(""),
+        Spans::from(Span::styled(
+            " BlockChainInfo (BCI)",
+            Style::default().fg(C_OBSERVATORY_AMBER),
+        )),
+        Spans::from(Span::styled(
+            " An observatory for the Bitcoin network.",
+            Style::default().fg(C_OBSERVATORY_AMBER),
+        )),
+        Spans::from(""),
+        Spans::from(Span::styled(
+            " BCI doesn't shout. It endures. 🦀",
+            Style::default().fg(C_OBSERVATORY_AMBER),
+        )),
+        Spans::from(""),
+        Spans::from(Span::styled(
+            " The longer you run it,",
+            Style::default().fg(C_HELP_TXT),
+        )),
+        Spans::from(Span::styled(
+            " the more you discover...",
+            Style::default().fg(C_HELP_TXT),
+        )),
+        Spans::from(""),
+        Spans::from(Span::styled(
+            " GLOBAL CONTROLS",
+            Style::default().fg(C_HELP_TXT),
+        )),
+        Spans::from(Span::styled(
+            " ─────────────────────────",
+            Style::default().fg(C_HELP_TXT),
+        )),
+        Spans::from(Span::styled(
+            "  Q     Quit application",
+            Style::default().fg(C_HELP_TXT),
+        )),
+        Spans::from(Span::styled(
+            "  T     Transaction lookup",
+            Style::default().fg(C_HELP_TXT),
+        )),
+        Spans::from(Span::styled(
+            "  #     Estimated hashrate",
+            Style::default().fg(C_HELP_TXT),
+        )),
+        Spans::from(Span::styled(
+            "  ESC   Close panels",
+            Style::default().fg(C_HELP_TXT),
+        )),
+        Spans::from(""),
+        Spans::from(Span::styled(
+            " DASHBOARD SECTIONS",
+            Style::default().fg(C_HELP_TXT),
+        )),
+        Spans::from(Span::styled(
+            " ─────────────────────────",
+            Style::default().fg(C_HELP_TXT),
+        )),
+        Spans::from(Span::styled(
+            "  Blockchain   Hashrate Distribution",
+            Style::default().fg(C_HELP_TXT),
+        )),
+        Spans::from(Span::styled(
+            "  Mempool      Mempool Visuals",
+            Style::default().fg(C_HELP_TXT),
+        )),
+        Spans::from(Span::styled(
+            "  Network      Node Versions, Clients, UASF",
+            Style::default().fg(C_HELP_TXT),
+        )),
+        Spans::from(Span::styled(
+            "     Hidden: u  Direct access to UASF Signals",
+            Style::default().fg(C_HELP_TXT),
+        )),
+        Spans::from(Span::styled(
+            "  Consensus    Fork Monitoring",
+            Style::default().fg(C_HELP_TXT),
+        )),
+        Spans::from(""),
+        Spans::from(Span::styled(
+            " Toggles are displayed directly inside",
+            Style::default().fg(C_HELP_TXT),
+        )),
+        Spans::from(Span::styled(
+            " each section for clarity.",
+            Style::default().fg(C_HELP_TXT),
+        )),
     ];
 
-    let paragraph = Paragraph::new(help_text.join("\n"))
-        .alignment(Alignment::Left)
-        .style(Style::default().fg(C_HELP_TXT).add_modifier(Modifier::BOLD))
-        .wrap(Wrap { trim: false });
+    let paragraph = Paragraph::new(help_text)
+    .alignment(Alignment::Left)
+    .wrap(Wrap { trim: false });
 
     let block = Block::default()
-        .title("Help (Press Esc to go back)")
+        .title("Observatory Codex (Press Esc to go back)")
         .borders(Borders::ALL)
         .style(Style::default().fg(Color::Yellow).add_modifier(Modifier::DIM));
 
@@ -1819,7 +1877,7 @@ fn render_quit_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) {
 
     let paragraph = Paragraph::new(help_text.join("\n"))
         .alignment(Alignment::Center)
-        .style(Style::default().fg(C_MAIN_LABELS).add_modifier(Modifier::BOLD))
+        .style(Style::default().fg(C_HELP_TXT))
         .wrap(Wrap { trim: false });
 
     let block = Block::default()
@@ -1859,7 +1917,7 @@ fn render_consensus_warning_popup<B: Backend>(frame: &mut Frame<B>, _app: &App) 
 
     let paragraph = Paragraph::new(warning_text.join("\n"))
         .alignment(Alignment::Left)
-        .style(Style::default().fg(C_CONSENSUS_WARNING_TXT).add_modifier(Modifier::BOLD))
+        .style(Style::default().fg(C_CONSENSUS_WARNING_TXT))
         .wrap(Wrap { trim: false });
 
     let block = Block::default()

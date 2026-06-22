@@ -92,10 +92,11 @@ pub const C_STATUS_LOW: Color = Color::Green;
 pub const C_STATUS_MED: Color = Color::Yellow;
 pub const C_STATUS_HIGH: Color = Color::Red;
 
-pub const C_TX_LOOKUP_TXT: Color = Color::Rgb(224, 182, 108); //Observatory Amber
-pub const C_HELP_TXT: Color = Color::Rgb(224, 182, 108); //Observatory Amber
-pub const C_HASHRATE_ON_DEMAND_TXT: Color = Color::Rgb(224, 182, 108); //Observatory Amber
+pub const C_TX_LOOKUP_TXT: Color = Color::Rgb(168, 194, 211); //Observatory Blue
+pub const C_HELP_TXT: Color = Color::Rgb(168, 194, 211); //Observatory Blue
+pub const C_HASHRATE_ON_DEMAND_TXT: Color = Color::Rgb(168, 194, 211); //Observatory Blue
 pub const C_CONSENSUS_WARNING_TXT: Color =  Color::Rgb(255, 180, 80); //Alert Orange
+pub const C_OBSERVATORY_AMBER: Color = Color::Rgb(224, 182, 108);
 
 /// Hashrate strip in header colors
 pub const C_HASHSTRIP_DIM: Color = Color::DarkGray;

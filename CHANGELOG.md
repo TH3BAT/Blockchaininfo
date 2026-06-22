@@ -7,6 +7,29 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
+v1.4.1 - 06-22-2026
+
+* Added jemalloc allocator (non-MSVC builds)
+* Reduced long-term memory footprint
+* Improved memory reclamation characteristics
+* Finalized Observatory UI theme (
+  popup text colors)
+* No new key bindings• No new panels
+
+Dependency Updates
+
+serde_json -> 1.0.150
+chrono -> 0.4.45
+toml -> 1.1.2+spec-1.1.0
+regex -> 1.12.4
+rand -> 0.10.1
+dashmap -> 6.2.1
+rpassword -> 7.5.4
+tokio -> 1.52.3
+tui -> 1.0.0
+
+---
+
 v1.4.0 - 06-10-2026
 
 For the majority of new features introduced during the v1.4.0 beta cycle

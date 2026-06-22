@@ -449,8 +449,8 @@ pub struct MinerBlockHistoryEntry {
     pub miner: Option<Arc<str>>,
 }
 
-/// Rolling 24-hour miner distribution tracking.
-/// Stores the last 144 block miners with their heights.
+/// Rolling two-week miner distribution tracking.
+/// Stores the last 2016 block miners with their heights.
 ///
 /// Used for the Hash Rate Distribution chart and “Last Miner” display.
 pub struct MinerBlockHistory {
