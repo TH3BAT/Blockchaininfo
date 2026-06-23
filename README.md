@@ -1,115 +1,180 @@
+# 🔭 BlockChainInfo (BCI)
 
-# 🌐 Blockchaininfo
+## A Bitcoin Network Observatory
 
-A Real-Time Bitcoin Network Observatory — Built in Rust
+**Measure. Verify. Understand.**
 
-![Rust][rust-badge] ![Uptime][uptime-badge]
+![Rust][rust-badge]
 
 [rust-badge]: https://img.shields.io/badge/Rust-1.70+-orange
-[uptime-badge]: https://img.shields.io/badge/Uptime-60_days-brightgreen
 
-![BlockchainInfo Avatar](https://image.nostr.build/98d63043b0980b9b5ffcb5c0aeb904a69e4054f432736f07b159411db669500f.jpg)
+![BCI Observatory Logo](assets/BCI_Logo.png)
 
 ---
 
 ## Overview
 
-**Blockchaininfo** is a high-performance, real-time terminal dashboard that reveals the **true heartbeat of the Bitcoin network**.
-Built in **Rust** for safety and speed, it connects directly to your Bitcoin Knots/Core RPC and delivers:
+**BlockChainInfo (BCI)** is a real-time Bitcoin network observatory built in Rust.
 
-* live blockchain metrics
-* mempool analytics
-* network decentralization health
-* consensus security / fork monitoring
-* transaction lookup
-* and more
+BCI connects directly to your Bitcoin Core or Knots node and transforms raw
+network data into a live observatory of Bitcoin's blockchain, mempool, network,
+and consensus activity.
 
-All packaged in a clean, color-coded TUI.
+Unlike web explorers, BCI operates locally against your own node, providing
+immediate visibility into network conditions without relying on third-party services.
 
-This is a tool built for those who care about **decentralization**, **sovereignty**, and the **integrity of Bitcoin’s proof-of-work network**.
+BCI doesn't shout. It endures.
 
----
-
-## Why Blockchaininfo Exists
-
-Bitcoin is decentralized — but **only if the network stays diverse and transparent**.
-
-Blockchaininfo monitors:
-
-* which versions are running
-* how healthy mempool activity is
-* how distributed the hash rate is
-* whether forks appear
-* how nodes behave across the network
-
-It offers a **real-time lens** into the state of Bitcoin’s decentralization — something no block explorer or web UI can deliver with this immediacy, clarity, and local privacy.
+The longer you run it, the more you discover.
 
 ---
 
-## Key Features
+## Why BCI Exists
 
-### ⚡ **Real-Time Insights**
+Bitcoin's strength comes from decentralization, transparency, and verifiable consensus.
 
-Every section updates independently using asynchronous tasks and global caches — ensuring smooth, flicker-free updates.
+BCI exists to help operators observe those properties directly.
 
-### 🧠 **Decentralization Monitoring**
+Rather than focusing on price, speculation, or market noise, BCI focuses on the
+health and behavior of the network itself.
 
-Track node version diversity and client distribution to identify centralizing trends.
+BCI allows operators to observe:
 
-### 🔥 **Consensus Security**
+* Blockchain activity
+* Mempool conditions
+* Network client diversity
+* Consensus security
+* Miner participation
+* Transaction propagation
+* UASF signalling
+* Difficulty cycle behavior
 
-Live fork monitoring displays active chain vs stale forks — with an automatic warning popup when a fork grows long.
-
-### 🧩 **Mempool Distribution**
-
-Custom mempool sampling logic (backed by semaphore concurrency + atomic dust filters) surfaces real-world fee pressure and distribution patterns.
-
-### 🎛️ **Interactive Toggles**
-
-Switch views instantly:
-
-* Hashrate Distribution
-* Last 20 Blocks / Miners
-* Dust-Free mempool view
-* Version vs Client distribution
-* Propagation Times vs Averages
-* Transaction lookup
-* Help panel
-
-### 🦀 **Rust-Powered Reliability**
-
-* Memory-safe
-* Panic-free
-* Concurrency tuned
-* 60+ day uptime proven
+All from a single terminal window.
 
 ---
 
-## File Structure
+## Observatory Instruments
 
-```plaintext
-.
-├── benches/
-├── cargo.toml
-├── miners.json
-└── src/
-    ├── config.rs
-    ├── consensus/
-    ├── display/
-    ├── models/
-    ├── rpc/
-    ├── runapp.rs
-    ├── ui/
-    ├── utils.rs
-    └── main.rs
+### ⛓️ Blockchain Observatory
+
+Monitor:
+
+* Best block
+* Difficulty
+* Estimated network hashrate
+* Difficulty adjustment progress
+* Verification progress
+* Chainwork
+* Disk usage
+* Median time
+* Block timestamps
+
+### ⚡ Hashphase Monitoring
+
+Track the current difficulty epoch through:
+
+* 10%
+* 25%
+* 50%
+* 75%
+* 100%
+
+phase checkpoints while observing estimated network hashrate changes throughout
+the cycle.
+
+### 📦 Mempool Observatory
+
+Observe:
+
+* Transaction count
+* Memory usage
+* Fee pressure
+* Transaction size distribution
+* Dust-free transaction views
+* Fee-rate statistics
+* Transaction age distribution
+
+### 🌎 Network Observatory
+
+Monitor:
+
+* Connected peers
+* Client diversity
+* Version distribution
+* UASF signals
+* Propagation timing
+* Data transfer statistics
+
+### ⛏️ Miner Observatory
+
+Track:
+
+* Last 20 blocks
+* Daily miner activity
+* Weekly miner activity
+* Miner participation trends
+* Observed mining entities
+
+### 🛡️ Consensus Observatory
+
+Observe:
+
+* Active chain status
+* Stale forks
+* Fork lengths
+* Consensus divergence signals
+* Automatic fork warning notifications
+
+---
+
+## Design Philosophy
+
+BCI is intentionally conservative.
+
+The goal is not to create another dashboard.
+
+The goal is to create an instrument panel that operators can leave running for
+weeks or months at a time.
+
+Features are added slowly.
+
+Interface changes are minimized.
+
+Observations are prioritized over interpretations.
+
+The observatory remains familiar release after release.
+
+---
+
+## Key Characteristics
+
+* Built in Rust
+* Works with Bitcoin Core and Bitcoin Knots
+* Supports pruned nodes
+* Local-first architecture
+* Real-time updates
+* Memory efficient
+* Long-running observatory design
+* Terminal-based interface
+* No external services required
+
+---
+
+## Installation
+
+```bash
+git clone https://github.com/TH3BAT/Blockchaininfo.git
+cd Blockchaininfo
+cargo build --release
 ```
 
-Each folder has a clear role:
+## Launch
 
-* **display/** → TUI rendering
-* **rpc/** → Bitcoin RPC operations
-* **models/** → local data structures (no external Bitcoin crates)
-* **runapp.rs** → async orchestration & global cache system
+```bash
+./target/release/blockchaininfo
+```
+
+Requires a running Bitcoin Core or Knots node with RPC enabled.
 
 ---
 
@@ -208,64 +273,3 @@ export BCI_RPC_PROXY="socks5h://127.0.0.1:9050"
 4. Env variables (`RPC_*`)
 5. Optional SOCKS proxy (`BCI_RPC_PROXY`)
 6. macOS Keychain / Linux Password Store
-
----
-
-## Installation
-
-```bash
-git clone https://github.com/TH3BAT/Blockchaininfo.git
-cd Blockchaininfo
-cargo build --release
-```
-
----
-
-## Usage
-
-```bash
-./target/release/blockchaininfo
-```
-
-Requires a running Bitcoin Knots/Core node with RPC enabled.
-
----
-
-## Demo Video
-
-A full demonstration video (`BlockChainInfoLiveDemo.mov`) is available in the Releases section.
-
-Shows:
-
-* Hash Phase flip
-* Mempool distribution
-* Node version/client charts
-* Fork monitoring
-* All toggles in action
-
----
-
-## Error Handling
-
-Blockchaininfo is built to survive:
-
-* RPC timeouts
-* invalid responses
-* json parsing failures
-* node restarts
-* mempool storms
-
-Errors are logged, not fatal.
-
----
-
-## Contributions
-
-PRs welcome!
-Fork → branch → PR.
-
----
-
-## License
-
-MIT — do whatever your sovereign soul wants.
