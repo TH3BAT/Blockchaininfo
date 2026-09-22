@@ -7,6 +7,12 @@ v1.0.0 marks the first stable release of BlockChainInfo.
 
 ---
 
+v1.4.2 - 09-21-2026
+
+* Support dynamic PH/s and EH/s hashrate display
+
+---
+
 v1.4.1 - 06-22-2026
 
 * Added jemalloc allocator (non-MSVC builds)

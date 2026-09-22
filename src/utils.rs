@@ -275,6 +275,19 @@ pub fn render_header(percent: f64, rates: &[f64]) -> Paragraph<'static> {
         Style::default().fg(color)
     };
 
+
+    let mut slots = vec!["---".to_string(); 5];
+
+    let start = 5usize.saturating_sub(rates.len());
+
+    let latest_rate = rates.last().copied().unwrap_or(0.0);
+    let use_eh = latest_rate >= 1e18;
+
+    for (i, rate) in rates.iter().enumerate() {
+        slots[start + i] = format_hashrate(*rate, use_eh);
+    }
+
+    /*
     let mut slots = vec!["---".to_string(); 5];
 
     let start = 5usize.saturating_sub(rates.len());
@@ -282,7 +295,7 @@ pub fn render_header(percent: f64, rates: &[f64]) -> Paragraph<'static> {
     for (i, rate) in rates.iter().enumerate() {
         slots[start + i] = format_eh(*rate);
     }
-
+    */
     let last_index = slots.iter().rposition(|s| s != "---");
 
     let mut rate_spans = vec![
@@ -306,11 +319,18 @@ pub fn render_header(percent: f64, rates: &[f64]) -> Paragraph<'static> {
             ));
         }
     }
+
+    rate_spans.push(Span::styled(
+        format!("] {}", if use_eh { "EH/s" } else { "PH/s" }),
+        Style::default().fg(C_HASHSTRIP_DIM),
+    ));
+
+    /*
     rate_spans.push(Span::styled(
         "] EH/s",
         Style::default().fg(C_HASHSTRIP_DIM),
     ));
-
+    */
     Paragraph::new(vec![
         Spans::from(vec![
             // Span::styled("₿lockChainInfo ", Style::default().fg(C_APP_TITLE)),
@@ -513,6 +533,16 @@ pub fn hex_decode(s: &str) -> Result<Vec<u8>, ()> {
 }
 
 /// Format hashrate into human readable format. (EH/s)
+/*
 pub fn format_eh(rate: f64) -> String {
     format!("{:.0}", rate / 1e18)
+}
+*/
+
+pub fn format_hashrate(rate: f64, use_eh: bool) -> String {
+    if use_eh {
+        format!("{:.0}", rate / 1e18)
+    } else {
+        format!("{:.0}", rate / 1e15)
+    }
 }

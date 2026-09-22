@@ -47,7 +47,7 @@ use crate::display::{
 };
 
 // Misc utilities: header/footer, miner loader, block history tracker.
-use crate::utils::{render_header, render_footer, load_miners_data, log_error, format_eh, 
+use crate::utils::{render_header, render_footer, load_miners_data, log_error, format_hashrate, 
     MINER_BLOCK_HISTORY};
 
 use crate::consensus::satoshi_math::*;
@@ -1722,15 +1722,19 @@ fn render_hashrate_on_demand_popup<B: Backend>(frame: &mut Frame<B>, app: &App) 
             ONE_CHAIN_DAY
         ))]
     } else if let Some(rate) = app.hashrate_on_demand {
-        vec![
-            Spans::from(" "),
-            Spans::from(format!("Window: {} blocks", ONE_CHAIN_DAY)),
-            Spans::from(format!(
-                "Estimated Network Rate: {} EH/s",
-                format_eh(rate)
-            )),
-            Spans::from(" "),
-        ]
+
+    let use_eh = rate >= 1e18;
+
+    vec![
+        Spans::from(" "),
+        Spans::from(format!("Window: {} blocks", ONE_CHAIN_DAY)),
+        Spans::from(format!(
+            "Estimated Network Rate: {} {}",
+            format_hashrate(rate, use_eh),
+            if use_eh { "EH/s" } else { "PH/s" }
+        )),
+        Spans::from(" "),
+    ]
     } else if let Some(err) = &app.hashrate_on_demand_error {
         vec![Spans::from(format!("RPC error: {}", err))]
     } else {
