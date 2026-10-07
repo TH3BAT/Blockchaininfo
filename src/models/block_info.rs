@@ -58,6 +58,8 @@ pub struct BlockInfo {
     pub mediantime: u64,
     pub nonce: u64,
     pub bits: String,
+    #[serde(alias = "difficulty_blake2b")]
+    #[serde(default)]
     pub difficulty: f64,
     pub chainwork: String,
     #[serde(rename = "nTx")]
@@ -98,6 +100,8 @@ pub struct BlockInfoFull {
     pub mediantime: u64,
     pub nonce: u64,
     pub bits: String,
+    #[serde(alias = "difficulty_blake2b")]
+    #[serde(default)]
     pub difficulty: f64,
     pub chainwork: String,
     #[serde(rename = "nTx")]

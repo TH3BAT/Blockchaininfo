@@ -44,6 +44,8 @@ pub struct BlockchainInfo {
     pub blocks: u64,
     pub chain: String,
     pub chainwork: String,
+    #[serde(alias = "difficulty_blake2b")]
+    #[serde(default)]
     pub difficulty: f64,
     #[serde(skip)]
     #[allow(dead_code)]
